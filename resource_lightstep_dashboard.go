@@ -8,10 +8,6 @@ import (
 func resourceLightstepDashboard() *shema.Resource {
     return &schema.Resource {
         Create: resourceLightstepDashboardCreate,
-        Read:   resourceLightstepDashboardRead,
-        Update: resourceLightstepDashboardUpdate,
-        Delete: resourceLightstepDashboardDelete,
-        Exists: resourceLightstepDashboardExists,
     }
 }
 
