@@ -57,8 +57,6 @@ type SearchRequestAttributes struct {
 }
 
 func (c *Client) CreateSearch(
-	apiKey string,
-	orgName string,
 	projectName string,
 	name string,
 	query string,
@@ -66,63 +64,37 @@ func (c *Client) CreateSearch(
 ) (PostSearchAPIResponse, error) {
 	resp := PostSearchAPIResponse{}
 
-	err := c.CallAPI(
-		"POST",
-		fmt.Sprintf("%v/projects/%v/searches", orgName, projectName),
-		apiKey,
-		CreateOrUpdateSearchBody{
-			Data: &CreateOrUpdateSearchRequest{
-				Response: Response{
-					Type: "search",
-				},
-				Attributes: SearchRequestAttributes{
-					Name:  name,
-					Query: query,
-				},
+	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/searches", projectName), CreateOrUpdateSearchBody{
+		Data: &CreateOrUpdateSearchRequest{
+			Response: Response{
+				Type: "search",
+			},
+			Attributes: SearchRequestAttributes{
+				Name:  name,
+				Query: query,
 			},
 		},
-		&resp)
+	}, &resp)
 
 	return resp, err
 }
 
-func (c *Client) ListSearches(
-	apiKey string,
-	orgName string,
-	projectName string,
-) (ListSearchesAPIResponse, error) {
+func (c *Client) ListSearches(projectName string) (ListSearchesAPIResponse, error) {
 	resp := ListSearchesAPIResponse{}
 
-	err := c.CallAPI(
-		"GET",
-		fmt.Sprintf("%v/projects/%v/searches", orgName, projectName),
-		apiKey,
-		nil,
-		&resp)
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/searches", projectName), nil, &resp)
 
 	return resp, err
 }
 
-func (c *Client) GetSearch(apiKey string, organizationName string, projectName string, searchID string) (GetSearchAPIResponse, error) {
+func (c *Client) GetSearch(projectName string, searchID string) (GetSearchAPIResponse, error) {
 	resp := GetSearchAPIResponse{}
-	err := c.CallAPI(
-		"GET",
-		fmt.Sprintf("%v/projects/%v/searches/%v", organizationName, projectName, searchID),
-		apiKey,
-		nil,
-		&resp,
-	)
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/searches/%v", projectName, searchID), nil, &resp)
 	return resp, err
 }
 
-func (c *Client) DeleteSearch(apiKey string, organizationName string, projectName string, searchID string) error {
-	err := c.CallAPI(
-		"DELETE",
-		fmt.Sprintf("%v/projects/%v/searches/%v", organizationName, projectName, searchID),
-		apiKey,
-		nil,
-		nil,
-	)
+func (c *Client) DeleteSearch(projectName string, searchID string) error {
+	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/searches/%v", projectName, searchID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

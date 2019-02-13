@@ -51,8 +51,6 @@ type DashboardRequestRelationships struct {
 }
 
 func (c *Client) CreateDashboard(
-	apiKey string,
-	orgName string,
 	projectName string,
 	dashboardName string,
 	searchAttributes []SearchAttributes,
@@ -74,47 +72,19 @@ func (c *Client) CreateDashboard(
 			})
 	}
 
-	err := c.CallAPI(
-		"POST",
-		fmt.Sprintf("%v/projects/%v/dashboards", orgName, projectName),
-		apiKey,
-		req,
-		&resp,
-	)
+	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), req, &resp)
 	return resp, err
 }
 
-func (c *Client) GetDashboard(
-	apiKey string,
-	orgName string,
-	projectName string,
-	dashboardID string,
-) (DashboardAPIResponse, error) {
+func (c *Client) GetDashboard(projectName string, dashboardID string) (DashboardAPIResponse, error) {
 
 	resp := DashboardAPIResponse{}
-	err := c.CallAPI(
-		"GET",
-		fmt.Sprintf("%v/projects/%v/dashboards/%v", orgName, projectName, dashboardID),
-		apiKey,
-		nil,
-		&resp,
-	)
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
 	return resp, err
 }
 
-func (c *Client) DeleteDashboard(
-	apiKey string,
-	orgName string,
-	projectName string,
-	dashboardID string,
-) error {
-	err := c.CallAPI(
-		"DELETE",
-		fmt.Sprintf("%v/projects/%v/dashboards/%v", orgName, projectName, dashboardID),
-		apiKey,
-		nil,
-		nil,
-	)
+func (c *Client) DeleteDashboard(projectName string, dashboardID string) error {
+	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
