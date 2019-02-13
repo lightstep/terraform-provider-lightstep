@@ -1,4 +1,4 @@
-package lightstep_sdk
+package lightstep
 
 type Response struct {
 	Type string `json:"type"`

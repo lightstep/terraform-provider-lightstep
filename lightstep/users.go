@@ -1,4 +1,4 @@
-package lightstep_sdk
+package lightstep
 
 type CreateUserAPIResponse struct {
 	Data *CreateUserResponse `json:"data"`

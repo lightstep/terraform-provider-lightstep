@@ -1,4 +1,4 @@
-package lightstep_sdk
+package lightstep
 
 type ConditionAPIResponse struct {
 	Data *ConditionResponse
