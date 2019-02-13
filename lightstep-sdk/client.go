@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/cookiejar"
 )
 
 type Headers map[string]string
@@ -28,6 +29,60 @@ func (a APIClientError) Error() string {
 }
 func (a APIClientError) GetHTTPResponse() *http.Response {
 	return a.Response
+}
+
+type Body struct {
+	Data   interface{}            `json:"data,omitempty"`
+	Errors []string               `json:"errors,omitempty"`
+	Links  map[string]interface{} `json:"links,omitempty"`
+}
+
+type Client struct {
+	hostname    string
+	client      *http.Client
+	contentType string
+}
+
+// NewClient gets a client for the public API
+func NewClient(ctx context.Context, hostname string) *Client {
+	cookieJar, err := cookiejar.New(nil)
+	if err != nil {
+		log.Fatal(ctx, err)
+	}
+	return &Client{
+		hostname: hostname,
+		client: &http.Client{
+			Jar: cookieJar,
+		},
+		contentType: "application/vnd.api+json",
+	}
+}
+
+// CallAPI calls the given API and unmarshals the result to into result.
+func (c *Client) CallAPI(
+	httpMethod string,
+	suffix string,
+	authToken string,
+	data interface{},
+	result interface{},
+) error {
+	return callAPI(
+		context.TODO(),
+		c.client,
+		generateURLForPublicAPI(c.hostname, suffix),
+		httpMethod,
+		Headers{
+			"Authorization": fmt.Sprintf("bearer %v", authToken),
+			"Content-Type":  c.contentType,
+			"Accept":        c.contentType,
+		},
+		data,
+		result,
+	)
+}
+
+func generateURLForPublicAPI(hostname string, suffix string) string {
+	return fmt.Sprintf("%v/public/v0.1/%v", hostname, suffix)
 }
 
 func executeAPIRequest(client *http.Client, req *http.Request, result interface{}) error {
@@ -83,6 +138,7 @@ func executeAPIRequest(client *http.Client, req *http.Request, result interface{
 
 	return nil
 }
+
 func createJSONRequest(
 	ctx context.Context,
 	httpMethod string,
