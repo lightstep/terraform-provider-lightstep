@@ -9,5 +9,9 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"lightstep_project": resourceProject(),
 		},
+
+                ResourcesMap: map[string]*schema.Resource{
+                    "lightstep_dashboard": resourceLightstepDashboard(),
+                },
 	}
 }
