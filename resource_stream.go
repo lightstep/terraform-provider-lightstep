@@ -5,11 +5,11 @@ import (
 )
 
 func resourceStream() *schema.Resource {
-  return &schema.Resource{
-    Create: resourceStreamCreate,
-    Read:   resourceStreamRead,
-    Update: resourceStreamUpdate,
-    Delete: resourceStreamDelete,
+	return &schema.Resource{
+		Create: resourceStreamCreate,
+		Read:   resourceStreamRead,
+		Update: resourceStreamUpdate,
+		Delete: resourceStreamDelete,
 
 		Schema: map[string]*schema.Schema{
 			"organization": &schema.Schema{
@@ -25,17 +25,17 @@ func resourceStream() *schema.Resource {
 }
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
-  return resourceStreamRead(d, m)
+	return resourceStreamRead(d, m)
 }
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
-  return nil
+	return nil
 }
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
-  return resourceStreamRead(d, m)
+	return resourceStreamRead(d, m)
 }
 
 func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
-  return nil
+	return nil
 }

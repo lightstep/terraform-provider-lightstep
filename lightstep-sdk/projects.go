@@ -45,7 +45,7 @@ type DeleteProjectAPIResponse struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-func (c *PublicAPIClient) CallCreateProject(apiKey string, orgName string, projectName string) (CreateProjectAPIResponse, error) {
+func (c *Client) CreateProject(apiKey string, orgName string, projectName string) (CreateProjectAPIResponse, error) {
 	resp := CreateProjectAPIResponse{}
 	err := c.CallAPI(
 		"POST",
@@ -61,7 +61,7 @@ func (c *PublicAPIClient) CallCreateProject(apiKey string, orgName string, proje
 	return resp, err
 }
 
-func (c *PublicAPIClient) CallReadProject(apiKey string, orgName string, projectName string) (ReadProjectsAPIResponse, error) {
+func (c *Client) ReadProject(apiKey string, orgName string, projectName string) (ReadProjectsAPIResponse, error) {
 	readProjectResp := ReadProjectsAPIResponse{}
 	err := c.CallAPI(
 		"GET",
@@ -73,7 +73,7 @@ func (c *PublicAPIClient) CallReadProject(apiKey string, orgName string, project
 	return readProjectResp, err
 }
 
-func (c *PublicAPIClient) CallListProjects(apiKey string, orgName string) (ListProjectsAPIResponse, error) {
+func (c *Client) ListProjects(apiKey string, orgName string) (ListProjectsAPIResponse, error) {
 	resp := ListProjectsAPIResponse{}
 	err := c.CallAPI(
 		"GET",
@@ -85,7 +85,7 @@ func (c *PublicAPIClient) CallListProjects(apiKey string, orgName string) (ListP
 	return resp, err
 }
 
-func (c *PublicAPIClient) CallDeleteProject(apiKey string, orgName string, projectName string) (DeleteProjectAPIResponse, error) {
+func (c *Client) DeleteProject(apiKey string, orgName string, projectName string) (DeleteProjectAPIResponse, error) {
 	resp := DeleteProjectAPIResponse{}
 	err := c.CallAPI(
 		"DELETE",
