@@ -47,7 +47,7 @@ type DashboardRequestRelationships struct {
 	Dashboard ResourceIDObject `json:"dashboard"`
 }
 
-func (c *PublicAPIClient) CallCreateDashboard(
+func (c *Client) CreateDashboard(
 	apiKey string,
 	orgName string,
 	projectName string,

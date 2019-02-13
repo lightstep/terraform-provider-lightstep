@@ -53,7 +53,7 @@ type SearchRequestAttributes struct {
 	CustomData map[string]interface{} `json:"custom_data,omitempty"`
 }
 
-func (c *PublicAPIClient) CallCreateSearch(
+func (c *Client) CreateSearch(
 	apiKey string,
 	orgName string,
 	projectName string,
@@ -83,7 +83,7 @@ func (c *PublicAPIClient) CallCreateSearch(
 	return resp, err
 }
 
-func (c *PublicAPIClient) CallListSearches(
+func (c *Client) ListSearches(
 	apiKey string,
 	orgName string,
 	projectName string,
@@ -100,7 +100,7 @@ func (c *PublicAPIClient) CallListSearches(
 	return resp, err
 }
 
-func (c *PublicAPIClient) CallGetSearch(apiKey string, organizationName string, projectName string, searchID string) (GetSearchAPIResponse, error) {
+func (c *Client) GetSearch(apiKey string, organizationName string, projectName string, searchID string) (GetSearchAPIResponse, error) {
 	resp := GetSearchAPIResponse{}
 	err := c.CallAPI(
 		"GET",
@@ -112,7 +112,7 @@ func (c *PublicAPIClient) CallGetSearch(apiKey string, organizationName string, 
 	return resp, err
 }
 
-func (c *PublicAPIClient) CallDeleteSearch(apiKey string, organizationName string, projectName string, searchID string) (DeleteSearchAPIResponse, error) {
+func (c *Client) DeleteSearch(apiKey string, organizationName string, projectName string, searchID string) (DeleteSearchAPIResponse, error) {
 	resp := DeleteSearchAPIResponse{}
 	err := c.CallAPI(
 		"DELETE",

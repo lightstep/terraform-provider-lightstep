@@ -37,19 +37,19 @@ type Body struct {
 	Links  map[string]interface{} `json:"links,omitempty"`
 }
 
-type PublicAPIClient struct {
+type Client struct {
 	hostname    string
 	client      *http.Client
 	contentType string
 }
 
-// NewPublicAPIClient gets a client for the public API
-func NewPublicAPIClient(ctx context.Context, hostname string) *PublicAPIClient {
+// NewClient gets a client for the public API
+func NewClient(ctx context.Context, hostname string) *Client {
 	cookieJar, err := cookiejar.New(nil)
 	if err != nil {
 		log.Fatal(ctx, err)
 	}
-	return &PublicAPIClient{
+	return &Client{
 		hostname: hostname,
 		client: &http.Client{
 			Jar: cookieJar,
@@ -59,7 +59,7 @@ func NewPublicAPIClient(ctx context.Context, hostname string) *PublicAPIClient {
 }
 
 // CallAPI calls the given API and unmarshals the result to into result.
-func (c *PublicAPIClient) CallAPI(
+func (c *Client) CallAPI(
 	httpMethod string,
 	suffix string,
 	authToken string,
