@@ -45,54 +45,30 @@ type DeleteProjectAPIResponse struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-func (c *Client) CreateProject(apiKey string, orgName string, projectName string) (CreateProjectAPIResponse, error) {
+func (c *Client) CreateProject(projectName string) (CreateProjectAPIResponse, error) {
 	resp := CreateProjectAPIResponse{}
-	err := c.CallAPI(
-		"POST",
-		fmt.Sprintf("%v/projects", orgName),
-		apiKey,
-		CreateProjectBody{
-			Data: &CreateProjectRequest{
-				Name: projectName,
-			},
+	err := c.CallAPI("POST", "projects", CreateProjectBody{
+		Data: &CreateProjectRequest{
+			Name: projectName,
 		},
-		&resp,
-	)
+	}, &resp)
 	return resp, err
 }
 
-func (c *Client) ReadProject(apiKey string, orgName string, projectName string) (ReadProjectsAPIResponse, error) {
+func (c *Client) ReadProject(projectName string) (ReadProjectsAPIResponse, error) {
 	readProjectResp := ReadProjectsAPIResponse{}
-	err := c.CallAPI(
-		"GET",
-		fmt.Sprintf("%v/projects/%v", orgName, projectName),
-		apiKey,
-		nil,
-		&readProjectResp,
-	)
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v", projectName), nil, &readProjectResp)
 	return readProjectResp, err
 }
 
-func (c *Client) ListProjects(apiKey string, orgName string) (ListProjectsAPIResponse, error) {
+func (c *Client) ListProjects() (ListProjectsAPIResponse, error) {
 	resp := ListProjectsAPIResponse{}
-	err := c.CallAPI(
-		"GET",
-		fmt.Sprintf("%v/projects/", orgName),
-		apiKey,
-		nil,
-		&resp,
-	)
+	err := c.CallAPI("GET", "projects", nil, &resp)
 	return resp, err
 }
 
-func (c *Client) DeleteProject(apiKey string, orgName string, projectName string) (DeleteProjectAPIResponse, error) {
+func (c *Client) DeleteProject(projectName string) (DeleteProjectAPIResponse, error) {
 	resp := DeleteProjectAPIResponse{}
-	err := c.CallAPI(
-		"DELETE",
-		fmt.Sprintf("%v/projects/%v", orgName, projectName),
-		apiKey,
-		nil,
-		&resp,
-	)
+	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v", projectName), nil, &resp)
 	return resp, err
 }

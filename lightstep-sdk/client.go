@@ -9,7 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/http/cookiejar"
+	"os"
 )
 
 type Headers map[string]string
@@ -38,51 +38,43 @@ type Body struct {
 }
 
 type Client struct {
-	hostname    string
+	apiKey      string
+	baseURL     string
 	client      *http.Client
 	contentType string
 }
 
 // NewClient gets a client for the public API
-func NewClient(ctx context.Context, hostname string) *Client {
-	cookieJar, err := cookiejar.New(nil)
-	if err != nil {
-		log.Fatal(ctx, err)
+func NewClient(ctx context.Context, apiKey string, orgName string) *Client {
+	baseUrl := os.Getenv("LIGHTSTEP_HOST")
+	if baseUrl == "" {
+		baseUrl = "https://api-staging.lightstep.com/public/v0.1/" // Hardcoding to staging for now
 	}
+	baseURLWithOrg := fmt.Sprintf("%v/%v/", baseUrl, orgName)
+
 	return &Client{
-		hostname: hostname,
-		client: &http.Client{
-			Jar: cookieJar,
-		},
+		apiKey:      apiKey,
+		baseURL:     baseURLWithOrg,
+		client:      http.DefaultClient,
 		contentType: "application/vnd.api+json",
 	}
 }
 
 // CallAPI calls the given API and unmarshals the result to into result.
-func (c *Client) CallAPI(
-	httpMethod string,
-	suffix string,
-	authToken string,
-	data interface{},
-	result interface{},
-) error {
+func (c *Client) CallAPI(httpMethod string, suffix string, data interface{}, result interface{}) error {
 	return callAPI(
 		context.TODO(),
 		c.client,
-		generateURLForPublicAPI(c.hostname, suffix),
+		fmt.Sprintf("%v/%v", c.baseURL, suffix),
 		httpMethod,
 		Headers{
-			"Authorization": fmt.Sprintf("bearer %v", authToken),
+			"Authorization": fmt.Sprintf("bearer %v", c.apiKey),
 			"Content-Type":  c.contentType,
 			"Accept":        c.contentType,
 		},
 		data,
 		result,
 	)
-}
-
-func generateURLForPublicAPI(hostname string, suffix string) string {
-	return fmt.Sprintf("%v/public/v0.1/%v", hostname, suffix)
 }
 
 func executeAPIRequest(client *http.Client, req *http.Request, result interface{}) error {
