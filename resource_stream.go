@@ -4,12 +4,12 @@ import (
   "github.com/hashicorp/terraform/helper/schema"
 )
 
-func resourceProject() *schema.Resource {
+func resourceStream() *schema.Resource {
   return &schema.Resource{
-    Create: resourceProjectCreate,
-    Read:   resourceProjectRead,
-    Update: resourceProjectUpdate,
-    Delete: resourceProjectDelete,
+    Create: resourceStreamCreate,
+    Read:   resourceStreamRead,
+    Update: resourceStreamUpdate,
+    Delete: resourceStreamDelete,
 
     Schema: map[string]*schema.Schema{
       "organization": &schema.Schema{
@@ -24,18 +24,18 @@ func resourceProject() *schema.Resource {
   }
 }
 
-func resourceProjectCreate(d *schema.ResourceData, m interface{}) error {
-  return resourceProjectRead(d, m)
+func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
+  return resourceStreamRead(d, m)
 }
 
-func resourceProjectRead(d *schema.ResourceData, m interface{}) error {
+func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
   return nil
 }
 
-func resourceProjectUpdate(d *schema.ResourceData, m interface{}) error {
-  return resourceProjectRead(d, m)
+func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
+  return resourceStreamRead(d, m)
 }
 
-func resourceProjectDelete(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
   return nil
 }
