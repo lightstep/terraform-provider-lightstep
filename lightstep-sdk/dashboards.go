@@ -1,6 +1,9 @@
 package lightstep_sdk
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type DashboardAPIResponse struct {
 	Data *DashboardResponse `json:"data"`
@@ -79,4 +82,46 @@ func (c *Client) CreateDashboard(
 		&resp,
 	)
 	return resp, err
+}
+
+func (c *Client) GetDashboard(
+	apiKey string,
+	orgName string,
+	projectName string,
+	dashboardID string,
+) (DashboardAPIResponse, error) {
+
+	resp := DashboardAPIResponse{}
+	err := c.CallAPI(
+		"GET",
+		fmt.Sprintf("%v/projects/%v/dashboards/%v", orgName, projectName, dashboardID),
+		apiKey,
+		nil,
+		&resp,
+	)
+	return resp, err
+}
+
+func (c *Client) DeleteDashboard(
+	apiKey string,
+	orgName string,
+	projectName string,
+	dashboardID string,
+) error {
+
+	resp := DashboardAPIResponse{}
+	err := c.CallAPI(
+		"DELETE",
+		fmt.Sprintf("%v/projects/%v/dashboards/%v", orgName, projectName, dashboardID),
+		apiKey,
+		nil,
+		&resp,
+	)
+	if err != nil {
+		apiClientError := err.(APIResponseCarrier)
+		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+			return err
+		}
+	}
+	return nil
 }
