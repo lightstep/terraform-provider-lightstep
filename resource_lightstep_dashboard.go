@@ -14,7 +14,22 @@ func resourceLightstepDashboard() *shema.Resource {
     },
 
     Schema: map[string]*schema.Schema {
-
+        "dashboard_id": &schema.Schema {
+            type: schema.TypeString,
+            required: false
+        },
+        "name": &schema.Schema {
+            type: schema.TypeString,
+            required: true
+        },
+        "projectName": &schema.Schema {
+            type: schema.TypeString,
+            required: true
+        },
+        "searchAttributes": &schema.Schema {
+            type: schema.TypeArray,
+            required: false
+        }
     }
 }
 
