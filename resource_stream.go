@@ -1,7 +1,7 @@
 package main
 
 import (
-  "github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func resourceStream() *schema.Resource {
@@ -11,17 +11,17 @@ func resourceStream() *schema.Resource {
     Update: resourceStreamUpdate,
     Delete: resourceStreamDelete,
 
-    Schema: map[string]*schema.Schema{
-      "organization": &schema.Schema{
-        Type:     schema.TypeString,
-        Required: true,
-      },
-      "project": &schema.Schema{
-        Type:     schema.TypeString,
-        Required: true,
-      },
-    },
-  }
+		Schema: map[string]*schema.Schema{
+			"organization": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			"project": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
+		},
+	}
 }
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
