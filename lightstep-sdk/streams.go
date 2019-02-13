@@ -1,6 +1,9 @@
 package lightstep_sdk
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type GetSearchAPIResponse struct {
 	Data *SearchResponse `json:"data,omitempty"`
@@ -112,14 +115,20 @@ func (c *Client) GetSearch(apiKey string, organizationName string, projectName s
 	return resp, err
 }
 
-func (c *Client) DeleteSearch(apiKey string, organizationName string, projectName string, searchID string) (DeleteSearchAPIResponse, error) {
-	resp := DeleteSearchAPIResponse{}
+func (c *Client) DeleteSearch(apiKey string, organizationName string, projectName string, searchID string) error {
 	err := c.CallAPI(
 		"DELETE",
 		fmt.Sprintf("%v/projects/%v/searches/%v", organizationName, projectName, searchID),
 		apiKey,
 		nil,
-		&resp,
+		nil,
 	)
-	return resp, err
+	if err != nil {
+		apiClientError := err.(APIResponseCarrier)
+		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+			return err
+		}
+	}
+	return nil
+
 }

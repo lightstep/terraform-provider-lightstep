@@ -108,14 +108,12 @@ func (c *Client) DeleteDashboard(
 	projectName string,
 	dashboardID string,
 ) error {
-
-	resp := DashboardAPIResponse{}
 	err := c.CallAPI(
 		"DELETE",
 		fmt.Sprintf("%v/projects/%v/dashboards/%v", orgName, projectName, dashboardID),
 		apiKey,
 		nil,
-		&resp,
+		nil,
 	)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
