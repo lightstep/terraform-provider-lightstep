@@ -1,7 +1,6 @@
 package main
 
 import (
-  "fmt"
 	"github.com/hashicorp/terraform/helper/schema"
   "github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
@@ -12,7 +11,7 @@ func resourceStream() *schema.Resource {
 		Read:   resourceStreamRead,
 		Update: resourceStreamUpdate,
 		Delete: resourceStreamDelete,
-    // Exists: resourceStreamExists,
+    Exists: resourceStreamExists,
 
 		Schema: map[string]*schema.Schema{
 			"project": &schema.Schema{
@@ -35,25 +34,34 @@ func resourceStream() *schema.Resource {
 	}
 }
 
-// func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
-//   return false, nil
-// }
+func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
+  return false, nil
+}
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
   client := m.(*lightstep.Client)
-
-  client.CreateSearch(
-    d.Get("project"),
-    d.Get("name"),
-    d.Get("query"),
+  _, err := client.CreateSearch(
+    d.Get("project").(string),
+    d.Get("name").(string),
+    d.Get("query").(string),
+    nil,
   )
-  fmt.Println(client)
-  //customData map[string]interface{},
+  if err != nil {
+    return err
+  }
 	return resourceStreamRead(d, m)
 }
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
-	return nil
+	client := m.(*lightstep.Client)
+  _, err := client.GetSearch(
+    d.Get("project").(string),
+    d.Get("stream_id").(string),
+  )
+  if err != nil {
+    return err
+  }
+  return nil
 }
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
