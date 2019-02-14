@@ -15,11 +15,11 @@ func resourceStream() *schema.Resource {
 		Exists: resourceStreamExists,
 
 		Schema: map[string]*schema.Schema{
-			"project": &schema.Schema{
+			"project_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"name": &schema.Schema{
+			"stream_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -27,6 +27,10 @@ func resourceStream() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+      "custom_data": &schema.Schema{
+        Type:     schema.TypeMap,
+        Optional: true,
+      },
 		},
 	}
 }
@@ -35,7 +39,7 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 	client := m.(*lightstep.Client)
 
 	if _, err := client.GetSearch(
-		d.Get("project").(string),
+		d.Get("project_name").(string),
 		d.Id(),
 	); err != nil {
 		return false, err
@@ -47,10 +51,10 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	resp, err := client.CreateSearch(
-		d.Get("project").(string),
-		d.Get("name").(string),
+		d.Get("project_name").(string),
+		d.Get("stream_name").(string),
 		d.Get("query").(string),
-		nil,
+		d.Get("custom_data").(map[string]interface{}),
 	)
 	if err != nil {
 		log.Println(err)
@@ -63,7 +67,7 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	_, err := client.GetSearch(
-		d.Get("project").(string),
+		d.Get("project_name").(string),
 		d.Id(),
 	)
 	if err != nil {
@@ -80,7 +84,7 @@ func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
 
 	client := m.(*lightstep.Client)
 	err := client.DeleteSearch(
-		d.Get("project").(string),
+		d.Get("project_name").(string),
 		d.Id(),
 	)
 	if err != nil {
