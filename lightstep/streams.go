@@ -72,6 +72,7 @@ func (c *Client) CreateSearch(
 			Attributes: SearchRequestAttributes{
 				Name:  name,
 				Query: query,
+				CustomData: customData,
 			},
 		},
 	}, &resp)

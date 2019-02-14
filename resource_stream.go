@@ -27,10 +27,10 @@ func resourceStream() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-      "custom_data": &schema.Schema{
-        Type:     schema.TypeMap,
-        Optional: true,
-      },
+			"custom_data": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+			},
 		},
 	}
 }

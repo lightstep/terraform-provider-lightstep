@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 )
 
 func resourceProject() *schema.Resource {
@@ -15,7 +14,7 @@ func resourceProject() *schema.Resource {
 		Exists: resourceProjectExists,
 
 		Schema: map[string]*schema.Schema{
-			"project": &schema.Schema{
+			"project_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -24,23 +23,36 @@ func resourceProject() *schema.Resource {
 }
 
 func resourceProjectExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
-	return false, nil
+	client := m.(*lightstep.Client)
+	_, err := client.ReadProject(
+		d.Get("project_name").(string),
+	)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func resourceProjectCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.CreateProject(
-		d.Get("project").(string),
+	resp, err := client.CreateProject(
+		d.Get("project_name").(string),
 	)
 	if err != nil {
 		return err
 	}
+	d.SetId(string(resp.Data.ID))
 	return resourceProjectRead(d, m)
 }
 
 func resourceProjectRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	log.Println(client)
+	_, err := client.ReadProject(
+		d.Get("project_name").(string),
+	)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -49,5 +61,13 @@ func resourceProjectUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceProjectDelete(d *schema.ResourceData, m interface{}) error {
+	client := m.(*lightstep.Client)
+	err := client.DeleteProject(
+		d.Get("project_name").(string),
+	)
+	if err != nil {
+		return err
+	}
+	d.SetId("")
 	return nil
 }

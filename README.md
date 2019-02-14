@@ -2,10 +2,46 @@
 Salad Bar 2019 Hackathon Project
 
 * Set LIGHTSTEP_API_KEY environment variable before the following
-* `go build -o terraform-provider-lightstep`
+
+* `mkdir -p ~/.terraform.d/plugins`
+* `go build -o ~/.terraform.d/plugins/terraform-provider-lightstep`
 * `terraform init`
+* `terraform plan`
 * `terraform apply`
 
-@cody: Check out the `resource_stream.go` and `resource_project.go` files for example on how to do CREATE. 
 
-`main.tf` has an example schema which when you apply, shows up in our test project on staging. You can also create new projects (just change the name) but probably wait until Julian can make his fix that stops staging env from breaking
+# TF File Schema
+
+## Global
+
+```HCL
+provider "lightstep" {
+  organization = "[ORG NAME]"
+}
+```
+
+## Projects
+
+```HCL
+resource "lightstep_project" "[PROJECT]" {
+  project_name = "[PROJECT]"
+}
+```
+
+## Dashboards
+
+```HCL
+
+```
+
+## Streams
+
+```HCL
+resource "lightstep_stream" "[STREAM]" {
+  project_name = "${lightstep_project.project.[PROJECT]}"
+  stream_name = "[STREAM]"
+  query = "[QUERY]"
+  depends_on = ["lightstep_project.[PROJECT]"]
+}
+```
+
