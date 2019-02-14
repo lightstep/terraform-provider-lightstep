@@ -5,7 +5,7 @@ import (
     "github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func resourceLightstepDashboard() *schema.Resource {
+func resourceDashboard() *schema.Resource {
     return &schema.Resource {
         Create: resourceLightstepDashboardCreate,
         Read:    resourceLightstepDashboardRead,

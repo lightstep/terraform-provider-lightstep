@@ -1,5 +1,5 @@
 provider "lightstep" {
-  // api_key = "${var.lighstep_api_key}"  
+  // api_key = "${var.lighstep_api_key}"
   organization = "LightStep"
 }
 
@@ -13,6 +13,18 @@ resource "lightstep_stream" "test_stream_2" {
   project = "saladbar-terraform"
   name = "test_stream_2"
   query = "tag:\"error\"=\"false\""
+}
+
+resource "lightstep_dashboard" "test_dashboard" {
+  project = "saladbar-terraform"
+  name = "test_dashboard"
+  searchAttributes = [{
+    name = "test_stream_2",
+    query = "tag:\"error\"=\"false\""
+  }, {
+    name = "test_stream_1",
+    query = "tag:\"error\"=\"true\""
+  }]
 }
 
 # resource "lightstep_project" "test_tf_project" {
