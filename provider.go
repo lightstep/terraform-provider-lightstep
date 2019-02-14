@@ -40,7 +40,6 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
     d.Get("organization").(string),
   )
   log.Println("[INFO] LightStep client successfully initialized.")
-  // panic("here")
 
   return client, nil
 }

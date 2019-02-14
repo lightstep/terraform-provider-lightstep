@@ -1,6 +1,7 @@
 package main
 
 import (
+  "log"
 	"github.com/hashicorp/terraform/helper/schema"
   "github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
@@ -40,15 +41,19 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
   client := m.(*lightstep.Client)
-  _, err := client.CreateSearch(
+  resp, err := client.CreateSearch(
     d.Get("project").(string),
     d.Get("name").(string),
     d.Get("query").(string),
     nil,
   )
   if err != nil {
+    log.Println(err)
     return err
   }
+  log.Println(resp.Data.ID)
+  d.SetId(string(resp.Data.ID))
+  d.Set("stream_id", string(resp.Data.ID))
 	return resourceStreamRead(d, m)
 }
 
@@ -56,7 +61,7 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
   _, err := client.GetSearch(
     d.Get("project").(string),
-    d.Get("stream_id").(string),
+    d.Id(),
   )
   if err != nil {
     return err
@@ -69,5 +74,6 @@ func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
+  d.SetId("")
 	return nil
 }
