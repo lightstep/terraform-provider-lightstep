@@ -1,46 +1,44 @@
-package lightstep
+package main
 
 import (
-    "fmt"
     "github.com/hashicorp/terraform/helper/schema"
-    lightstep "github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func resourceLightstepDashboard() *shema.Resource {
+func resourceLightstepDashboard() *schema.Resource {
     return &schema.Resource {
         Create: resourceLightstepDashboardCreate,
-        Get:    resourceLightstepDashboardGet,
+        Read:    resourceLightstepDashboardRead,
         Delete: resourceLightstepDashboardDelete,
-    },
 
-    Schema: map[string]*schema.Schema {
-        "dashboard_id": &schema.Schema {
-            type: schema.TypeString,
-            required: false
+        Schema: map[string]*schema.Schema {
+            "dashboard_id": &schema.Schema {
+                Type: schema.TypeString,
+                Required: false,
+            },
+            "name": &schema.Schema {
+                Type: schema.TypeString,
+                Required: true,
+            },
+            "projectName": &schema.Schema {
+                Type: schema.TypeString,
+                Required: true,
+            },
+            "searchAttributes": &schema.Schema {
+                Type: schema.TypeString,
+                Required: false,
+            },
         },
-        "name": &schema.Schema {
-            type: schema.TypeString,
-            required: true
-        },
-        "projectName": &schema.Schema {
-            type: schema.TypeString,
-            required: true
-        },
-        "searchAttributes": &schema.Schema {
-            type: schema.TypeArray,
-            required: false
-        }
     }
 }
 
 func resourceLightstepDashboardCreate(d *schema.ResourceData, meta interface{}) error {
-    client := meta.(*lightstep.Client)
+    return nil
 }
 
-func resourceLightstepDashboardGet(d *schema.ResourceData, meta interface{}) error {
-    client := meta.(*lightstep.Client)
+func resourceLightstepDashboardRead(d *schema.ResourceData, meta interface{}) error {
+    return nil
 }
 
-func resourceLightstepDashboardDelete(d *schema.ResourceData, meta interface{}) {
-    client := meta.(*lightstep.Client)
+func resourceLightstepDashboardDelete(d *schema.ResourceData, meta interface{}) error {
+    return nil
 }
