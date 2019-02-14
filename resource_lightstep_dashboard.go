@@ -35,17 +35,12 @@ func resourceLightstepDashboard() *shema.Resource {
 
 func resourceLightstepDashboardCreate(d *schema.ResourceData, meta interface{}) error {
     client := meta.(*lightstep.Client)
-
 }
 
 func resourceLightstepDashboardGet(d *schema.ResourceData, meta interface{}) error {
     client := meta.(*lightstep.Client)
-
-
 }
 
 func resourceLightstepDashboardDelete(d *schema.ResourceData, meta interface{}) {
     client := meta.(*lightstep.Client)
-
-
 }
