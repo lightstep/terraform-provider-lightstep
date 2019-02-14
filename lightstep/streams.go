@@ -1,4 +1,4 @@
-package lightstep_sdk
+package lightstep
 
 import (
 	"fmt"
