@@ -18,7 +18,7 @@ resource "lightstep_stream" "test_stream_2" {
 resource "lightstep_dashboard" "test_dashboard" {
   project = "saladbar-terraform"
   name = "test_dashboard"
-  searchAttributes = [{
+  search_attributes = [{
     name = "test_stream_2",
     query = "tag:\"error\"=\"false\""
   }, {
