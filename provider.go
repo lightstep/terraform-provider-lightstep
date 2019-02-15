@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 )
 
 func Provider() *schema.Provider {
@@ -33,13 +32,11 @@ func Provider() *schema.Provider {
 }
 
 func configureProvider(d *schema.ResourceData) (interface{}, error) {
-	// Initializing client here with credentials
 	client := lightstep.NewClient(
 		context.Background(),
 		d.Get("api_key").(string),
 		d.Get("organization").(string),
 	)
-	log.Println("[INFO] LightStep client successfully initialized.")
 
 	return client, nil
 }

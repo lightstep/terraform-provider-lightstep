@@ -1,8 +1,8 @@
 package lightstep
 
 import (
-"fmt"
-"net/http"
+	"fmt"
+	"net/http"
 )
 
 type ReadProjectsAPIResponse struct {
@@ -70,7 +70,7 @@ func (c *Client) ListProjects() (ListProjectsAPIResponse, error) {
 	return resp, err
 }
 
-func (c *Client) DeleteProject(projectName string)error {
+func (c *Client) DeleteProject(projectName string) error {
 	resp := DeleteProjectAPIResponse{}
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v", projectName), nil, &resp)
 	if err != nil {

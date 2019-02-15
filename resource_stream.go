@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 )
 
 func resourceStream() *schema.Resource {
@@ -57,9 +56,9 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 		d.Get("custom_data").(map[string]interface{}),
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
+
 	d.SetId(string(resp.Data.ID))
 	return resourceStreamRead(d, m)
 }
