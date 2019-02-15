@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 	"strings"
-	"log"
 )
 
 func resourceStream() *schema.Resource {
