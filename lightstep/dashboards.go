@@ -86,6 +86,10 @@ func (c *Client) UpdateDashboard(
 	resp := DashboardAPIResponse{}
 	req := DashboardRequestBody{
 		Data: &DashboardRequest{
+			Response: Response{
+				Type: "dashboard",
+				ID:   dashboardID,
+			},
 			Attributes: DashboardRequestAttributes{
 				Name: dashboardName,
 			},
