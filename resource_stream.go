@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 	"fmt"
-	"time"
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 	"strings"
+	"time"
 )
 
 func resourceStream() *schema.Resource {
@@ -36,8 +36,8 @@ func resourceStream() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-       Create: schema.DefaultTimeout(2 * time.Second),
-    },
+			Create: schema.DefaultTimeout(2 * time.Second),
+		},
 	}
 }
 
@@ -57,23 +57,23 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-      resp, err := client.CreateSearch(
-				d.Get("project_name").(string),
-				d.Get("stream_name").(string),
-				d.Get("query").(string),
-				d.Get("custom_data").(map[string]interface{}),
-			)
-			if err != nil {
-				// Fix until lock error is resolved
-				if strings.Contains(err.Error(),"Internal Server Error") {
-					return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet"))
-				} else {
-					return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
-				}
+		resp, err := client.CreateSearch(
+			d.Get("project_name").(string),
+			d.Get("stream_name").(string),
+			d.Get("query").(string),
+			d.Get("custom_data").(map[string]interface{}),
+		)
+		if err != nil {
+			// Fix until lock error is resolved
+			if strings.Contains(err.Error(), "Internal Server Error") {
+				return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet"))
+			} else {
+				return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
 			}
-      d.SetId(string(resp.Data.ID))
-      return resource.NonRetryableError(resourceStreamRead(d, m))
-  })
+		}
+		d.SetId(string(resp.Data.ID))
+		return resource.NonRetryableError(resourceStreamRead(d, m))
+	})
 }
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
@@ -90,6 +90,16 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
+	client := m.(*lightstep.Client)
+
+	if d.HasChange("query") {
+		if err := client.DeleteSearch(
+			d.Get("project_name").(string),
+			d.Id(),
+		); err != nil {
+			return err
+		}
+	}
 	return resourceStreamCreate(d, m)
 }
 
