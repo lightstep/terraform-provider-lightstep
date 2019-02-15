@@ -13,10 +13,6 @@
 *.out
 
 terraform-provider-lightstep
-
-.terraform
-
-
 .terraform
 terraform.tfstate
 crash.log

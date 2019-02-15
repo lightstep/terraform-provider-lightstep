@@ -1,6 +1,9 @@
 package lightstep
 
-import "fmt"
+import (
+"fmt"
+"net/http"
+)
 
 type ReadProjectsAPIResponse struct {
 	Data *ProjectResponse `json:"data,omitempty"`
@@ -67,8 +70,14 @@ func (c *Client) ListProjects() (ListProjectsAPIResponse, error) {
 	return resp, err
 }
 
-func (c *Client) DeleteProject(projectName string) (DeleteProjectAPIResponse, error) {
+func (c *Client) DeleteProject(projectName string)error {
 	resp := DeleteProjectAPIResponse{}
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v", projectName), nil, &resp)
-	return resp, err
+	if err != nil {
+		apiClientError := err.(APIResponseCarrier)
+		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+			return err
+		}
+	}
+	return nil
 }
