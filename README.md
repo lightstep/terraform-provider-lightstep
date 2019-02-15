@@ -39,7 +39,6 @@ resource "lightstep_stream" "[STREAM]" {
   project_name = "${lightstep_project.project.[PROJECT]}"
   stream_name = "[STREAM]"
   query = "[QUERY]"
-  depends_on = ["lightstep_project.[PROJECT]"]
 }
 ```
 
