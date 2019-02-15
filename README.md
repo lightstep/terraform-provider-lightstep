@@ -11,6 +11,7 @@ Salad Bar 2019 Hackathon Project
 > terraform init
 > terraform plan
 > terraform apply
+```
 
 # TF File Schema
 
@@ -31,12 +32,6 @@ resource "lightstep_project" "[PROJECT]" {
 }
 ```
 
-## Dashboards
-
-```terraform
-
-```
-
 ## Streams
 
 ```terraform
@@ -46,13 +41,28 @@ resource "lightstep_stream" "[STREAM]" {
   query = "[QUERY]"
   depends_on = ["lightstep_project.[PROJECT]"]
 }
+```
 
+## Dashboards
+
+```terraform
+resource "lightstep_dashboard" "[DASHBOARD]" {
+  project_name = "${lightstep_project.project.[PROJECT]}"
+  dashboard_name = "[DASHBOARD NAME]"
+  streams = [
+    {
+      stream_name = "${lightstep_stream.[STREAM].stream_name}"
+      query = "${lightstep_stream.[STREAM].query}"
+    }
+  ]
+}
+
+```
 
 
 ## TODO
 
-* Updating Projects - what does it mean
-* Updating Dashboards - implement in SDK first
+* Updating Projects - what does this mean?
 * Deleting Projects and creating new one with same name - waiting on pull request
 * Only passing in Stream IDs/TF aliases for Dashboards instead of duplicating data
 * Rate Limiting APIs
