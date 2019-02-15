@@ -65,3 +65,4 @@ resource "lightstep_dashboard" "[DASHBOARD]" {
 * Deleting Projects and creating new one with same name - waiting on pull request
 * Only passing in Stream IDs/TF aliases for Dashboards instead of duplicating data
 * Rate Limiting APIs
+
