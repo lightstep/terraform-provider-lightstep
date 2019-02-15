@@ -2,51 +2,49 @@ provider "lightstep" {
   organization = "LightStep"
 }
 
-resource "lightstep_project" "project" {
-  project_name = "saladbar-terraform_test28"
+#############################################################
+# Projects
+#############################################################
+resource "lightstep_project" "demo_project" {
+  project_name = "nksingh-demo"
 }
 
+#############################################################
 # Streams
-
+#############################################################
 resource "lightstep_stream" "stream_1" {
-  project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_1"
-  query = "tag:\"error\"=\"true\""
+  project_name = "${lightstep_project.demo_project.project_name}"
+  stream_name = "BEEMO Charges"
+  query = "tag:\"customer_id\"=\"BEEMO\" operation:\"api/v1/charge\""
 }
 
 resource "lightstep_stream" "stream_2" {
-  project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_ishmeet"
-  query = "tag:\"error\"=\"false\""
+  project_name = "${lightstep_project.demo_project.project_name}"
+  stream_name = "BEEMO Reserve Assets"
+  query = "tag:\"customer_id\"=\"BEEMO\" operation:\"api/v1/reserve-asset\""
   custom_data = {
-    test_string = "Hello Ishmeet"
-    test_map = "This Cool"
+    legacy = "false"
   }
 }
 
 resource "lightstep_stream" "stream_3" {
-  project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_3"
-  query = "tag:\"release_tag\"=\"373bef115c81f552\""
+  project_name = "${lightstep_project.demo_project.project_name}"
+  stream_name = "BEEMO Webapp Load"
+  query = "tag:\"customer_id\"=\"BEEMO\" operation:\"dom-load\""
 }
 
 resource "lightstep_stream" "stream_4" {
-  project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_4"
-  query = "tag:\"release_tag\"=\"ef11373b5c5281f5\""
+  project_name = "${lightstep_project.demo_project.project_name}"
+  stream_name = "BEEMO Start Reservation Flow"
+  query = "tag:\"customer_id\"=\"BEEMO\" operation:\"start-reservation-flow\""
 }
 
-resource "lightstep_stream" "stream_5" {
-  project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_5"
-  query = "tag:\"release_tag\"=\"ishmeet\""
-}
-
-# Dashboard
-
+#############################################################
+# Dashboards
+#############################################################
 resource "lightstep_dashboard" "dashboard" {
-  project_name = "${lightstep_project.project.project_name}"
-  dashboard_name = "test_dashboard"
+  project_name = "${lightstep_project.demo_project.project_name}"
+  dashboard_name = "BEEMO -- #TERRAFORM FTW"
   streams = [
     {
       stream_name = "${lightstep_stream.stream_1.stream_name}"
@@ -63,10 +61,6 @@ resource "lightstep_dashboard" "dashboard" {
     {
       stream_name = "${lightstep_stream.stream_4.stream_name}"
       query = "${lightstep_stream.stream_4.query}"
-    },
-    {
-      stream_name = "${lightstep_stream.stream_5.stream_name}"
-      query = "${lightstep_stream.stream_5.query}"
     },
   ]
 }
