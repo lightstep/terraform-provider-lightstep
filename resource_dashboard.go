@@ -11,22 +11,36 @@ func resourceDashboard() *schema.Resource {
         Read:    resourceDashboardRead,
         Delete: resourceDashboardDelete,
 
+
         Schema: map[string]*schema.Schema {
             "dashboard_id": {
                 Type: schema.TypeString,
-                Required: false,
+                Optional: true,
             },
             "name": {
                 Type: schema.TypeString,
-                Required: false,
+                Optional: true,
             },
             "project": {
                 Type: schema.TypeString,
                 Required: true,
             },
             "searchAttributes": {
+            resource_lightstep_dashboard.go
                 Type: schema.TypeList,
-                Required: false,
+                Optional: true,
+                Elem: &schema.Resource{
+                    Schema: map[string]*schema.Schema{
+                        "name": &schema.Schema{
+                            Type: schema.TypeString,
+                            Required: true,
+                        },
+                        "query": &schema.Schema{
+                            Type: schema.TypeString,
+                            Required: true,
+                        },
+                    },
+                },
             },
         },
     }
@@ -34,16 +48,28 @@ func resourceDashboard() *schema.Resource {
 
 func resourceDashboardCreate(d *schema.ResourceData, meta interface{}) error {
     client := meta.(*lightstep.Client)
+
+    var searchAttributes []lightstep.SearchAttributes
+    for _, sa := range d.Get("searchAttributes").([]interface{}) {
+        searchAttributes = append(
+                searchAttributes,
+                lightstep.SearchAttributes{
+                    Name: sa.Get("name").(string),
+                    Query: sa.Get("query").(string),
+                },)
+    }
+
+
     _, err := client.CreateDashboard(
         d.Get("project").(string),
         d.Get("name").(string),
-        d.Get("searchAttributes").([]lightstep.SearchAttributes),
+        searchAttributes,
     )
     if err != nil {
         return err
     }
 
-    return resourceStreamRead(d, meta)
+    return resourceLightstepDashboardRead(d, meta)
 }
 
 func resourceDashboardRead(d *schema.ResourceData, meta interface{}) error {
@@ -57,7 +83,7 @@ func resourceDashboardRead(d *schema.ResourceData, meta interface{}) error {
         return err
     }
 
-    return resourceStreamRead(d, meta)
+    return nil
 }
 
 func resourceDashboardDelete(d *schema.ResourceData, meta interface{}) error {
@@ -68,4 +94,8 @@ func resourceDashboardDelete(d *schema.ResourceData, meta interface{}) error {
     )
 
     return nil
+}
+
+func resourceLightstepDashboardUpdate(d *schema.ResourceData, meta interface{}) error {
+    return resourceLightstepDashboardRead(d, meta);
 }

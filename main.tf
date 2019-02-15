@@ -1,8 +1,4 @@
-variable 
-
-
 provider "lightstep" {
-  // api_key = "${var.lighstep_api_key}"  
   organization = "LightStep"
 }
 
@@ -35,6 +31,19 @@ resource "lightstep_dashboard" "test_dashboard" {
   }]
 }
 
+
 resource "lightstep_project" "project" {
   project = "saladbar-terraform_test2"
+}
+
+resource "lightstep_dashboard" "test_dashboard" {
+  project = "saladbar-terraform"
+  name = "test_dashboard"
+  search_attributes = [{
+    name = "test_stream_2",
+    query = "tag:\"error\"=\"false\""
+  }, {
+    name = "test_stream_1",
+    query = "tag:\"error\"=\"true\""
+  }]
 }

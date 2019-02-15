@@ -24,7 +24,7 @@ func Provider() *schema.Provider {
 
 		ResourcesMap: map[string]*schema.Resource{
 			"lightstep_project": resourceProject(),
-			// "lightstep_dashboard": resourceDashboard(),
+			"lightstep_dashboard": resourceDashboard(),
 			"lightstep_stream": resourceStream(),
 		},
 
