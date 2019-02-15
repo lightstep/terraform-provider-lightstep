@@ -96,7 +96,31 @@ func resourceDashboardRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
-	return resourceDashboardCreate(d, m)
+	client := m.(*lightstep.Client)
+
+	var searchAttributes []lightstep.SearchAttributes
+	for _, sa := range d.Get("streams").([]interface{}) {
+		sa, _ := sa.(map[string]interface{})
+		searchAttributes = append(
+			searchAttributes,
+			lightstep.SearchAttributes{
+				Name:  sa["stream_name"].(string),
+				Query: sa["query"].(string),
+			},
+		)
+	}
+
+	_, err := client.UpdateDashboard(
+		d.Get("project_name").(string),
+		d.Get("dashboard_name").(string),
+		searchAttributes,
+		d.Id(),
+	)
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }
 
 func resourceDashboardDelete(d *schema.ResourceData, m interface{}) error {

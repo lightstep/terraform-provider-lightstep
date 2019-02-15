@@ -3,7 +3,7 @@ provider "lightstep" {
 }
 
 resource "lightstep_project" "project" {
-  project_name = "saladbar-terraform_test25"
+  project_name = "saladbar-terraform_test_demo"
 }
 
 # Streams
@@ -32,7 +32,7 @@ resource "lightstep_stream" "stream_3" {
 
 resource "lightstep_stream" "stream_4" {
   project_name = "${lightstep_project.project.project_name}"
-  stream_name = "test_stream_7"
+  stream_name = "test_stream_4"
   query = "tag:\"release_tag\"=\"ef11373b5c5281f5\""
 }
 
@@ -46,7 +46,7 @@ resource "lightstep_stream" "stream_5" {
 
 resource "lightstep_dashboard" "dashboard" {
   project_name = "${lightstep_project.project.project_name}"
-  dashboard_name = "test_dashboard"
+  dashboard_name = "test_dashboard2"
   streams = [
     {
       stream_name = "${lightstep_stream.stream_1.stream_name}"
