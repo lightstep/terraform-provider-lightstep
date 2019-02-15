@@ -15,19 +15,19 @@ func resourceStream() *schema.Resource {
 		Exists: resourceStreamExists,
 
 		Schema: map[string]*schema.Schema{
-			"project_name": &schema.Schema{
+			"project_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"stream_name": &schema.Schema{
+			"stream_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"query": &schema.Schema{
+			"query": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"custom_data": &schema.Schema{
+			"custom_data": {
 				Type:     schema.TypeMap,
 				Optional: true,
 			},

@@ -14,7 +14,7 @@ func resourceProject() *schema.Resource {
 		Exists: resourceProjectExists,
 
 		Schema: map[string]*schema.Schema{
-			"project_name": &schema.Schema{
+			"project_name": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
