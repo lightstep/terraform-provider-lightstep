@@ -17,3 +17,4 @@ terraform-provider-lightstep
 terraform.tfstate
 crash.log
 terraform.tfstate.backup
+test.tf
