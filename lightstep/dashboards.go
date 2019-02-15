@@ -76,6 +76,33 @@ func (c *Client) CreateDashboard(
 	return resp, err
 }
 
+func (c *Client) UpdateDashboard(
+	projectName string,
+	dashboardName string,
+	searchAttributes []SearchAttributes,
+	dashboardID string,
+) (DashboardAPIResponse, error) {
+
+	resp := DashboardAPIResponse{}
+	req := DashboardRequestBody{
+		Data: &DashboardRequest{
+			Attributes: DashboardRequestAttributes{
+				Name: dashboardName,
+			},
+		},
+	}
+	for _, sa := range searchAttributes {
+		req.Data.Attributes.Searches = append(
+			req.Data.Attributes.Searches,
+			SearchResponse{
+				Attributes: sa,
+			})
+	}
+
+	err := c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), req, &resp)
+	return resp, err
+}
+
 func (c *Client) GetDashboard(projectName string, dashboardID string) (DashboardAPIResponse, error) {
 
 	resp := DashboardAPIResponse{}
