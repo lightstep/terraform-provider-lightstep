@@ -18,6 +18,7 @@ github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnweb
 github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e/go.mod h1:N+BjUcTjSxc2mtRGSCPsat1kze3CUtvJN3/jTXlp29k=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -56,6 +57,8 @@ github.com/hashicorp/hcl2 v0.0.0-20190130225218-89dbc5eb3d9e h1:wcDATcjAY0ebgNtu
 github.com/hashicorp/hcl2 v0.0.0-20190130225218-89dbc5eb3d9e/go.mod h1:HtEzazM5AZ9fviNEof8QZB4T1Vz9UhHrGhnMPzl//Ek=
 github.com/hashicorp/hil v0.0.0-20190212132231-97b3a9cdfa93 h1:T1Q6ag9tCwun16AW+XK3tAql24P4uTGUMIn1/92WsQQ=
 github.com/hashicorp/hil v0.0.0-20190212132231-97b3a9cdfa93/go.mod h1:n2TSygSNwsLJ76m8qFXTSc7beTb+auJxYdqrnoqwZWE=
+github.com/hashicorp/logutils v1.0.0 h1:dLEQVugN8vlakKOUE3ihGLTZJRB4j+M2cdTm/ORI65Y=
+github.com/hashicorp/logutils v1.0.0/go.mod h1:QIAnNjmIWmVIIkWDTG1z5v++HQmx9WQRO+LraFDTW64=
 github.com/hashicorp/terraform v0.11.11 h1:5q1y/a0RB1QmKc1n6E9tnWQqPMb+nEb7Bfol74N2grw=
 github.com/hashicorp/terraform v0.11.11/go.mod h1:uN1KUiT7Wdg61fPwsGXQwK3c8PmpIVZrt5Vcb1VrSoM=
 github.com/hashicorp/yamux v0.0.0-20180604194846-3520598351bb h1:b5rjCoWHc7eqmAS4/qyk21ZsHyb6Mxv/jykxvNTkU4M=

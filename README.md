@@ -46,3 +46,13 @@ resource "lightstep_stream" "[STREAM]" {
   query = "[QUERY]"
   depends_on = ["lightstep_project.[PROJECT]"]
 }
+
+
+
+## TODO
+
+* Updating Projects - what does it mean
+* Updating Dashboards - implement in SDK first
+* Deleting Projects and creating new one with same name - waiting on pull request
+* Only passing in Stream IDs/TF aliases for Dashboards instead of duplicating data
+* Rate Limiting APIs

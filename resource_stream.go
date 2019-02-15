@@ -2,7 +2,11 @@ package main
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"fmt"
+	"time"
+	"strings"
 	"log"
 )
 
@@ -32,6 +36,9 @@ func resourceStream() *schema.Resource {
 				Optional: true,
 			},
 		},
+		Timeouts: &schema.ResourceTimeout{
+       Create: schema.DefaultTimeout(2 * time.Second),
+    },
 	}
 }
 
@@ -50,18 +57,24 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	resp, err := client.CreateSearch(
-		d.Get("project_name").(string),
-		d.Get("stream_name").(string),
-		d.Get("query").(string),
-		d.Get("custom_data").(map[string]interface{}),
-	)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	d.SetId(string(resp.Data.ID))
-	return resourceStreamRead(d, m)
+	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+      resp, err := client.CreateSearch(
+				d.Get("project_name").(string),
+				d.Get("stream_name").(string),
+				d.Get("query").(string),
+				d.Get("custom_data").(map[string]interface{}),
+			)
+			if err != nil {
+				// Fix until lock error is resolved
+				if strings.Contains(err.Error(),"Internal Server Error") {
+					return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet"))
+				} else {
+					return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
+				}
+			}
+      d.SetId(string(resp.Data.ID))
+      return resource.NonRetryableError(resourceStreamRead(d, m))
+  })
 }
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
@@ -71,7 +84,8 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 		d.Id(),
 	)
 	if err != nil {
-		return err
+
+		return fmt.Errorf("Error reading stream: %s", err)
 	}
 	return nil
 }
