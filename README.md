@@ -1,6 +1,9 @@
 # terraform-provider-lightstep
 Salad Bar 2019 Hackathon Project
 
+* Install Terraform (will work with v0.11, not with v0.12)
+* In `the terraform.tfstate` file, under resource, change the "nksingh-demo" values to your target project name, that you will also set in your `main.tf` file. Yes this is hacky but it's a hackathon project :)
+* In `main.tf` make sure you set the right organization that contains your target project, as well as check that your API key has the right permissions for that org/project as well
 * Set LIGHTSTEP_API_KEY environment variable before the following
 
 ```bash
@@ -9,6 +12,7 @@ Salad Bar 2019 Hackathon Project
 > mkdir -p ~/.terraform.d/plugins
 > go build -o ~/.terraform.d/plugins/terraform-provider-lightstep
 > terraform init
+> # write/edit your main.tf file schema
 > terraform plan
 > terraform apply
 ```
