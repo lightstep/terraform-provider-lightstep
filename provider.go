@@ -13,11 +13,13 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_API_KEY", nil),
+				Description: "A Lightstep API Key with Member role. To create one follow the instructions here:https://docs.lightstep.com/docs/create-and-manage-api-keys",
 			},
 			"organization": {
 				Type:        schema.TypeString,
 				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_HOST", nil),
+				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_ORG", nil),
+				Description: "The name of the Lighstep organization",
 			},
 		},
 

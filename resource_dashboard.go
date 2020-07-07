@@ -28,11 +28,11 @@ func resourceDashboard() *schema.Resource {
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"stream_name": &schema.Schema{
+						"stream_name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"query": &schema.Schema{
+						"query": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
