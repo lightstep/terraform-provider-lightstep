@@ -18,7 +18,7 @@ type DashboardResponse struct {
 
 type DashboardAttributes struct {
 	Name     string           `json:"name"`
-	Searches []SearchResponse `json:"searches"`
+	Searches []StreamResponse `json:"searches"`
 }
 
 type DashboardRelationships struct {
@@ -43,7 +43,7 @@ type DashboardRequest struct {
 
 type DashboardRequestAttributes struct {
 	Name     string           `json:"name"`
-	Searches []SearchResponse `json:"searches"`
+	Searches []StreamResponse `json:"searches"`
 }
 
 type DashboardRequestRelationships struct {
@@ -53,7 +53,7 @@ type DashboardRequestRelationships struct {
 func (c *Client) CreateDashboard(
 	projectName string,
 	dashboardName string,
-	searchAttributes []SearchAttributes,
+	searchAttributes []StreamAttributes,
 ) (DashboardAPIResponse, error) {
 
 	resp := DashboardAPIResponse{}
@@ -67,7 +67,7 @@ func (c *Client) CreateDashboard(
 	for _, sa := range searchAttributes {
 		req.Data.Attributes.Searches = append(
 			req.Data.Attributes.Searches,
-			SearchResponse{
+			StreamResponse{
 				Attributes: sa,
 			})
 	}
@@ -79,7 +79,7 @@ func (c *Client) CreateDashboard(
 func (c *Client) UpdateDashboard(
 	projectName string,
 	dashboardName string,
-	searchAttributes []SearchAttributes,
+	searchAttributes []StreamAttributes,
 	dashboardID string,
 ) (DashboardAPIResponse, error) {
 
@@ -98,7 +98,7 @@ func (c *Client) UpdateDashboard(
 	for _, sa := range searchAttributes {
 		req.Data.Attributes.Searches = append(
 			req.Data.Attributes.Searches,
-			SearchResponse{
+			StreamResponse{
 				Attributes: sa,
 			})
 	}

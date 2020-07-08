@@ -44,7 +44,7 @@ func resourceStream() *schema.Resource {
 func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
 	client := m.(*lightstep.Client)
 
-	if _, err := client.GetSearch(
+	if _, err := client.GetStream(
 		d.Get("project_name").(string),
 		d.Id(),
 	); err != nil {
@@ -57,7 +57,7 @@ func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e erro
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := client.CreateSearch(
+		resp, err := client.CreateStream(
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
@@ -78,7 +78,7 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetSearch(
+	_, err := client.GetStream(
 		d.Get("project_name").(string),
 		d.Id(),
 	)
@@ -93,7 +93,7 @@ func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
 	if d.HasChange("query") {
-		if err := client.DeleteSearch(
+		if err := client.DeleteStream(
 			d.Get("project_name").(string),
 			d.Id(),
 		); err != nil {
@@ -106,7 +106,7 @@ func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
 
 	client := m.(*lightstep.Client)
-	err := client.DeleteSearch(
+	err := client.DeleteStream(
 		d.Get("project_name").(string),
 		d.Id(),
 	)

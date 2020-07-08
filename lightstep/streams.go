@@ -5,71 +5,70 @@ import (
 	"net/http"
 )
 
-type GetSearchAPIResponse struct {
-	Data *SearchResponse `json:"data,omitempty"`
+type GetStreamAPIResponse struct {
+	Data *StreamResponse `json:"data,omitempty"`
 }
 
-type ListSearchesAPIResponse struct {
-	Data *ListSearchesResponse `json:"data,omitempty"`
+type ListStreamsAPIResponse struct {
+	Data *ListStreamsResponse `json:"data,omitempty"`
 }
 
-type PostSearchAPIResponse struct {
-	Data *SearchResponse `json:"data,omitempty"`
+type PostStreamAPIResponse struct {
+	Data *StreamResponse `json:"data,omitempty"`
 }
 
-type DeleteSearchAPIResponse struct {
+type DeleteStreamAPIResponse struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
-type ListSearchesResponse []SearchResponse
+type ListStreamsResponse []StreamResponse
 
-type SearchResponse struct {
+type StreamResponse struct {
 	Response
-	Attributes    SearchAttributes    `json:"attributes,omitempty"`
-	Relationships SearchRelationships `json:"relationships,omitempty"`
+	Attributes    StreamAttributes    `json:"attributes,omitempty"`
+	Relationships StreamRelationships `json:"relationships,omitempty"`
 	Links         Links               `json:"links"`
 }
 
-type SearchAttributes struct {
+type StreamAttributes struct {
 	Name       string                 `json:"name"`
 	Query      string                 `json:"query"`
 	CustomData map[string]interface{} `json:"custom-data,omitempty"`
 }
 
-type SearchRelationships struct {
+type StreamRelationships struct {
 	Project    LinksObj `json:"project"`
 	Conditions LinksObj `json:"conditions,omitempty"`
 }
 
-type CreateOrUpdateSearchBody struct {
-	Data *CreateOrUpdateSearchRequest `json:"data"`
+type CreateOrUpdateStreamBody struct {
+	Data *CreateOrUpdateStreamRequest `json:"data"`
 }
 
-type CreateOrUpdateSearchRequest struct {
+type CreateOrUpdateStreamRequest struct {
 	Response
-	Attributes SearchRequestAttributes `json:"attributes,omitempty"`
+	Attributes StreamRequestAttributes `json:"attributes,omitempty"`
 }
 
-type SearchRequestAttributes struct {
+type StreamRequestAttributes struct {
 	Name       string                 `json:"name"`
 	Query      string                 `json:"query,omitempty"`
 	CustomData map[string]interface{} `json:"custom_data,omitempty"`
 }
 
-func (c *Client) CreateSearch(
+func (c *Client) CreateStream(
 	projectName string,
 	name string,
 	query string,
 	customData map[string]interface{},
-) (PostSearchAPIResponse, error) {
-	resp := PostSearchAPIResponse{}
-
-	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/searches", projectName), CreateOrUpdateSearchBody{
-		Data: &CreateOrUpdateSearchRequest{
+) (PostStreamAPIResponse, error) {
+	resp := PostStreamAPIResponse{}
+	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/streams", projectName), CreateOrUpdateStreamBody{
+		Data: &CreateOrUpdateStreamRequest{
 			Response: Response{
-				Type: "search",
+				Type: "stream",
 			},
-			Attributes: SearchRequestAttributes{
+			Attributes: StreamRequestAttributes{
 				Name:       name,
 				Query:      query,
 				CustomData: customData,
@@ -80,22 +79,22 @@ func (c *Client) CreateSearch(
 	return resp, err
 }
 
-func (c *Client) ListSearches(projectName string) (ListSearchesAPIResponse, error) {
-	resp := ListSearchesAPIResponse{}
+func (c *Client) ListStreams(projectName string) (ListStreamsAPIResponse, error) {
+	resp := ListStreamsAPIResponse{}
 
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/searches", projectName), nil, &resp)
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams", projectName), nil, &resp)
 
 	return resp, err
 }
 
-func (c *Client) GetSearch(projectName string, searchID string) (GetSearchAPIResponse, error) {
-	resp := GetSearchAPIResponse{}
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/searches/%v", projectName, searchID), nil, &resp)
+func (c *Client) GetStream(projectName string, StreamID string) (GetStreamAPIResponse, error) {
+	resp := GetStreamAPIResponse{}
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	return resp, err
 }
 
-func (c *Client) DeleteSearch(projectName string, searchID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/searches/%v", projectName, searchID), nil, nil)
+func (c *Client) DeleteStream(projectName string, StreamID string) error {
+	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
