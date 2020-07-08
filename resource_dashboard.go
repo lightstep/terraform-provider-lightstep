@@ -28,11 +28,11 @@ func resourceDashboard() *schema.Resource {
 				Required: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"stream_name": &schema.Schema{
+						"stream_name": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"query": &schema.Schema{
+						"query": {
 							Type:     schema.TypeString,
 							Required: true,
 						},
@@ -58,12 +58,12 @@ func resourceDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e e
 func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	var searchAttributes []lightstep.SearchAttributes
+	var streamAttributes []lightstep.StreamAttributes
 	for _, sa := range d.Get("streams").([]interface{}) {
 		sa, _ := sa.(map[string]interface{})
-		searchAttributes = append(
-			searchAttributes,
-			lightstep.SearchAttributes{
+		streamAttributes = append(
+			streamAttributes,
+			lightstep.StreamAttributes{
 				Name:  sa["stream_name"].(string),
 				Query: sa["query"].(string),
 			},
@@ -73,7 +73,7 @@ func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
 	resp, err := client.CreateDashboard(
 		d.Get("project_name").(string),
 		d.Get("dashboard_name").(string),
-		searchAttributes,
+		streamAttributes,
 	)
 	if err != nil {
 		log.Println(err)
@@ -98,12 +98,12 @@ func resourceDashboardRead(d *schema.ResourceData, m interface{}) error {
 func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	var searchAttributes []lightstep.SearchAttributes
+	var searchAttributes []lightstep.StreamAttributes
 	for _, sa := range d.Get("streams").([]interface{}) {
 		sa, _ := sa.(map[string]interface{})
 		searchAttributes = append(
 			searchAttributes,
-			lightstep.SearchAttributes{
+			lightstep.StreamAttributes{
 				Name:  sa["stream_name"].(string),
 				Query: sa["query"].(string),
 			},
