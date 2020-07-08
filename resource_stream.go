@@ -15,8 +15,6 @@ func resourceStream() *schema.Resource {
 		Read:   resourceStreamRead,
 		Update: resourceStreamUpdate,
 		Delete: resourceStreamDelete,
-		Exists: resourceStreamExists,
-
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
@@ -36,22 +34,9 @@ func resourceStream() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(2 * time.Second),
+			Create: schema.DefaultTimeout(5 * time.Second),
 		},
 	}
-}
-
-func resourceStreamExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
-	client := m.(*lightstep.Client)
-
-	if _, err := client.GetStream(
-		d.Get("project_name").(string),
-		d.Id(),
-	); err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
@@ -71,7 +56,7 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 				return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
 			}
 		}
-		d.SetId(string(resp.Data.ID))
+		d.SetId(resp.Data.ID)
 		return resource.NonRetryableError(resourceStreamRead(d, m))
 	})
 }
@@ -91,7 +76,7 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-
+	// changing the query means creating an entirely new stream and data is lost
 	if d.HasChange("query") {
 		if err := client.DeleteStream(
 			d.Get("project_name").(string),

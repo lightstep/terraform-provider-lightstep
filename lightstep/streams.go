@@ -5,26 +5,9 @@ import (
 	"net/http"
 )
 
-type GetStreamAPIResponse struct {
-	Data *StreamResponse `json:"data,omitempty"`
-}
-
-type ListStreamsAPIResponse struct {
-	Data *ListStreamsResponse `json:"data,omitempty"`
-}
-
-type PostStreamAPIResponse struct {
-	Data *StreamResponse `json:"data,omitempty"`
-}
-
-type DeleteStreamAPIResponse struct {
-	Data interface{} `json:"data,omitempty"`
-}
-
-type ListStreamsResponse []StreamResponse
-
-type StreamResponse struct {
-	Response
+type Stream struct {
+	Type          string              `default:"stream"`
+	ID            string              `json:"id,omitempty"`
 	Attributes    StreamAttributes    `json:"attributes,omitempty"`
 	Relationships StreamRelationships `json:"relationships,omitempty"`
 	Links         Links               `json:"links"`
@@ -41,19 +24,28 @@ type StreamRelationships struct {
 	Conditions LinksObj `json:"conditions,omitempty"`
 }
 
+type Links map[string]string
+
+type LinksObj struct {
+	Links Links `json:"links"`
+}
+
+type StreamAPIResponse struct {
+	Data *Stream `json:"data,omitempty"`
+}
+
+type ListStreamsAPIResponse struct {
+	Data []Stream `json:"data,omitempty"`
+}
+
 type CreateOrUpdateStreamBody struct {
 	Data *CreateOrUpdateStreamRequest `json:"data"`
 }
 
 type CreateOrUpdateStreamRequest struct {
-	Response
-	Attributes StreamRequestAttributes `json:"attributes,omitempty"`
-}
-
-type StreamRequestAttributes struct {
-	Name       string                 `json:"name"`
-	Query      string                 `json:"query,omitempty"`
-	CustomData map[string]interface{} `json:"custom_data,omitempty"`
+	Type       string           `json:"type"`
+	ID         string           `json:"id,omitempty"`
+	Attributes StreamAttributes `json:"attributes,omitempty"`
 }
 
 func (c *Client) CreateStream(
@@ -61,14 +53,12 @@ func (c *Client) CreateStream(
 	name string,
 	query string,
 	customData map[string]interface{},
-) (PostStreamAPIResponse, error) {
-	resp := PostStreamAPIResponse{}
+) (StreamAPIResponse, error) {
+	resp := StreamAPIResponse{}
 	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/streams", projectName), CreateOrUpdateStreamBody{
 		Data: &CreateOrUpdateStreamRequest{
-			Response: Response{
-				Type: "stream",
-			},
-			Attributes: StreamRequestAttributes{
+			Type: "stream",
+			Attributes: StreamAttributes{
 				Name:       name,
 				Query:      query,
 				CustomData: customData,
@@ -87,8 +77,8 @@ func (c *Client) ListStreams(projectName string) (ListStreamsAPIResponse, error)
 	return resp, err
 }
 
-func (c *Client) GetStream(projectName string, StreamID string) (GetStreamAPIResponse, error) {
-	resp := GetStreamAPIResponse{}
+func (c *Client) GetStream(projectName string, StreamID string) (StreamAPIResponse, error) {
+	resp := StreamAPIResponse{}
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	return resp, err
 }
