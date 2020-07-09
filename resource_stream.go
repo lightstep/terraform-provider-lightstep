@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 	"strings"
 	"time"
@@ -41,8 +41,9 @@ func resourceStream() *schema.Resource {
 
 func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
+
 	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		resp, err := client.CreateStream(
+		stream, err := client.CreateStream(
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
@@ -56,7 +57,8 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 				return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
 			}
 		}
-		d.SetId(resp.Data.ID)
+
+		d.SetId(stream.ID)
 		return resource.NonRetryableError(resourceStreamRead(d, m))
 	})
 }
@@ -68,7 +70,6 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 		d.Id(),
 	)
 	if err != nil {
-
 		return fmt.Errorf("Error reading stream: %s", err)
 	}
 	return nil
@@ -76,7 +77,6 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	// changing the query means creating an entirely new stream and data is lost
 	if d.HasChange("query") {
 		if err := client.DeleteStream(
 			d.Get("project_name").(string),
@@ -89,7 +89,6 @@ func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
-
 	client := m.(*lightstep.Client)
 	err := client.DeleteStream(
 		d.Get("project_name").(string),

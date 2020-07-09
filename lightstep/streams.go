@@ -1,16 +1,18 @@
 package lightstep
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
 type Stream struct {
-	Type          string              `default:"stream"`
+	Type          string              `json:"type,omitempty"`
 	ID            string              `json:"id,omitempty"`
 	Attributes    StreamAttributes    `json:"attributes,omitempty"`
 	Relationships StreamRelationships `json:"relationships,omitempty"`
-	Links         Links               `json:"links"`
+	Links         Links               `json:"links,omitempty"`
 }
 
 type StreamAttributes struct {
@@ -20,32 +22,8 @@ type StreamAttributes struct {
 }
 
 type StreamRelationships struct {
-	Project    LinksObj `json:"project"`
+	Project    LinksObj `json:"project,omitempty"`
 	Conditions LinksObj `json:"conditions,omitempty"`
-}
-
-type Links map[string]string
-
-type LinksObj struct {
-	Links Links `json:"links"`
-}
-
-type StreamAPIResponse struct {
-	Data *Stream `json:"data,omitempty"`
-}
-
-type ListStreamsAPIResponse struct {
-	Data []Stream `json:"data,omitempty"`
-}
-
-type CreateOrUpdateStreamBody struct {
-	Data *CreateOrUpdateStreamRequest `json:"data"`
-}
-
-type CreateOrUpdateStreamRequest struct {
-	Type       string           `json:"type"`
-	ID         string           `json:"id,omitempty"`
-	Attributes StreamAttributes `json:"attributes,omitempty"`
 }
 
 func (c *Client) CreateStream(
@@ -53,34 +31,74 @@ func (c *Client) CreateStream(
 	name string,
 	query string,
 	customData map[string]interface{},
-) (StreamAPIResponse, error) {
-	resp := StreamAPIResponse{}
-	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/streams", projectName), CreateOrUpdateStreamBody{
-		Data: &CreateOrUpdateStreamRequest{
-			Type: "stream",
-			Attributes: StreamAttributes{
-				Name:       name,
-				Query:      query,
-				CustomData: customData,
-			},
-		},
-	}, &resp)
+) (Stream, error) {
+	var (
+		s    Stream
+		resp Envelope
+	)
 
-	return resp, err
+
+	bytes, err := json.Marshal(
+		Stream{
+		Type: "stream",
+		Attributes: StreamAttributes{
+			Name:       name,
+			Query:      query,
+			CustomData: customData,
+		},
+	})
+
+	if err != nil {
+		log.Printf("error marshalling data: %v", err)
+	}
+
+	req := Envelope{
+		Data: bytes,
+	}
+
+	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/streams", projectName), req, &resp)
+
+	err = json.Unmarshal(resp.Data, &s)
+	return s, err
 }
 
-func (c *Client) ListStreams(projectName string) (ListStreamsAPIResponse, error) {
-	resp := ListStreamsAPIResponse{}
+func (c *Client) ListStreams(projectName string) ([]Stream, error) {
+	var (
+		s    []Stream
+		resp Envelope
+	)
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams", projectName), nil, &resp)
-
-	return resp, err
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return s, err
+	}
+	err = json.Unmarshal(resp.Data, &s)
+	if err != nil {
+		log.Printf("Error unmarshaling response: %v", err)
+		return s, err
+	}
+	return s, err
 }
 
-func (c *Client) GetStream(projectName string, StreamID string) (StreamAPIResponse, error) {
-	resp := StreamAPIResponse{}
+func (c *Client) GetStream(projectName string, StreamID string) (Stream, error) {
+	var (
+		s Stream
+	)
+	resp := Envelope{}
+
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
-	return resp, err
+	if err != nil {
+		log.Printf("Error: %v", err)
+		return s, err
+	}
+
+	err = json.Unmarshal(resp.Data, &s)
+	if err != nil {
+		log.Printf("Error unmarshaling response: %v", err)
+		return s, err
+	}
+	return s, err
 }
 
 func (c *Client) DeleteStream(projectName string, StreamID string) error {
