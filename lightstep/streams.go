@@ -3,7 +3,6 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -46,18 +45,24 @@ func (c *Client) CreateStream(
 				CustomData: customData,
 			},
 		})
-
 	if err != nil {
-		log.Printf("error marshalling data: %v", err)
+		return s, err
 	}
 
-	req := Envelope{
-		Data: bytes,
+	err = c.CallAPI(
+		"POST",
+		fmt.Sprintf("projects/%v/streams", projectName),
+		Envelope{Data: bytes},
+		&resp)
+	if err != nil {
+		return s, err
 	}
-
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/streams", projectName), req, &resp)
 
 	err = json.Unmarshal(resp.Data, &s)
+	if err != nil {
+		return s, err
+	}
+
 	return s, err
 }
 
@@ -69,12 +74,10 @@ func (c *Client) ListStreams(projectName string) ([]Stream, error) {
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams", projectName), nil, &resp)
 	if err != nil {
-		log.Printf("Error: %v", err)
 		return s, err
 	}
 	err = json.Unmarshal(resp.Data, &s)
 	if err != nil {
-		log.Printf("Error unmarshaling response: %v", err)
 		return s, err
 	}
 	return s, err
@@ -88,13 +91,11 @@ func (c *Client) GetStream(projectName string, StreamID string) (Stream, error) 
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	if err != nil {
-		log.Printf("Error: %v", err)
 		return s, err
 	}
 
 	err = json.Unmarshal(resp.Data, &s)
 	if err != nil {
-		log.Printf("Error unmarshaling response: %v", err)
 		return s, err
 	}
 	return s, err
@@ -109,5 +110,4 @@ func (c *Client) DeleteStream(projectName string, StreamID string) error {
 		}
 	}
 	return nil
-
 }

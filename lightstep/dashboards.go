@@ -3,7 +3,6 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -44,24 +43,21 @@ func (c *Client) CreateDashboard(
 		})
 
 	if err != nil {
-		log.Printf("error marshalling data: %v", err)
+		return d, err
 	}
 
-	req := Envelope{
-		Data: bytes,
-	}
+	req := Envelope{Data: bytes}
 
 	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), req, &resp)
 	if err != nil {
-		log.Printf("error getting dashboard: %v", err)
 		return d, err
 	}
 
 	err = json.Unmarshal(resp.Data, &d)
 	if err != nil {
-		log.Printf("error unmarshalling: %v", err)
 		return d, err
 	}
+
 	return d, err
 }
 
@@ -71,8 +67,11 @@ func (c *Client) UpdateDashboard(
 	streams []Stream,
 	dashboardID string,
 ) (Dashboard, error) {
-	var d Dashboard
-	resp := Envelope{}
+
+	var (
+		d    Dashboard
+		resp Envelope
+	)
 
 	bytes, err := json.Marshal(&Dashboard{
 		Type: "dashboard",
@@ -87,13 +86,11 @@ func (c *Client) UpdateDashboard(
 
 	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), req, &resp)
 	if err != nil {
-		log.Printf("failed to update dashboard")
 		return d, err
 	}
 
 	err = json.Unmarshal(resp.Data, &d)
 	if err != nil {
-		log.Printf("failed to unmarshal data: %v", err)
 		return d, err
 	}
 	return d, err
@@ -108,7 +105,6 @@ func (c *Client) GetDashboard(projectName string, dashboardID string) (Dashboard
 	}
 	err = json.Unmarshal(resp.Data, &d)
 	if err != nil {
-		log.Printf("failed to unmarshal data: %v", err)
 		return d, err
 	}
 	return d, err
@@ -117,7 +113,6 @@ func (c *Client) GetDashboard(projectName string, dashboardID string) (Dashboard
 func (c *Client) DeleteDashboard(projectName string, dashboardID string) error {
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, nil)
 	if err != nil {
-
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
 			return err
