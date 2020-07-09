@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 )
 
 func resourceDashboard() *schema.Resource {
@@ -57,7 +56,6 @@ func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
 		streams,
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -89,7 +87,6 @@ func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
 		d.Id(),
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	return nil

@@ -70,7 +70,7 @@ func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 		d.Id(),
 	)
 	if err != nil {
-		return fmt.Errorf("Error reading stream: %s", err)
+		return err
 	}
 	return nil
 }
