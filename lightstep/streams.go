@@ -37,16 +37,15 @@ func (c *Client) CreateStream(
 		resp Envelope
 	)
 
-
 	bytes, err := json.Marshal(
 		Stream{
-		Type: "stream",
-		Attributes: StreamAttributes{
-			Name:       name,
-			Query:      query,
-			CustomData: customData,
-		},
-	})
+			Type: "stream",
+			Attributes: StreamAttributes{
+				Name:       name,
+				Query:      query,
+				CustomData: customData,
+			},
+		})
 
 	if err != nil {
 		log.Printf("error marshalling data: %v", err)

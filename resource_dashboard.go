@@ -24,10 +24,10 @@ func resourceDashboard() *schema.Resource {
 				Required: true,
 			},
 			"stream_ids": {
-				Type: schema.TypeList,
+				Type:     schema.TypeList,
 				Optional: true,
-				Elem: &schema.Schema {
-					Type:schema.TypeString,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},

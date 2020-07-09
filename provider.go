@@ -7,7 +7,7 @@ import (
 )
 
 func Provider() *schema.Provider {
-	return  &schema.Provider{
+	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
 				Type:        schema.TypeString,
@@ -28,7 +28,7 @@ func Provider() *schema.Provider {
 			"lightstep_stream":    resourceStream(),
 		},
 
-		ConfigureFunc: configureProvider,
+		ConfigureFunc:    configureProvider,
 		TerraformVersion: "v.12.26",
 	}
 }
