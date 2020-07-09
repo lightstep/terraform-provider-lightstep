@@ -1,117 +1,113 @@
 package lightstep
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-type DashboardAPIResponse struct {
-	Data *DashboardResponse `json:"data"`
-}
-
-type DashboardResponse struct {
-	Response
+type Dashboard struct {
+	Type          string                 `json:"type,omitempty"`
+	ID            string                 `json:"id,omitempty"`
 	Attributes    DashboardAttributes    `json:"attributes,omitempty"`
 	Relationships DashboardRelationships `json:"relationships,omitempty"`
 	Links         Links                  `json:"links"`
 }
 
 type DashboardAttributes struct {
-	Name     string           `json:"name"`
-	Searches []StreamResponse `json:"searches"`
+	Name    string   `json:"name"`
+	Streams []Stream `json:"streams"`
 }
 
 type DashboardRelationships struct {
 	Project LinksObj `json:"project"`
 }
 
-type ListDashboardsAPIResponse struct {
-	Data *ListDashboardsResponse `json:"data,omitempty"`
-}
-
-type ListDashboardsResponse []DashboardResponse
-
-type DashboardRequestBody struct {
-	Data *DashboardRequest `json:"data"`
-}
-
-type DashboardRequest struct {
-	Response
-	Attributes    DashboardRequestAttributes    `json:"attributes"`
-	Relationships DashboardRequestRelationships `json:"relationships"`
-}
-
-type DashboardRequestAttributes struct {
-	Name     string           `json:"name"`
-	Searches []StreamResponse `json:"searches"`
-}
-
-type DashboardRequestRelationships struct {
-	Dashboard ResourceIDObject `json:"dashboard"`
-}
-
 func (c *Client) CreateDashboard(
 	projectName string,
 	dashboardName string,
-	searchAttributes []StreamAttributes,
-) (DashboardAPIResponse, error) {
+	streams []Stream,
+) (Dashboard, error) {
+	var (
+		d    Dashboard
+		resp Envelope
+	)
 
-	resp := DashboardAPIResponse{}
-	req := DashboardRequestBody{
-		Data: &DashboardRequest{
-			Attributes: DashboardRequestAttributes{
-				Name: dashboardName,
+	bytes, err := json.Marshal(
+		Dashboard{
+			Type: "dashboard",
+			Attributes: DashboardAttributes{
+				Name:    dashboardName,
+				Streams: streams,
 			},
-		},
-	}
-	for _, sa := range searchAttributes {
-		req.Data.Attributes.Searches = append(
-			req.Data.Attributes.Searches,
-			StreamResponse{
-				Attributes: sa,
-			})
+		})
+
+	if err != nil {
+		return d, err
 	}
 
-	err := c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), req, &resp)
-	return resp, err
+	req := Envelope{Data: bytes}
+
+	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), req, &resp)
+	if err != nil {
+		return d, err
+	}
+
+	err = json.Unmarshal(resp.Data, &d)
+	if err != nil {
+		return d, err
+	}
+
+	return d, err
 }
 
 func (c *Client) UpdateDashboard(
 	projectName string,
 	dashboardName string,
-	searchAttributes []StreamAttributes,
+	streams []Stream,
 	dashboardID string,
-) (DashboardAPIResponse, error) {
+) (Dashboard, error) {
 
-	resp := DashboardAPIResponse{}
-	req := DashboardRequestBody{
-		Data: &DashboardRequest{
-			Response: Response{
-				Type: "dashboard",
-				ID:   dashboardID,
-			},
-			Attributes: DashboardRequestAttributes{
-				Name: dashboardName,
-			},
+	var (
+		d    Dashboard
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(&Dashboard{
+		Type: "dashboard",
+		ID:   dashboardID,
+		Attributes: DashboardAttributes{
+			Name:    dashboardName,
+			Streams: streams,
 		},
-	}
-	for _, sa := range searchAttributes {
-		req.Data.Attributes.Searches = append(
-			req.Data.Attributes.Searches,
-			StreamResponse{
-				Attributes: sa,
-			})
+	})
+
+	req := Envelope{Data: bytes}
+
+	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), req, &resp)
+	if err != nil {
+		return d, err
 	}
 
-	err := c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), req, &resp)
-	return resp, err
+	err = json.Unmarshal(resp.Data, &d)
+	if err != nil {
+		return d, err
+	}
+	return d, err
 }
 
-func (c *Client) GetDashboard(projectName string, dashboardID string) (DashboardAPIResponse, error) {
-
-	resp := DashboardAPIResponse{}
+func (c *Client) GetDashboard(projectName string, dashboardID string) (Dashboard, error) {
+	var d Dashboard
+	resp := Envelope{}
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
-	return resp, err
+	if err != nil {
+		return d, err
+	}
+	err = json.Unmarshal(resp.Data, &d)
+	if err != nil {
+		return d, err
+	}
+	return d, err
 }
 
 func (c *Client) DeleteDashboard(projectName string, dashboardID string) error {

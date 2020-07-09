@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -28,7 +28,8 @@ func Provider() *schema.Provider {
 			"lightstep_stream":    resourceStream(),
 		},
 
-		ConfigureFunc: configureProvider,
+		ConfigureFunc:    configureProvider,
+		TerraformVersion: "v.12.26",
 	}
 }
 

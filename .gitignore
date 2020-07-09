@@ -14,8 +14,7 @@
 
 terraform-provider-lightstep
 .terraform
-# Temporarily remove this so that we can commit a version for the demo
-# terraform.tfstate
+terraform.tfstate
 crash.log
 terraform.tfstate.backup
 test.tf

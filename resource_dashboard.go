@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 )
 
 func resourceDashboard() *schema.Resource {
@@ -23,20 +22,11 @@ func resourceDashboard() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"streams": {
+			"stream_ids": {
 				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"stream_name": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"query": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
 				},
 			},
 		},
@@ -58,28 +48,18 @@ func resourceDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e e
 func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	var streamAttributes []lightstep.StreamAttributes
-	for _, sa := range d.Get("streams").([]interface{}) {
-		sa, _ := sa.(map[string]interface{})
-		streamAttributes = append(
-			streamAttributes,
-			lightstep.StreamAttributes{
-				Name:  sa["stream_name"].(string),
-				Query: sa["query"].(string),
-			},
-		)
-	}
+	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
 
-	resp, err := client.CreateDashboard(
+	dashboard, err := client.CreateDashboard(
 		d.Get("project_name").(string),
 		d.Get("dashboard_name").(string),
-		streamAttributes,
+		streams,
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
-	d.SetId(string(resp.Data.ID))
+
+	d.SetId(dashboard.ID)
 	return resourceDashboardRead(d, m)
 }
 
@@ -98,26 +78,15 @@ func resourceDashboardRead(d *schema.ResourceData, m interface{}) error {
 func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	var searchAttributes []lightstep.StreamAttributes
-	for _, sa := range d.Get("streams").([]interface{}) {
-		sa, _ := sa.(map[string]interface{})
-		searchAttributes = append(
-			searchAttributes,
-			lightstep.StreamAttributes{
-				Name:  sa["stream_name"].(string),
-				Query: sa["query"].(string),
-			},
-		)
-	}
+	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
 
 	_, err := client.UpdateDashboard(
 		d.Get("project_name").(string),
 		d.Get("dashboard_name").(string),
-		searchAttributes,
+		streams,
 		d.Id(),
 	)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 	return nil
@@ -134,4 +103,13 @@ func resourceDashboardDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	d.SetId("")
 	return nil
+}
+
+func streamIDsToStreams(ids []interface{}) []lightstep.Stream {
+	streams := []lightstep.Stream{}
+
+	for _, id := range ids {
+		streams = append(streams, lightstep.Stream{ID: id.(string)})
+	}
+	return streams
 }
