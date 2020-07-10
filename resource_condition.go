@@ -65,7 +65,7 @@ func resourceConditionRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceConditionDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	err := client.DeleteCondition(d.Get("project_name").(string), d.Get("condition_id").(string))
+	err := client.DeleteCondition(d.Get("project_name").(string), d.Id())
 	return err
 }
 

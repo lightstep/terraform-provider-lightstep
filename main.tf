@@ -1,38 +1,57 @@
-provider "lightstep" {
-  organization = "YOUR ORG HERE"
-  api_key = "YOUR API KEY HERE"
-}
-
 variable "project" {
   type = string
-  default = "YOUR PROJECT HERE"
+  default = "YOUR STAGING PROJECT HERE"
 }
 
 #############################################################
 # Streams
 #############################################################
-resource "lightstep_stream" "stream_5" {
+resource "lightstep_stream" "non_beemo" {
   project_name = var.project
-  stream_name = "BEEMO! Charge! UPDATED NAME"
+  stream_name = "Non-BEEMO charges"
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
 }
 
-resource "lightstep_stream" "stream_3" {
+resource "lightstep_stream" "beemo" {
   project_name = var.project
-  stream_name = "Non BEEMO Charges All Else"
-  query = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\", \"oops\")"
+  stream_name = "BEEMO charges"
+  query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
 #############################################################
 # Dashboards
 #############################################################
 
-resource "lightstep_dashboard" "test" {
+resource "lightstep_dashboard" "customer_charges" {
   project_name = var.project
-  dashboard_name = "terrrrrraform"
-  stream_ids = [lightstep_stream.stream_5.id, lightstep_stream.stream_3.id]
+  dashboard_name = "Customer Charges"
+  stream_ids = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
 
+#############################################################
+# Conditions
+#############################################################
 
+resource "lightstep_condition" "beemo_errors" {
+  project_name = var.project
+  condition_name = "Charge errors for BEEMO"
+  expression = "err > .4"
+  evaluation_window_ms = 300000
+  stream_id = lightstep_stream.beemo.id
+}
 
+resource "lightstep_condition" "beemo_latency" {
+  project_name = var.project
+  condition_name = "High Latency for Charge to BEEMO"
+  expression = "lat(95) > 5s"
+  evaluation_window_ms = 300000
+  stream_id = lightstep_stream.beemo.id
+}
 
+resource "lightstep_condition" "beemo_ops" {
+  project_name = var.project
+  condition_name = "Abnormally low ops for BEEMO charge"
+  expression = "ops < 100"
+  evaluation_window_ms = 1200000 # 20 minutes
+  stream_id = lightstep_stream.beemo.id
+}
