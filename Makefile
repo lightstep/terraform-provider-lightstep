@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	go build -o terraform-provider-lightstep
+	go build -o terraform-provider-lightstep_v$(shell cat .go-version)
 
 .PHONY: install
 install:
