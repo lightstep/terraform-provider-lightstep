@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 if ! git diff --quiet HEAD; then
     git diff HEAD | cat
