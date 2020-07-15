@@ -25,3 +25,7 @@ install-golangci-lint:
 .PHONY: lint
 lint:
 	golangci-lint run --deadline 3m0s --no-config ./...
+
+.PHONY: ensure-clean-repo
+ensure-clean-repo:
+	@scripts/ensure-clean-repo
