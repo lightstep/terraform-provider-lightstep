@@ -7,11 +7,9 @@ import (
 )
 
 type Stream struct {
-	Type          string              `json:"type,omitempty"`
-	ID            string              `json:"id,omitempty"`
-	Attributes    StreamAttributes    `json:"attributes,omitempty"`
-	Relationships StreamRelationships `json:"relationships,omitempty"`
-	Links         Links               `json:"links,omitempty"`
+	Type       string           `json:"type,omitempty"`
+	ID         string           `json:"id,omitempty"`
+	Attributes StreamAttributes `json:"attributes,omitempty"`
 }
 
 type StreamAttributes struct {
@@ -20,17 +18,13 @@ type StreamAttributes struct {
 	CustomData map[string]interface{} `json:"custom-data,omitempty"`
 }
 
-type StreamRelationships struct {
-	Project    LinksObj `json:"project,omitempty"`
-	Conditions LinksObj `json:"conditions,omitempty"`
-}
-
 func (c *Client) CreateStream(
 	projectName string,
 	name string,
 	query string,
 	customData map[string]interface{},
 ) (Stream, error) {
+
 	var (
 		s    Stream
 		resp Envelope
@@ -85,9 +79,9 @@ func (c *Client) ListStreams(projectName string) ([]Stream, error) {
 
 func (c *Client) GetStream(projectName string, StreamID string) (Stream, error) {
 	var (
-		s Stream
+		s    Stream
+		resp Envelope
 	)
-	resp := Envelope{}
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	if err != nil {

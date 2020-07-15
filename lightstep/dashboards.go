@@ -7,11 +7,9 @@ import (
 )
 
 type Dashboard struct {
-	Type          string                 `json:"type,omitempty"`
-	ID            string                 `json:"id,omitempty"`
-	Attributes    DashboardAttributes    `json:"attributes,omitempty"`
-	Relationships DashboardRelationships `json:"relationships,omitempty"`
-	Links         Links                  `json:"links"`
+	Type       string              `json:"type,omitempty"`
+	ID         string              `json:"id,omitempty"`
+	Attributes DashboardAttributes `json:"attributes,omitempty"`
 }
 
 type DashboardAttributes struct {
@@ -19,15 +17,12 @@ type DashboardAttributes struct {
 	Streams []Stream `json:"streams"`
 }
 
-type DashboardRelationships struct {
-	Project LinksObj `json:"project"`
-}
-
 func (c *Client) CreateDashboard(
 	projectName string,
 	dashboardName string,
 	streams []Stream,
 ) (Dashboard, error) {
+
 	var (
 		d    Dashboard
 		resp Envelope
@@ -46,9 +41,7 @@ func (c *Client) CreateDashboard(
 		return d, err
 	}
 
-	req := Envelope{Data: bytes}
-
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), req, &resp)
+	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
 	}
@@ -81,10 +74,11 @@ func (c *Client) UpdateDashboard(
 			Streams: streams,
 		},
 	})
+	if err != nil {
+		return d, err
+	}
 
-	req := Envelope{Data: bytes}
-
-	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), req, &resp)
+	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
 	}
@@ -97,12 +91,16 @@ func (c *Client) UpdateDashboard(
 }
 
 func (c *Client) GetDashboard(projectName string, dashboardID string) (Dashboard, error) {
-	var d Dashboard
-	resp := Envelope{}
+	var (
+		d    Dashboard
+		resp Envelope
+	)
+
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
 	if err != nil {
 		return d, err
 	}
+
 	err = json.Unmarshal(resp.Data, &d)
 	if err != nil {
 		return d, err

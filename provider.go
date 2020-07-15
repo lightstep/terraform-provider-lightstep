@@ -26,6 +26,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"lightstep_dashboard": resourceDashboard(),
 			"lightstep_stream":    resourceStream(),
+			"lightstep_condition": resourceCondition(),
 		},
 
 		ConfigureFunc:    configureProvider,

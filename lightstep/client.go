@@ -31,6 +31,11 @@ func (a APIClientError) GetHTTPResponse() *http.Response {
 	return a.Response
 }
 
+// represents a generic response from the API
+type Envelope struct {
+	Data json.RawMessage `json:"data"`
+}
+
 type Body struct {
 	Data   interface{}            `json:"data,omitempty"`
 	Errors []string               `json:"errors,omitempty"`

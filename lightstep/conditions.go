@@ -1,71 +1,137 @@
 package lightstep
 
-type ConditionAPIResponse struct {
-	Data *ConditionResponse
-}
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
 
-type ConditionResponse struct {
-	Response
-	Attributes    ConditionAttributes    `json:"attributes,omitempty"`
+type Condition struct {
+	Type          string                 `json:"type,omitempty"`
+	ID            string                 `json:"id,omitempty"`
+	Attributes    ConditionAttributes    `json:"attributes"`
 	Relationships ConditionRelationships `json:"relationships,omitempty"`
-	Links         Links                  `json:"links"`
 }
 
 type ConditionAttributes struct {
-	Name               *string                `json:"name"`
-	EvaluationWindowMs int64                  `json:"eval-window-ms"`
-	Expression         string                 `json:"expression"`
+	Name               string                 `json:"name,omitempty"`
+	EvaluationWindowMS int                    `json:"eval-window-ms,omitempty"`
+	Expression         string                 `json:"expression,omitempty"`
 	CustomData         map[string]interface{} `json:"custom-data,omitempty"`
 }
 
 type ConditionRelationships struct {
-	Project LinksObj `json:"project"`
-	Search  LinksObj `json:"search"`
+	Stream ConditionStream `json:"stream"`
 }
 
-type ListConditionsAPIResponse struct {
-	Data *ListConditionsResponse `json:"data,omitempty"`
+type ConditionStream struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
 }
 
-type ListConditionsResponse []ConditionResponse
+func (c *Client) CreateCondition(
+	projectName string,
+	conditionName string,
+	expression string,
+	evaluationWindowMS int,
+	streamID string) (Condition, error) {
 
-type ConditionStatusAPIResponse struct {
-	Data *ConditionStatusResponse
+	var (
+		cond Condition
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(Condition{
+		Type: "condition",
+		Attributes: ConditionAttributes{
+			Name:               conditionName,
+			EvaluationWindowMS: evaluationWindowMS,
+			Expression:         expression,
+			CustomData:         nil,
+		},
+		Relationships: ConditionRelationships{
+			Stream: ConditionStream{
+				ID:   streamID,
+				Type: "stream",
+			},
+		},
+	})
+	if err != nil {
+		return cond, err
+	}
+
+	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/conditions", projectName), Envelope{Data: bytes}, &resp)
+	if err != nil {
+		return cond, err
+	}
+
+	err = json.Unmarshal(resp.Data, &cond)
+	if err != nil {
+		return cond, err
+	}
+	return cond, err
 }
 
-type ConditionStatusResponse struct {
-	Response
-	Attributes    ConditionStatusAttributes    `json:"attributes,omitempty"`
-	Relationships ConditionStatusRelationships `json:"relationships,omitempty"`
+func (c *Client) UpdateCondition(
+	projectName string,
+	conditionID string,
+	attributes ConditionAttributes,
+) (Condition, error) {
+	var (
+		cond Condition
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(&Condition{
+		ID:         conditionID,
+		Attributes: attributes,
+	})
+	if err != nil {
+		return cond, err
+	}
+
+	err = c.CallAPI(
+		"PATCH",
+		fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID),
+		Envelope{Data: bytes},
+		&resp)
+	if err != nil {
+		return cond, err
+	}
+
+	err = json.Unmarshal(resp.Data, &cond)
+	if err != nil {
+		return cond, err
+	}
+
+	return cond, err
 }
 
-type ConditionStatusAttributes struct {
-	Expression  string `json:"expression"`
-	State       string `json:"state"`
-	Description string `json:"description"`
+func (c *Client) GetCondition(projectName string, conditionID string) (Condition, error) {
+	var (
+		cond Condition
+		resp Envelope
+	)
+
+	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
+	if err != nil {
+		return cond, err
+	}
+
+	err = json.Unmarshal(resp.Data, &cond)
+	if err != nil {
+		return cond, err
+	}
+	return cond, err
 }
 
-type ConditionStatusRelationships struct {
-	Condition LinksObj `json:"condition"`
-}
-
-type ConditionRequestBody struct {
-	Data *ConditionRequest `json:"data"`
-}
-
-type ConditionRequest struct {
-	Response
-	Attributes    ConditionRequestAttributes    `json:"attributes"`
-	Relationships ConditionRequestRelationships `json:"relationships"`
-}
-
-type ConditionRequestAttributes struct {
-	Name               *string                 `json:"name"`
-	Expression         *string                 `json:"expression"`
-	EvaluationWindowMs *int64                  `json:"eval-window-ms"`
-	CustomData         *map[string]interface{} `json:"custom-data"`
-}
-
-type ConditionRequestRelationships struct {
-	Search ResourceIDObject `json:"search"`
+func (c *Client) DeleteCondition(projectName string, conditionID string) error {
+	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
+	if err != nil {
+		apiClientError := err.(APIResponseCarrier)
+		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+			return err
+		}
+	}
+	return nil
 }
