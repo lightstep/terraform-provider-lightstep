@@ -25,3 +25,7 @@ install-golangci-lint:
 .PHONY: lint
 lint:
 	golangci-lint run --deadline 3m0s --no-config ./...
+
+.PHONY: acc-test
+acc-test:
+	TF_ACC=true go test -v

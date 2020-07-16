@@ -53,7 +53,7 @@ type Client struct {
 func NewClient(ctx context.Context, apiKey string, orgName string) *Client {
 	baseUrl := os.Getenv("LIGHTSTEP_HOST")
 	if baseUrl == "" {
-		baseUrl = "https://api-staging.lightstep.com/public/v0.2" // Hardcoding to staging for now
+		baseUrl = "https://api.lightstep.com/public/v0.2"
 	}
 	baseURLWithOrg := fmt.Sprintf("%v/%v", baseUrl, orgName)
 
