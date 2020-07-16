@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 	"os"
+	"regexp"
 	"testing"
 )
 
@@ -13,6 +14,15 @@ const project = "terraform-provider-tests"
 
 func TestAccStream(t *testing.T) {
 	var stream lightstep.Stream
+
+	badQuery := `
+resource "lightstep_stream" "aggie_errors" {
+  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  stream_name = "Errors (All)"
+  query = "error = true"
+}
+`
+
 	streamConfig := `
 resource "lightstep_stream" "aggie_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", project) + `
@@ -20,6 +30,7 @@ resource "lightstep_stream" "aggie_errors" {
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
 }
 `
+
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", project) + `
@@ -33,6 +44,13 @@ resource "lightstep_stream" "aggie_errors" {
 		CheckDestroy: testAccStreamDestroy,
 		// each step is akin to running a `terraform apply`
 		Steps: []resource.TestStep{
+			{
+				Config: badQuery,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
+				),
+				ExpectError: regexp.MustCompile("InvalidArgument") ,
+			},
 			{
 				Config: streamConfig,
 				Check: resource.ComposeTestCheckFunc(
