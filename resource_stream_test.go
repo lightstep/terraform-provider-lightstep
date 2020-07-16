@@ -9,37 +9,27 @@ import (
 	"testing"
 )
 
-const project = "dev-paigebernier"
+const project = "terraform-provider-tests"
 
 func TestAccStream(t *testing.T) {
 	var stream lightstep.Stream
 	streamConfig := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = "dev-paigebernier"
+  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
   stream_name = "Aggie Errors"
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
 }
 `
-
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = "dev-paigebernier"
+  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
   stream_name = "Errors (All)"
   query = "\"error\" IN (\"true\")"
 }
 `
-
-	badQuery := `
-resource "lightstep_stream" "aggie_errors" {
-  project_name = "dev-paigebernier"
-  stream_name = "Errors (All)"
-  query = "error IN (true)"
-}
-
-`
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
 		CheckDestroy: testAccStreamDestroy,
 		// each step is akin to running a `terraform apply`
 		Steps: []resource.TestStep{
@@ -49,7 +39,7 @@ resource "lightstep_stream" "aggie_errors" {
 					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "stream_name", "Aggie Errors"),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "query", "service IN (\"aggie\") AND \"error\" IN (\"true\")"),
-					),
+				),
 			},
 			{
 				Config: updatedNameQuery,
@@ -60,7 +50,6 @@ resource "lightstep_stream" "aggie_errors" {
 				),
 			},
 		},
-
 	})
 }
 
