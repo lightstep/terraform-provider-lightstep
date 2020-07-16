@@ -49,7 +49,7 @@ resource "lightstep_stream" "aggie_errors" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
 				),
-				ExpectError: regexp.MustCompile("InvalidArgument") ,
+				ExpectError: regexp.MustCompile("InvalidArgument"),
 			},
 			{
 				Config: streamConfig,
