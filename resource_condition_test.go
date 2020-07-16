@@ -4,6 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"regexp"
 	"testing"
 	"fmt"
 )
@@ -26,11 +27,50 @@ resource "lightstep_condition" "beemo_errors" {
   stream_id = lightstep_stream.beemo.id
 }
 `
+
+	updatedConfig := `
+resource "lightstep_stream" "beemo" {
+  project_name = ` + fmt.Sprintf("\"%s\"", project) +`
+  stream_name = "BEEMO charges"
+  query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
+}
+
+resource "lightstep_condition" "beemo_errors" {
+  project_name = ` + fmt.Sprintf("\"%s\"", project) +`
+  condition_name = "Payment Errors for BEEMO"
+  expression = "err > .2"
+  evaluation_window_ms = 500000
+  stream_id = lightstep_stream.beemo.id
+}
+`
+	badExpressionConfig := `
+resource "lightstep_stream" "beemo" {
+  project_name = ` + fmt.Sprintf("\"%s\"", project) +`
+  stream_name = "BEEMO charges"
+  query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
+}
+
+resource "lightstep_condition" "beemo_errors" {
+  project_name = ` + fmt.Sprintf("\"%s\"", project) +`
+  condition_name = "Charge errors for BEEMO"
+  expression = "err > 1.4"
+  evaluation_window_ms = 300000
+  stream_id = lightstep_stream.beemo.id
+}
+`
 resource.Test(t, resource.TestCase{
 	PreCheck: func() { testAccPreCheck(t) },
 	Providers: testAccProviders,
 	CheckDestroy: testAccConditionDestroy,
 	Steps: []resource.TestStep{
+		{
+			Config: badExpressionConfig,
+			Check: resource.ComposeTestCheckFunc(
+				testAccCheckConditionExists("lightstep_condition.beemo_errors", &condition),
+			),
+			ExpectError: regexp.MustCompile("InvalidArgument") ,
+
+		},
 		{
 			Config: conditionConfig,
 			Check: resource.ComposeTestCheckFunc(
@@ -41,9 +81,18 @@ resource.Test(t, resource.TestCase{
 
 			),
 		},
+		{
+			Config: updatedConfig,
+			Check: resource.ComposeTestCheckFunc(
+				testAccCheckConditionExists("lightstep_condition.beemo_errors", &condition),
+				resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "condition_name", "Payment Errors for BEEMO"),
+				resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "expression", "err > .2"),
+				resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "evaluation_window_ms", "500000"),
+
+			),
+		},
 	},
 })
-
 }
 
 func testAccCheckConditionExists(resourceName string, condition *lightstep.Condition) resource.TestCheckFunc {
