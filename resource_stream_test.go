@@ -71,6 +71,32 @@ resource "lightstep_stream" "aggie_errors" {
 	})
 }
 
+func TestAccStreamImport(t *testing.T) {
+	resourceName := "lightstep_stream.sql"
+	importedStream := `
+resource "lightstep_stream" "sql" {
+	project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+	stream_name = "DO NOT DELETE - for the import test"
+	query = "operation IN (\"sql/insert\")"
+}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: importedStream,
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     fmt.Sprintf("%s.dp7HzprH", project),
+			},
+		},
+	})
+}
+
 func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get stream from TF state

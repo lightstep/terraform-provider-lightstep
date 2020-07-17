@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"strings"
 )
 
 func resourceCondition() *schema.Resource {
@@ -11,7 +13,9 @@ func resourceCondition() *schema.Resource {
 		Read:   resourceConditionRead,
 		Delete: resourceConditionDelete,
 		Update: resourceConditionUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceConditionImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
@@ -85,4 +89,24 @@ func resourceConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	)
 
 	return err
+}
+
+func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_condition>'")
+	}
+	project, id := ids[0], ids[1]
+
+	_, err := client.GetCondition(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(id)
+	d.Set("project", project)
+
+	return []*schema.ResourceData{d}, nil
 }

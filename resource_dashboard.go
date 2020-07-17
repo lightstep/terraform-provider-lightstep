@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"strings"
 )
 
 func resourceDashboard() *schema.Resource {
@@ -12,7 +14,9 @@ func resourceDashboard() *schema.Resource {
 		Delete: resourceDashboardDelete,
 		Exists: resourceDashboardExists,
 		Update: resourceDashboardUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceDashboardImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"dashboard_name": {
 				Type:     schema.TypeString,
@@ -112,4 +116,24 @@ func streamIDsToStreams(ids []interface{}) []lightstep.Stream {
 		streams = append(streams, lightstep.Stream{ID: id.(string)})
 	}
 	return streams
+}
+
+func resourceDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_dashboard>'")
+	}
+	project, id := ids[0], ids[1]
+
+	_, err := client.GetDashboard(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(id)
+	d.Set("project", project)
+
+	return []*schema.ResourceData{d}, nil
 }
