@@ -28,4 +28,4 @@ lint:
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
-	@scripts/ensure-clean-repo
+	@scripts/ensure_clean_repo.sh
