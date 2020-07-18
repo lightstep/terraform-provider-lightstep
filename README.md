@@ -33,9 +33,9 @@ provider "lightstep" {
 
 ```terraform
 resource "lightstep_stream" "[STREAM]" {
-  project_name = "${lightstep_project.project.[PROJECT]}"
-  stream_name = "[STREAM]"
-  query = "[QUERY]"
+  project_name = "${var.project}"
+  stream_name = "STREAM NAME"
+  query = "QUERY"
 }
 ```
 
@@ -46,13 +46,31 @@ To import a stream:
 
 ```terraform
 resource "lightstep_dashboard" "[DASHBOARD]" {
-  project_name = "${lightstep_project.project.[PROJECT]}"
-  dashboard_name = "[DASHBOARD NAME]"
-  stream_ids = [STREAM_IDS]
+  project_name = "${var.project}"
+  dashboard_name = "DASHBOARD NAME"
+  stream_ids = ["STREAM_IDS"]
 
 }
 
 ```
+
+To import a dashboard:
+`terraform import lightstep_stream.<resource name> project.dashboardID`
+
+## Conditions
+
+```
+resource "lightstep_condition" "beemo_errors" {
+  project_name = var.project
+  condition_name = "CONDITION NAME"
+  expression = "EXPRESSION"
+  evaluation_window_ms = MS
+  stream_id = "STREAM_ID"
+}
+```
+
+To import a condition:
+`terraform import lightstep_stream.<resource name> project.conditionID`
 
 ## TODO
 * Streams 
