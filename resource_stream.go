@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"log"
 	"strings"
 	"time"
 )
@@ -110,18 +109,20 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_stream. Expecting an  ID formed as '<lightstep_project>.<lightstep_stream>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_stream. Expecting an  ID formed as '<lightstep_project>.<stream_id>'. Got: %v", d.Id())
 	}
-	project, id := ids[0], ids[1]
 
+	project, id := ids[0], ids[1]
 	stream, err := client.GetStream(project, id)
 	if err != nil {
+
 		return []*schema.ResourceData{}, err
 	}
-	log.Print(stream)
+
 	d.SetId(id)
-	d.Set("project", project)
-	d.Set("stream_name", stream.Attributes.Name)
-	d.Set("query", stream.Attributes.Query)
+	d.Set("project_name", project) //nolint project_name is already valid since it is used in API call above
+	d.Set("stream_name", stream.Attributes.Name) //nolint stream_name or query because they are received from API call
+	d.Set("query", stream.Attributes.Query) //nolint
+
 	return []*schema.ResourceData{d}, nil
 }
