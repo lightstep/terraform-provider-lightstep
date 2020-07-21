@@ -29,3 +29,7 @@ lint:
 .PHONY: acc-test
 acc-test:
 	TF_ACC=true go test -v
+
+.PHONY: ensure-clean-repo
+ensure-clean-repo:
+	@scripts/ensure_clean_repo.sh
