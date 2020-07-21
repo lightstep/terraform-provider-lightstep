@@ -123,17 +123,21 @@ func resourceDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_dashboard>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_dashboardID>'")
 	}
 	project, id := ids[0], ids[1]
 
-	_, err := client.GetDashboard(project, id)
+	dashboard, err := client.GetDashboard(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
+	var streamIDs []string
+	for _, stream := range dashboard.Attributes.Streams {
+		streamIDs = append(streamIDs, stream.ID)
+	}
 
 	d.SetId(id)
-	d.Set("project", project)
-
+	d.Set("project_name", project) // nolint  these values are fetched from LS
+	d.Set("stream_ids", streamIDs) // nolint  and are known to be valid
 	return []*schema.ResourceData{d}, nil
 }

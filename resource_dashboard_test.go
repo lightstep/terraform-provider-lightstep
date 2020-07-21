@@ -78,26 +78,24 @@ resource "lightstep_dashboard" "customer_charges" {
 }
 
 func TestAccDashboardImport(t *testing.T) {
-	resourceName := "lightstep_dashboard.ingress"
-	importedDashboard := `
-resource "lightstep_dashboard" "ingress" {
-	project_name = ` + fmt.Sprintf("\"%s\"", project) + `
-  dashboard_name = "Customer Charges"
-  stream_ids = ["dp7HzprH"]
-}
-`
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: importedDashboard,
+				Config: `
+resource "lightstep_dashboard" "ingress" {
+	project_name = "terraform-provider-tests"
+ 	dashboard_name = "IMPORT ME"
+ 	stream_ids = ["VKhpmH1V"]
+}
+`,
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     fmt.Sprintf("%s.dp7HzprH", project),
+				ResourceName:        "lightstep_dashboard.ingress",
+				ImportState:         true,
+				ImportStateVerify:   true,
+				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
 			},
 		},
 	})
