@@ -137,7 +137,8 @@ func resourceDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 
 	d.SetId(id)
-	d.Set("project_name", project) // nolint  these values are fetched from LS
-	d.Set("stream_ids", streamIDs) // nolint  and are known to be valid
+	d.Set("project_name", project)                     // nolint  these values are fetched from LS
+	d.Set("dashboard_name", dashboard.Attributes.Name) // nolint   and are known to be valid
+	d.Set("stream_ids", streamIDs)                     // nolint
 	return []*schema.ResourceData{d}, nil
 }

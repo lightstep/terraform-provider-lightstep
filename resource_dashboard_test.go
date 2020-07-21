@@ -86,7 +86,7 @@ func TestAccDashboardImport(t *testing.T) {
 				Config: `
 resource "lightstep_dashboard" "ingress" {
 	project_name = "terraform-provider-tests"
- 	dashboard_name = "IMPORT ME"
+ 	dashboard_name = "to import"
  	stream_ids = ["VKhpmH1V"]
 }
 `,
