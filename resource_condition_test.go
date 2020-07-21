@@ -93,29 +93,26 @@ resource "lightstep_condition" "beemo_errors" {
 }
 
 func TestAccConditionImport(t *testing.T) {
-	resourceName := "lightstep_stream.checkout"
-	importedCondition := `
-resource "lightstep_condition" "checkout" {
-	project_name = ` + fmt.Sprintf("\"%s\"", project) + `
-	condition_name = "Checkout errors"
-  	expression = "err > .6"
-  	evaluation_window_ms = 300000
-  	stream_id = "dp7HzprH"
-}
-`
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: importedCondition,
+				Config: `
+resource "lightstep_condition" "import-cond" {
+	project_name = "terraform-provider-tests"
+	condition_name = "High Ops"
+ 	expression = "ops > 10000"
+ 	evaluation_window_ms = 1200000
+ 	stream_id = "CrwM5g63"
+}
+`,
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     fmt.Sprintf("%s.dp7HzprH", project),
+				ResourceName:        "lightstep_condition.import-cond",
+				ImportState:         true,
+				ImportStateVerify:   true,
+				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
 			},
 		},
 	})
@@ -132,7 +129,6 @@ func testAccCheckConditionExists(resourceName string, condition *lightstep.Condi
 			return fmt.Errorf("ID is not set")
 		}
 
-		// get stream from LS
 		client := testAccProvider.Meta().(*lightstep.Client)
 		cond, err := client.GetCondition(project, tfCondition.Primary.ID)
 		if err != nil {

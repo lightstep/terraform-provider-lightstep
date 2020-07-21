@@ -96,17 +96,29 @@ func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_condition>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_condition_ID>'")
 	}
-	project, id := ids[0], ids[1]
 
-	_, err := client.GetCondition(project, id)
+	project, id := ids[0], ids[1]
+	c, err := client.GetCondition(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	// stream ID does not get returned from getCondition
+	// need to follow the links in relationships to get stream ID
+	var stream lightstep.Stream
+	stream, err = client.GetStreamByLink(c.Relationships.Stream.Links.Related)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
 	d.SetId(id)
-	d.Set("project", project)
+	d.Set("project_name", project)                                 //nolint these are values fetched from the api
+	d.Set("condition_name", c.Attributes.Name)                     //nolint so we know that they are valid
+	d.Set("expression", c.Attributes.Expression)                   //nolint
+	d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS) //nolint
+	d.Set("stream_id", stream.ID)                                  //nolint
 
 	return []*schema.ResourceData{d}, nil
 }

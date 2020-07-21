@@ -25,8 +25,14 @@ type ConditionRelationships struct {
 }
 
 type ConditionStream struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
+	ID    string `json:"id"`
+	Type  string `json:"type"`
+	Links Links  `json:"links"`
+}
+
+type Links struct {
+	Related string `json:"related"`
+	Self    string `json:"self"`
 }
 
 func (c *Client) CreateCondition(
@@ -112,7 +118,6 @@ func (c *Client) GetCondition(projectName string, conditionID string) (Condition
 		cond Condition
 		resp Envelope
 	)
-
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
 	if err != nil {
 		return cond, err

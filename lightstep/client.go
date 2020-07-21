@@ -188,7 +188,6 @@ func callAPI(
 		headers,
 	)
 	if err != nil {
-		log.Print(err)
 		return err
 	}
 
@@ -199,3 +198,27 @@ func callAPI(
 func httpMethodSupportsRequestBody(method string) bool {
 	return method != "GET" && method != "DELETE"
 }
+
+func (c *Client) GetStreamByLink(url string) (Stream, error) {
+	response := Envelope{}
+	str := Stream{}
+	err := callAPI(context.TODO(),
+		c.client,
+		url,
+		"GET",
+		Headers{
+		"Authorization": fmt.Sprintf("bearer %v", c.apiKey),
+		"Content-Type":  c.contentType,
+		"Accept":        c.contentType,
+	}, nil, &response)
+	if err != nil {
+		return Stream{}, err
+	}
+
+	err = json.Unmarshal(response.Data, &str)
+	if err != nil {
+		return str, err
+	}
+
+	 return str, nil
+	}
