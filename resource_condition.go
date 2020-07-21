@@ -107,8 +107,7 @@ func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 
 	// stream ID does not get returned from getCondition
 	// need to follow the links in relationships to get stream ID
-	var stream lightstep.Stream
-	stream, err = client.GetStreamByLink(c.Relationships.Stream.Links.Related)
+	stream_id, err := client.GetStreamIDByLink(c.Relationships.Stream.Links.Related)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
@@ -118,7 +117,7 @@ func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	d.Set("condition_name", c.Attributes.Name)                     //nolint so we know that they are valid
 	d.Set("expression", c.Attributes.Expression)                   //nolint
 	d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS) //nolint
-	d.Set("stream_id", stream.ID)                                  //nolint
+	d.Set("stream_id", stream_id)                                  //nolint
 
 	return []*schema.ResourceData{d}, nil
 }

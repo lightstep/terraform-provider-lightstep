@@ -199,7 +199,7 @@ func httpMethodSupportsRequestBody(method string) bool {
 	return method != "GET" && method != "DELETE"
 }
 
-func (c *Client) GetStreamByLink(url string) (Stream, error) {
+func (c *Client) GetStreamIDByLink(url string) (string, error) {
 	response := Envelope{}
 	str := Stream{}
 	err := callAPI(context.TODO(),
@@ -207,18 +207,18 @@ func (c *Client) GetStreamByLink(url string) (Stream, error) {
 		url,
 		"GET",
 		Headers{
-		"Authorization": fmt.Sprintf("bearer %v", c.apiKey),
-		"Content-Type":  c.contentType,
-		"Accept":        c.contentType,
-	}, nil, &response)
+			"Authorization": fmt.Sprintf("bearer %v", c.apiKey),
+			"Content-Type":  c.contentType,
+			"Accept":        c.contentType,
+		}, nil, &response)
 	if err != nil {
-		return Stream{}, err
+		return "", err
 	}
 
 	err = json.Unmarshal(response.Data, &str)
 	if err != nil {
-		return str, err
+		return "", err
 	}
 
-	 return str, nil
-	}
+	return str.ID, nil
+}
