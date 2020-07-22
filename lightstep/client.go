@@ -217,7 +217,7 @@ func (c *Client) GetStreamIDByLink(url string) (string, error) {
 
 	err = json.Unmarshal(response.Data, &str)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to unmarshal response json: %v", err)
 	}
 
 	return str.ID, nil
