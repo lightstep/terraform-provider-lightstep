@@ -15,6 +15,9 @@ func resourceStream() *schema.Resource {
 		Read:   resourceStreamRead,
 		Update: resourceStreamUpdate,
 		Delete: resourceStreamDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceStreamImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
@@ -99,4 +102,26 @@ func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
 	}
 	d.SetId("")
 	return nil
+}
+
+func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_stream. Expecting an  ID formed as '<lightstep_project>.<stream_id>'. Got: %v", d.Id())
+	}
+
+	project, id := ids[0], ids[1]
+	stream, err := client.GetStream(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(id)
+	d.Set("project_name", project)               //nolint project_name is already valid since it is used in API call above
+	d.Set("stream_name", stream.Attributes.Name) //nolint stream_name or query because they are received from API call
+	d.Set("query", stream.Attributes.Query)      //nolint
+
+	return []*schema.ResourceData{d}, nil
 }

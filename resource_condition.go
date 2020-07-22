@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"strings"
 )
 
 func resourceCondition() *schema.Resource {
@@ -11,7 +13,9 @@ func resourceCondition() *schema.Resource {
 		Read:   resourceConditionRead,
 		Delete: resourceConditionDelete,
 		Update: resourceConditionUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceConditionImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
@@ -85,4 +89,35 @@ func resourceConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	)
 
 	return err
+}
+
+func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_condition_ID>'")
+	}
+
+	project, id := ids[0], ids[1]
+	c, err := client.GetCondition(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	// stream ID does not get returned from getCondition
+	// need to follow the links in relationships to get stream ID
+	stream_id, err := client.GetStreamIDByLink(c.Relationships.Stream.Links.Related)
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	d.SetId(id)
+	d.Set("project_name", project)                                 //nolint these are values fetched from the api
+	d.Set("condition_name", c.Attributes.Name)                     //nolint so we know that they are valid
+	d.Set("expression", c.Attributes.Expression)                   //nolint
+	d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS) //nolint
+	d.Set("stream_id", stream_id)                                  //nolint
+
+	return []*schema.ResourceData{d}, nil
 }

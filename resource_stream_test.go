@@ -71,6 +71,30 @@ resource "lightstep_stream" "aggie_errors" {
 	})
 }
 
+func TestAccStreamImport(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "lightstep_stream" "import-stream"{
+	project_name = "terraform-provider-tests"
+    stream_name = "very important stream to import"
+	query = "service IN (\"api\")"
+}
+`,
+			},
+			{
+				ResourceName:        "lightstep_stream.import-stream",
+				ImportState:         true,
+				ImportStateVerify:   true,
+				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
+			},
+		},
+	})
+}
+
 func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get stream from TF state

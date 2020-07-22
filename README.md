@@ -1,16 +1,12 @@
 # terraform-provider-lightstep
-Salad Bar 2019 Hackathon Project
 
+## Getting Started
 * Install Terraform (v0.12)
-* In `the terraform.tfstate` file, under resource, change the "nksingh-demo" values to your target project name, that you will also set in your `main.tf` file. Yes this is hacky but it's a hackathon project :)
-  * The reason is that Terraform on an empty state will try to make a project but our project api create is not a public endpoint. Therefor, we're tricking Terrform into thinking the project already exists! Which it actually does. 
-* In `main.tf` make sure you set the right organization that contains your target project, as well as check that your API key has the right permissions for that org/project as well
-* Set LIGHTSTEP_API_KEY and LIGHSTEP_ORG environment variable before the following
-
-
+* Set LIGHTSTEP_API_KEY & LIGHTSTEP_ORG environment variables
+* Set your project name in the variable block of `main.tf`
+* Build the binary 
 ```bash
 
-> export LIGHTSTEP_API_KEY = "[YOUR KEY HERE]"
 > mkdir -p ~/.terraform.d/plugins
 > go build -o ~/.terraform.d/plugins/terraform-provider-lightstep
 > terraform init
@@ -22,10 +18,14 @@ Salad Bar 2019 Hackathon Project
 # TF File Schema
 
 ## Global
+Setting the provider block is optional since you can set LIGHTSTEP_ORG & LIGHTSTEP_API_KEY 
+as environment variables.
 
 ```terraform
 provider "lightstep" {
   organization = "[ORG NAME]"
+  api_key      = "[API KEY]"
+  
 }
 ```
 
@@ -33,33 +33,46 @@ provider "lightstep" {
 
 ```terraform
 resource "lightstep_stream" "[STREAM]" {
-  project_name = "${lightstep_project.project.[PROJECT]}"
-  stream_name = "[STREAM]"
-  query = "[QUERY]"
+  project_name = "${var.project}"
+  stream_name = "STREAM NAME"
+  query = "QUERY"
 }
 ```
+
+To import a stream:
+`terraform import lightstep_stream.<resource name> project.streamID`
 
 ## Dashboards
 
 ```terraform
 resource "lightstep_dashboard" "[DASHBOARD]" {
-  project_name = "${lightstep_project.project.[PROJECT]}"
-  dashboard_name = "[DASHBOARD NAME]"
-  streams = [
-    {
-      stream_name = "${lightstep_stream.[STREAM].stream_name}"
-      query = "${lightstep_stream.[STREAM].query}"
-    }
-  ]
+  project_name = "${var.project}"
+  dashboard_name = "DASHBOARD NAME"
+  stream_ids = ["STREAM_IDS"]
+
 }
 
 ```
 
-## TODO
+To import a dashboard:
+`terraform import lightstep_stream.<resource name> project.dashboardID`
 
-* Projects
-  * Delete - Happens today but if new project is created with same name, crashes `app-staging`. Waiting on Pull Request
-  * Update - What does it mean to update a project? What implications are there for historical data? 
+## Conditions
+
+```
+resource "lightstep_condition" "beemo_errors" {
+  project_name = var.project
+  condition_name = "CONDITION NAME"
+  expression = "EXPRESSION"
+  evaluation_window_ms = MS
+  stream_id = "STREAM_ID"
+}
+```
+
+To import a condition:
+`terraform import lightstep_stream.<resource name> project.conditionID`
+
+## TODO
 * Streams 
   * Update - What does it mean to change the stream query in the TF file? Is the previous stream no longer required and should be deleted (AS-IS)?
 * Dashboards
@@ -70,6 +83,5 @@ resource "lightstep_dashboard" "[DASHBOARD]" {
   * Rate limiting - when resources are created in parallel, might run into rate limits
   * 500 error for lock when streams are being created
 * SDK - Separate into a repo
-* Test Terraform
 
 
