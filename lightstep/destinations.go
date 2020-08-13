@@ -6,12 +6,10 @@ import (
 	"net/http"
 )
 
-type DestinationType string
-
 const (
-	PAGERDUTY_DESTINATION_TYPE DestinationType = "pagerduty"
-	WEBHOOK_DESTINATION_TYPE   DestinationType = "webhook"
-	SLACK_DESTINATION_TYPE     DestinationType = "slack"
+	PAGERDUTY_DESTINATION_TYPE = "pagerduty"
+	WEBHOOK_DESTINATION_TYPE   = "webhook"
+	SLACK_DESTINATION_TYPE     = "slack"
 )
 
 type Destination struct {
@@ -22,7 +20,7 @@ type Destination struct {
 
 type WebhookAttributes struct {
 	Name            string                 `json:"name"`
-	DestinationType DestinationType        `json:"destination_type"`
+	DestinationType string                 `json:"destination_type"`
 	URL             string                 `json:"url"`
 	CustomHeaders   map[string]interface{} `json:"custom_headers,omitempty"`
 }

@@ -61,7 +61,7 @@ resource "lightstep_condition" "beemo_ops" {
 # Destinations
 #############################################################
 
-resource "lightstep_webhook_destination" "webhook_12" {
+resource "lightstep_webhook_destination" "webhook" {
   project_name     = var.project
   destination_name = "my svc"
   url              = "https://www.downforeveryoneorjustme.com"
@@ -72,6 +72,4 @@ resource "lightstep_webhook_destination" "webhook_12" {
   }
 
 }
-
-
 
