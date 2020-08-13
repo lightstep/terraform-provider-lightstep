@@ -55,3 +55,20 @@ resource "lightstep_condition" "beemo_ops" {
   evaluation_window_ms = 1200000 # 20 minutes
   stream_id = lightstep_stream.beemo.id
 }
+
+
+#############################################################
+# Destinations
+#############################################################
+
+resource "lightstep_destination" "webhook" {
+  project_name = var.project
+  destination_name = "really-important-alerting-service"
+  url = "https://www.downforeveryoneorjustme.com"
+  destination_type="webhook"
+  custom_headers = {
+    "header_1" = "var_1"
+  }
+}
+
+

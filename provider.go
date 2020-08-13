@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
@@ -24,9 +25,10 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"lightstep_dashboard": resourceDashboard(),
-			"lightstep_stream":    resourceStream(),
-			"lightstep_condition": resourceCondition(),
+			"lightstep_dashboard":   resourceDashboard(),
+			"lightstep_stream":      resourceStream(),
+			"lightstep_condition":   resourceCondition(),
+			"lightstep_destination": resourceDestination(),
 		},
 
 		ConfigureFunc:    configureProvider,
