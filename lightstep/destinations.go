@@ -19,6 +19,12 @@ type WebhookAttributes struct {
 	CustomHeaders   map[string]interface{} `json:"custom_headers,omitempty"`
 }
 
+type PagerdutyAttributes struct {
+	Name            string `json:"name"`
+	IntegrationKey  string `json:"integration_key"`
+	DestinationType string `json:"destination_type"`
+}
+
 func (c *Client) CreateDestination(
 	project string,
 	destination Destination) (Destination, error) {
