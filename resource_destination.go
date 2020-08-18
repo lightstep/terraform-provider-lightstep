@@ -29,16 +29,11 @@ func resourceDestination() *schema.Resource {
 			},
 			"destination_name": {
 				Type:     schema.TypeString,
-				ForceNew: true,
 				Optional: true,
+				ForceNew: true,
 			},
 			"url": {
 				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-			},
-			"custom_headers": {
-				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -48,50 +43,91 @@ func resourceDestination() *schema.Resource {
 
 func resourceDestinationCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	attrs, err := setAttributesForDestinationType(d)
+	err := validateAttributesForType(d)
+	if err != nil {
+		return err
+	}
+
+	attributes, err := getDestinationAttributesForType(d)
 	if err != nil {
 		return err
 	}
 
 	destination, err := client.CreateDestination(
 		d.Get("project_name").(string),
-		attrs,
-	)
+		d.Get("destination_type").(string),
+		attributes)
 	if err != nil {
-		return err
+		return fmt.Errorf("Error creating %v.\nErr:%v\n", destination, err)
 	}
 
 	d.SetId(destination.ID)
-	return resourceConditionRead(d, m)
+	return resourceDestinationRead(d, m)
 }
 
-func setAttributesForDestinationType(d *schema.ResourceData) (interface{}, error) {
-	switch d.Get("destination_type").(string) {
-	case lightstep.WEBHOOK_DESTINATION_TYPE:
-		var attributes lightstep.WebhookAttributes
-
-		name, ok := d.GetOk("destination_name")
-		if !ok {
-			return nil, fmt.Errorf("Missing required parameter 'name' for %v type\n", lightstep.WEBHOOK_DESTINATION_TYPE)
-		}
-
-		url, ok := d.GetOk("url")
-		if !ok {
-			return nil, fmt.Errorf("Missing required parameter 'url' for %v type\n", lightstep.WEBHOOK_DESTINATION_TYPE)
-		}
-
-		customHeaders, ok := d.GetOk("custom_headers")
-		if ok {
-			attributes.CustomHeaders = customHeaders.(map[string]interface{})
-		}
-		attributes.Name = name.(string)
-		attributes.URL = url.(string)
-		attributes.DestinationType = lightstep.WEBHOOK_DESTINATION_TYPE
-		return attributes, nil
-
-	default:
-		return nil, nil
+func getRequiredAttributesForType(destType string) []string {
+	destinationTypeToAttributes := map[string][]string{
+		"webhook": {
+			"destination_name",
+			"url",
+		},
+		"pagerduty": {
+			"integration_key",
+			"destination_name",
+		},
+		"slack": {
+			"channel",
+			"scope",
+		},
 	}
+	return destinationTypeToAttributes[destType]
+
+}
+
+// performing validation of attributes for type here since
+// terraform's ValidateFunc does not allow you to inspect other fields
+func validateAttributesForType(d *schema.ResourceData) error {
+	requiredAttributes := map[string][]string{
+		"webhook": {
+			"destination_name",
+			"url",
+		},
+		"pagerduty": {
+			"integration_key",
+			"destination_name",
+		},
+		"slack": {
+			"channel",
+			"scope",
+		},
+	}
+
+	destinationType := d.Get("destination_type").(string)
+	requiredAttrForType := requiredAttributes[destinationType]
+	for _, attr := range requiredAttrForType {
+		_, ok := d.GetOk(attr)
+		if !ok {
+			return fmt.Errorf("Missing required attribute %v for destination type %v", attr, destinationType)
+		}
+	}
+	return nil
+}
+
+func getDestinationAttributesForType(d *schema.ResourceData) (map[string]interface{}, error) {
+	destinationType := d.Get("destination_type").(string)
+
+	attributes := map[string]interface{}{}
+
+	requiredAttrs := getRequiredAttributesForType(destinationType)
+	for _, attr := range requiredAttrs {
+		v, ok := d.GetOk(attr)
+		if !ok {
+			return nil, fmt.Errorf("Missing required parameter %v. Got: %v\n", attr, v)
+		}
+		attributes[attr] = v
+	}
+
+	return attributes, nil
 
 }
 
@@ -120,19 +156,23 @@ func resourceDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
-	fmt.Printf("project %v, id %v\n", project, id)
 	d.SetId(c.ID)
 	d.Set("project_name", project)    // nolint  these values are fetched from LS
 	d.Set("destination_type", c.Type) // nolint  and known to be valid
+	destinationType := d.Get("destination_type").(string)
+	requiredAttrs := getRequiredAttributesForType(destinationType)
 
-	switch c.Type {
-	case lightstep.WEBHOOK_DESTINATION_TYPE:
-		d.Set("destination_name", c.Attributes.(lightstep.WebhookAttributes).Name) // nolint
-		d.Set("url", c.Attributes.(lightstep.WebhookAttributes).URL)               // nolint
-		if len(c.Attributes.(lightstep.WebhookAttributes).CustomHeaders) != 0 {
-			d.Set("custom_headers", c.Attributes.(lightstep.WebhookAttributes).CustomHeaders) // nolint
+	terraformAttributes := map[string]string{}
+	var attributes = map[string]interface{}{}
+	for _, attr := range requiredAttrs {
+		v, ok := terraformAttributes[attr]
+		if !ok {
+			return []*schema.ResourceData{}, fmt.Errorf("Missing required parameter %v. Got: %v\n", attr, v)
 		}
+		attributes[attr] = v
 	}
+
+	d.Set("attributes", attributes) //no lint
 
 	return []*schema.ResourceData{d}, nil
 }

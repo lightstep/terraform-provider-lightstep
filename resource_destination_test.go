@@ -20,9 +20,7 @@ resource "lightstep_destination" "missing_webhook" {
   destination_name = "alert-scraper"
   url = "https://www.alert-scraper.com"
   destination_type="webhook"
-  custom_headers = {
-    "header_1" = "var_1"
-  }
+
 }
 `
 
@@ -32,6 +30,7 @@ resource "lightstep_destination" "webhook" {
   destination_name = "very important webhook"
   url = "https://www.downforeveryoneorjustme.com"
   destination_type="webhook"
+
 }
 `
 	resource.Test(t, resource.TestCase{
