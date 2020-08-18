@@ -11,12 +11,12 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func TestAccDestination(t *testing.T) {
+func TestAccWebhookDestination(t *testing.T) {
 	var destination lightstep.Destination
 
 	missingDestination := `
-resource "lightstep_destination" "missing_webhook" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+resource "lightstep_webhook_destination" "missing_webhook" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   destination_name = "alert-scraper"
   url = "https://www.alert-scraper.com"
   destination_type="webhook"
@@ -25,30 +25,34 @@ resource "lightstep_destination" "missing_webhook" {
 `
 
 	destinationConfig := `
-resource "lightstep_destination" "webhook" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+resource "lightstep_webhook_destination" "webhook" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   destination_name = "very important webhook"
   url = "https://www.downforeveryoneorjustme.com"
   destination_type="webhook"
+  custom_headers = {
+  	"header_1" = "value_1"
+    "header_2" = "value_2"
+  }
 
 }
 `
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccDestinationDestroy,
+		CheckDestroy: testAccWebhookDestinationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: missingDestination,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDestinationExists("lightstep_destination.missing_webhook", &destination),
+					testAccCheckWebhookDestinationExists("lightstep_destination.missing_webhook", &destination),
 				),
 				ExpectError: regexp.MustCompile("config is invalid"),
 			},
 			{
 				Config: destinationConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDestinationExists("lightstep_destination.webhook", &destination),
+					testAccCheckWebhookDestinationExists("lightstep_destination.webhook", &destination),
 					resource.TestCheckResourceAttr("lightstep_destination.webhook", "destination_name", "very important webhook"),
 					resource.TestCheckResourceAttr("lightstep_destination.webhook", "url", "https://www.downforeveryoneorjustme.com"),
 				),
@@ -58,31 +62,34 @@ resource "lightstep_destination" "webhook" {
 
 }
 
-func TestAccDestinationImport(t *testing.T) {
+func TestAccWebhookDestinationImport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource "lightstep_destination" "webhook"
+resource "lightstep_webhook_destination" "webhook"
 	project_name = "terraform-provider-tests"
 	destination_name = "do-not-delete"
 	url = "https://www.this-is-for-the-integration-tests.com"
 	destination_type = "webhook"
+    custom_headers = {
+	  "allow-all" = "forever"
+    }
 `,
 			},
 			{
 				ResourceName:        "lightstep_destination.webhook",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
 			},
 		},
 	})
 }
 
-func testAccCheckDestinationExists(resourceName string, destination *lightstep.Destination) resource.TestCheckFunc {
+func testAccCheckWebhookDestinationExists(resourceName string, destination *lightstep.Destination) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get destination from TF state
 		tfDestination, ok := s.RootModule().Resources[resourceName]
@@ -96,7 +103,7 @@ func testAccCheckDestinationExists(resourceName string, destination *lightstep.D
 
 		// get destination from LS
 		client := testAccProvider.Meta().(*lightstep.Client)
-		d, err := client.GetDestination(project, tfDestination.Primary.ID)
+		d, err := client.GetDestination(test_project, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -106,14 +113,14 @@ func testAccCheckDestinationExists(resourceName string, destination *lightstep.D
 	}
 }
 
-func testAccDestinationDestroy(s *terraform.State) error {
+func testAccWebhookDestinationDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
 	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "destination" {
+		if resource.Type != "lightstep_webhook_destination" {
 			continue
 		}
 
-		s, err := conn.GetDestination(project, resource.Primary.ID)
+		s, err := conn.GetDestination(test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Destination with ID (%v) still exists.", resource.Primary.ID)

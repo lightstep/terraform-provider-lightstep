@@ -8,13 +8,13 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func resourceDestination() *schema.Resource {
+func resourceWebhookDestination() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDestinationCreate,
-		Read:   resourceDestinationRead,
-		Delete: resourceDestinationDelete,
+		Create: resourceWebhookDestinationCreate,
+		Read:   resourceWebhookDestinationRead,
+		Delete: resourceWebhookDestinationDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceDestinationImport,
+			State: resourceWebhookDestinationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -22,18 +22,18 @@ func resourceDestination() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-			"destination_type": {
+			"destination_name": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-			"destination_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"url": {
 				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"custom_headers": {
+				Type:     schema.TypeMap,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -41,109 +41,48 @@ func resourceDestination() *schema.Resource {
 	}
 }
 
-func resourceDestinationCreate(d *schema.ResourceData, m interface{}) error {
+func resourceWebhookDestinationCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	err := validateAttributesForType(d)
-	if err != nil {
-		return err
+
+	dest := lightstep.Destination{
+		Type: "destination",
 	}
 
-	attributes, err := getDestinationAttributesForType(d)
-	if err != nil {
-		return err
+	attrs := lightstep.WebhookAttributes{
+		Name:            d.Get("destination_name").(string),
+		DestinationType: "webhook",
+		URL:             d.Get("url").(string),
 	}
 
-	destination, err := client.CreateDestination(
-		d.Get("project_name").(string),
-		d.Get("destination_type").(string),
-		attributes)
+	headers, ok := d.GetOk("custom_headers")
+	if ok {
+		attrs.CustomHeaders = headers.(map[string]interface{})
+	}
+
+	dest.Attributes = attrs
+
+	destination, err := client.CreateDestination(d.Get("project_name").(string), dest)
 	if err != nil {
 		return fmt.Errorf("Error creating %v.\nErr:%v\n", destination, err)
 	}
 
 	d.SetId(destination.ID)
-	return resourceDestinationRead(d, m)
+	return resourceWebhookDestinationRead(d, m)
 }
 
-func getRequiredAttributesForType(destType string) []string {
-	destinationTypeToAttributes := map[string][]string{
-		"webhook": {
-			"destination_name",
-			"url",
-		},
-		"pagerduty": {
-			"integration_key",
-			"destination_name",
-		},
-		"slack": {
-			"channel",
-			"scope",
-		},
-	}
-	return destinationTypeToAttributes[destType]
-
-}
-
-// performing validation of attributes for type here since
-// terraform's ValidateFunc does not allow you to inspect other fields
-func validateAttributesForType(d *schema.ResourceData) error {
-	requiredAttributes := map[string][]string{
-		"webhook": {
-			"destination_name",
-			"url",
-		},
-		"pagerduty": {
-			"integration_key",
-			"destination_name",
-		},
-		"slack": {
-			"channel",
-			"scope",
-		},
-	}
-
-	destinationType := d.Get("destination_type").(string)
-	requiredAttrForType := requiredAttributes[destinationType]
-	for _, attr := range requiredAttrForType {
-		_, ok := d.GetOk(attr)
-		if !ok {
-			return fmt.Errorf("Missing required attribute %v for destination type %v", attr, destinationType)
-		}
-	}
-	return nil
-}
-
-func getDestinationAttributesForType(d *schema.ResourceData) (map[string]interface{}, error) {
-	destinationType := d.Get("destination_type").(string)
-
-	attributes := map[string]interface{}{}
-
-	requiredAttrs := getRequiredAttributesForType(destinationType)
-	for _, attr := range requiredAttrs {
-		v, ok := d.GetOk(attr)
-		if !ok {
-			return nil, fmt.Errorf("Missing required parameter %v. Got: %v\n", attr, v)
-		}
-		attributes[attr] = v
-	}
-
-	return attributes, nil
-
-}
-
-func resourceDestinationRead(d *schema.ResourceData, m interface{}) error {
+func resourceWebhookDestinationRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	_, err := client.GetDestination(d.Get("project_name").(string), d.Id())
 	return err
 }
 
-func resourceDestinationDelete(d *schema.ResourceData, m interface{}) error {
+func resourceWebhookDestinationDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	err := client.DeleteDestination(d.Get("project_name").(string), d.Id())
 	return err
 }
 
-func resourceDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*lightstep.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -157,22 +96,16 @@ func resourceDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema
 		return []*schema.ResourceData{}, err
 	}
 	d.SetId(c.ID)
-	d.Set("project_name", project)    // nolint  these values are fetched from LS
-	d.Set("destination_type", c.Type) // nolint  and known to be valid
-	destinationType := d.Get("destination_type").(string)
-	requiredAttrs := getRequiredAttributesForType(destinationType)
 
-	terraformAttributes := map[string]string{}
-	var attributes = map[string]interface{}{}
-	for _, attr := range requiredAttrs {
-		v, ok := terraformAttributes[attr]
-		if !ok {
-			return []*schema.ResourceData{}, fmt.Errorf("Missing required parameter %v. Got: %v\n", attr, v)
-		}
-		attributes[attr] = v
+	attributes := c.Attributes.(map[string]interface{})
+
+	d.Set("project_name", project)                // nolint  these values are fetched from LS
+	d.Set("destination_name", attributes["name"]) // nolint  and known to be valid
+	d.Set("url", attributes["url"])               // nolint
+
+	if len(attributes["custom_headers"].(map[string]interface{})) > 0 {
+		d.Set("custom_headers", attributes["custom_headers"]) // nolint
 	}
-
-	d.Set("attributes", attributes) //no lint
 
 	return []*schema.ResourceData{d}, nil
 }
