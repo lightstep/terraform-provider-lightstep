@@ -54,12 +54,13 @@ resource "lightstep_condition" "beemo_ops" {
   expression = "ops < 100"
   evaluation_window_ms = 1200000 # 20 minutes
   stream_id = lightstep_stream.beemo.id
-}
 
+}
 
 #############################################################
 # Destinations
 #############################################################
+
 
 resource "lightstep_webhook_destination" "webhook" {
   project_name     = var.project
@@ -72,4 +73,3 @@ resource "lightstep_webhook_destination" "webhook" {
   }
 
 }
-

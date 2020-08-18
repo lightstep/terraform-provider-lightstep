@@ -18,7 +18,7 @@ type Destination struct {
 	ID         string      `json:"id"`
 }
 
-type webhookAttributes struct {
+type WebhookAttributes struct {
 	Name            string                 `json:"name"`
 	DestinationType string                 `json:"destination_type"`
 	URL             string                 `json:"url"`
