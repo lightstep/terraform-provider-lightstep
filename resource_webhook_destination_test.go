@@ -14,11 +14,10 @@ import (
 func TestAccWebhookDestination(t *testing.T) {
 	var destination lightstep.Destination
 
-	missingDestination := `
+	missingExpressionConfig := `
 resource "lightstep_webhook_destination" "missing_webhook" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   destination_name = "alert-scraper"
-  url = "https://www.alert-scraper.com"
 }
 `
 
@@ -39,11 +38,11 @@ resource "lightstep_webhook_destination" "webhook" {
 		CheckDestroy: testAccWebhookDestinationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: missingDestination,
+				Config: missingExpressionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.missing_webhook", &destination),
 				),
-				ExpectError: regexp.MustCompile("Not found:"),
+				ExpectError: regexp.MustCompile("Missing required argument: The argument \"url\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,
