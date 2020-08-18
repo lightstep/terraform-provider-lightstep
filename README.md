@@ -77,7 +77,7 @@ To import a condition:
 #### Webhook Destination
 
 ```
-resource "lightstep_destination" "my_destination" {
+resource "lightstep_webhook_destination" "my_destination" {
      project_name = var.project
      destination_name = "NAME OF DESTINATION"
      url = "https://www.YOUR-URL.net"
