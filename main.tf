@@ -61,7 +61,6 @@ resource "lightstep_condition" "beemo_ops" {
 # Destinations
 #############################################################
 
-
 resource "lightstep_webhook_destination" "webhook" {
   project_name     = var.project
   destination_name = "my svc"
