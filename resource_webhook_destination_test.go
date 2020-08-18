@@ -19,8 +19,6 @@ resource "lightstep_webhook_destination" "missing_webhook" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   destination_name = "alert-scraper"
   url = "https://www.alert-scraper.com"
-  destination_type="webhook"
-
 }
 `
 
@@ -29,12 +27,10 @@ resource "lightstep_webhook_destination" "webhook" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   destination_name = "very important webhook"
   url = "https://www.downforeveryoneorjustme.com"
-  destination_type="webhook"
   custom_headers = {
   	"header_1" = "value_1"
     "header_2" = "value_2"
   }
-
 }
 `
 	resource.Test(t, resource.TestCase{
@@ -45,16 +41,16 @@ resource "lightstep_webhook_destination" "webhook" {
 			{
 				Config: missingDestination,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebhookDestinationExists("lightstep_destination.missing_webhook", &destination),
+					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.missing_webhook", &destination),
 				),
-				ExpectError: regexp.MustCompile("config is invalid"),
+				ExpectError: regexp.MustCompile("Not found:"),
 			},
 			{
 				Config: destinationConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckWebhookDestinationExists("lightstep_destination.webhook", &destination),
-					resource.TestCheckResourceAttr("lightstep_destination.webhook", "destination_name", "very important webhook"),
-					resource.TestCheckResourceAttr("lightstep_destination.webhook", "url", "https://www.downforeveryoneorjustme.com"),
+					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.webhook", &destination),
+					resource.TestCheckResourceAttr("lightstep_webhook_destination.webhook", "destination_name", "very important webhook"),
+					resource.TestCheckResourceAttr("lightstep_webhook_destination.webhook", "url", "https://www.downforeveryoneorjustme.com"),
 				),
 			},
 		},
@@ -69,18 +65,18 @@ func TestAccWebhookDestinationImport(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource "lightstep_webhook_destination" "webhook"
+resource "lightstep_webhook_destination" "webhook" {
 	project_name = "terraform-provider-tests"
 	destination_name = "do-not-delete"
 	url = "https://www.this-is-for-the-integration-tests.com"
-	destination_type = "webhook"
     custom_headers = {
 	  "allow-all" = "forever"
     }
+}
 `,
 			},
 			{
-				ResourceName:        "lightstep_destination.webhook",
+				ResourceName:        "lightstep_webhook_destination.webhook",
 				ImportState:         true,
 				ImportStateVerify:   true,
 				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
