@@ -25,10 +25,11 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"lightstep_dashboard":           resourceDashboard(),
-			"lightstep_stream":              resourceStream(),
-			"lightstep_condition":           resourceCondition(),
-			"lightstep_webhook_destination": resourceWebhookDestination(),
+			"lightstep_dashboard":             resourceDashboard(),
+			"lightstep_stream":                resourceStream(),
+			"lightstep_condition":             resourceCondition(),
+			"lightstep_webhook_destination":   resourceWebhookDestination(),
+			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 		},
 
 		ConfigureFunc:    configureProvider,
