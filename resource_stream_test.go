@@ -2,22 +2,23 @@ package main
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 	"os"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-const project = "terraform-provider-tests"
+const test_project = "terraform-provider-tests"
 
 func TestAccStream(t *testing.T) {
 	var stream lightstep.Stream
 
 	badQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Errors (All)"
   query = "error = true"
 }
@@ -25,7 +26,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	streamConfig := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Aggie Errors"
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
 }
@@ -33,7 +34,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Errors (All)"
   query = "\"error\" IN (\"true\")"
 }
@@ -89,7 +90,7 @@ resource "lightstep_stream" "import-stream"{
 				ResourceName:        "lightstep_stream.import-stream",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
 			},
 		},
 	})
@@ -109,7 +110,7 @@ func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) res
 
 		// get stream from LS
 		client := testAccProvider.Meta().(*lightstep.Client)
-		str, err := client.GetStream(project, tfStream.Primary.ID)
+		str, err := client.GetStream(test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -129,7 +130,7 @@ func testAccStreamDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetStream(project, resource.Primary.ID)
+		s, err := conn.GetStream(test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Stream with ID (%v) still exists.", resource.Primary.ID)
