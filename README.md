@@ -72,6 +72,30 @@ resource "lightstep_condition" "beemo_errors" {
 To import a condition:
 `terraform import lightstep_stream.<resource name> project.conditionID`
 
+## Destinations
+
+#### Webhook Destination
+
+```
+resource "lightstep_webhook_destination" "my_destination" {
+     project_name = var.project
+     destination_name = "NAME OF DESTINATION"
+     url = "https://www.YOUR-URL.net"
+     destination_type = "webhook"
+     custom_headers = {
+       "Access-Control-Max-Age" = "120"
+     }
+   }
+```
+
+To import a destination:
+`terraform import lightstep_destination.<resource_name> <project>.destinationID`
+
+
+## Testing
+The integration tests create, update, and destroy real resources in a dedicated project in public terraform-provider-tests
+[project link](https://app.lightstep.com/terraform-provider-tests/service-directory/android/deployments)
+
 ## TODO
 * Streams 
   * Update - What does it mean to change the stream query in the TF file? Is the previous stream no longer required and should be deleted (AS-IS)?
@@ -83,5 +107,6 @@ To import a condition:
   * Rate limiting - when resources are created in parallel, might run into rate limits
   * 500 error for lock when streams are being created
 * SDK - Separate into a repo
+
 
 

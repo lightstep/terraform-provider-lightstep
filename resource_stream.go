@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"strings"
-	"time"
 )
 
 func resourceStream() *schema.Resource {
@@ -30,6 +31,7 @@ func resourceStream() *schema.Resource {
 			"query": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"custom_data": {
 				Type:     schema.TypeMap,

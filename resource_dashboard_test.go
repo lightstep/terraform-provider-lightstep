@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"regexp"
-	"testing"
 )
 
 func TestAccDashboard(t *testing.T) {
@@ -14,7 +15,7 @@ func TestAccDashboard(t *testing.T) {
 
 	missingStream := `
 resource "lightstep_dashboard" "customer_charges" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   dashboard_name = "All Non-BEEMO Charges"
   stream_ids = [lightstep_stream.non_beemo.id]
 }
@@ -28,20 +29,20 @@ resource "lightstep_stream" "non_beemo" {
 }
 
 resource "lightstep_dashboard" "customer_charges" {
- project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+ project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
  dashboard_name = "All Non-BEEMO Charges"
  stream_ids = [lightstep_stream.non_beemo.id]
 }
 `
 	updatedNameDashboard := `
 resource "lightstep_stream" "non_beemo" {
- project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+ project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Non-BEEMO charges"
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
 }
 
 resource "lightstep_dashboard" "customer_charges" {
- project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+ project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
  dashboard_name = "Customer Charges"
  stream_ids = [lightstep_stream.non_beemo.id]
 }
@@ -95,7 +96,7 @@ resource "lightstep_dashboard" "ingress" {
 				ResourceName:        "lightstep_dashboard.ingress",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
 			},
 		},
 	})
@@ -115,7 +116,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashb
 
 		// get dashboard from LS
 		client := testAccProvider.Meta().(*lightstep.Client)
-		d, err := client.GetDashboard(project, tfStream.Primary.ID)
+		d, err := client.GetDashboard(test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -135,7 +136,7 @@ func testAccDashboardDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDashboard(project, resource.Primary.ID)
+		s, err := conn.GetDashboard(test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Dashboard with ID (%v) still exists.", resource.Primary.ID)

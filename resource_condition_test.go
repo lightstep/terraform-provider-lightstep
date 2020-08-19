@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"regexp"
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"regexp"
-	"testing"
 )
 
 func TestAccCondition(t *testing.T) {
@@ -14,13 +15,13 @@ func TestAccCondition(t *testing.T) {
 
 	conditionConfig := `
 resource "lightstep_stream" "beemo" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "BEEMO charges"
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
 resource "lightstep_condition" "beemo_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Charge errors for BEEMO"
   expression = "err > .4"
   evaluation_window_ms = 300000
@@ -30,13 +31,13 @@ resource "lightstep_condition" "beemo_errors" {
 
 	updatedConfig := `
 resource "lightstep_stream" "beemo" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "BEEMO charges"
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
 resource "lightstep_condition" "beemo_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Payment Errors for BEEMO"
   expression = "err > .2"
   evaluation_window_ms = 500000
@@ -45,13 +46,13 @@ resource "lightstep_condition" "beemo_errors" {
 `
 	badExpressionConfig := `
 resource "lightstep_stream" "beemo" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "BEEMO charges"
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
 resource "lightstep_condition" "beemo_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Charge errors for BEEMO"
   expression = "err > 1.4"
   evaluation_window_ms = 300000
@@ -112,7 +113,7 @@ resource "lightstep_condition" "import-cond" {
 				ResourceName:        "lightstep_condition.import-cond",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
 			},
 		},
 	})
@@ -130,7 +131,7 @@ func testAccCheckConditionExists(resourceName string, condition *lightstep.Condi
 		}
 
 		client := testAccProvider.Meta().(*lightstep.Client)
-		cond, err := client.GetCondition(project, tfCondition.Primary.ID)
+		cond, err := client.GetCondition(test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -149,7 +150,7 @@ func testAccConditionDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetCondition(project, resource.Primary.ID)
+		s, err := conn.GetCondition(test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Condition with ID (%v) still exists.", resource.Primary.ID)
