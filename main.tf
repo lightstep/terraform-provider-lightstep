@@ -2,10 +2,10 @@ variable "project" {
   type    = string
   default = "YOUR-PROJECT-NAME-HERE"
 }
-//
-//#############################################################
-//# Streams
-//#############################################################
+
+##############################################################
+## Streams
+##############################################################
 resource "lightstep_stream" "non_beemo" {
   project_name = var.project
   stream_name = "Non-BEEMO charges"
@@ -18,9 +18,9 @@ resource "lightstep_stream" "beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
-//#############################################################
-//# Dashboards
-//#############################################################
+##############################################################
+## Dashboards
+##############################################################
 
 resource "lightstep_dashboard" "customer_charges" {
   project_name = var.project
@@ -28,9 +28,9 @@ resource "lightstep_dashboard" "customer_charges" {
   stream_ids = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
 
-//#############################################################
-//# Conditions
-//#############################################################
+##############################################################
+## Conditions
+##############################################################
 
 resource "lightstep_condition" "beemo_errors" {
   project_name = var.project
