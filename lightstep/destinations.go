@@ -25,6 +25,11 @@ type PagerdutyAttributes struct {
 	DestinationType string `json:"destination_type"`
 }
 
+type SlackAttributes struct {
+	Channel         string `json:"channel"`
+	DestinationType string `json:"destination_type"`
+}
+
 func (c *Client) CreateDestination(
 	project string,
 	destination Destination) (Destination, error) {
