@@ -63,7 +63,7 @@ func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) (
 
 	ids, err := splitID(d.Id())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	project, id := ids[0], ids[1]
