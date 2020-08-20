@@ -14,36 +14,43 @@ import (
 func TestAccSlackDestination(t *testing.T) {
 	var destination lightstep.Destination
 
-	missingExpressionConfig := `
-resource "lightstep_slack_destination" "missing_channel" {
-  project_name = "terraform-provider-tests"
-}
-`
+	//	destinationConfig := `
+	//resource "lightstep_slack_destination" "slack" {
+	// project_name = "terraform-provider-tests"
+	// channel = "#emergency-room"
+	//}
+	//`
 
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
+	project_name = "terraform-provider-tests"
+	channel = "#emergency-room"
 }
 `
+	missingExpressionConfig := `
+	resource "lightstep_slack_destination" "missing_channel" {
+	project_name = "terraform-provider-tests"
+	}
+	`
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccSlackDestinationDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: missingExpressionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSlackDestinationExists("lightstep_slack_destination.missing_channel", &destination),
-				),
-				ExpectError: regexp.MustCompile("Missing required argument: The argument \"channel\" is required, but no definition was found."),
-			},
-			{
 				Config: destinationConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSlackDestinationExists("lightstep_slack_destination.slack", &destination),
 					resource.TestCheckResourceAttr("lightstep_slack_destination.slack", "channel", "#emergency-room"),
 				),
+			},
+			{
+				Config: missingExpressionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSlackDestinationExists("lightstep_slack_destination.missing_channel", &destination),
+				),
+				ExpectError: regexp.MustCompile("Missing required argument: The argument \"channel\" is required, but no definition was found."),
 			},
 		},
 	})
@@ -58,8 +65,8 @@ func TestAccSlackDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_slack_destination" "imported" {
-  project_name = "terraform-provider-tests"
-  channel = "#terraform-provider-acceptance-tests"
+ project_name = "terraform-provider-tests"
+ channel = "#terraform-provider-acceptance-tests"
 }
 `,
 			},
@@ -97,18 +104,19 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *lights
 	}
 }
 
+// WHY ISN't DESTROY WORKING
+
 func testAccSlackDestinationDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
-	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "lightstep_slack_destination" {
+	for _, r := range s.RootModule().Resources {
+		if r.Type != "lightstep_slack_destination" {
 			continue
 		}
 
-		s, err := conn.GetDestination(test_project, resource.Primary.ID)
+		_, err := conn.GetDestination(test_project, r.Primary.ID)
 		if err == nil {
-			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Destination with ID (%v) still exists.", resource.Primary.ID)
-			}
+			return fmt.Errorf("Destination with ID (%v) still exists.", r.Primary.ID)
+
 		}
 
 	}

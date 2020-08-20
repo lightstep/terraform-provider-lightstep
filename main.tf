@@ -78,3 +78,8 @@ resource "lightstep_pagerduty_destination" "pd" {
   destination_name = "My Destination"
   integration_key = "eec7e430f6gd489b8e91ebcae17a3f42"
 }
+
+resource "lightstep_slack_destination" "slack" {
+  project_name = var.project
+  channel = "#urgent-care"
+}

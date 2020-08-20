@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
@@ -18,14 +17,16 @@ func resourceSlackDestination() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Lightstep project name",
 			},
 			"channel": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Slack channel name. Either #channel or @handle.",
 			},
 		},
 	}
@@ -57,9 +58,9 @@ func resourceSlackDestinationCreate(d *schema.ResourceData, m interface{}) error
 func resourceSlackDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*lightstep.Client)
 
-	ids := strings.Split(d.Id(), ".")
-	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_slack_destination. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
+	ids, err := splitID(d.Id())
+	if err != nil {
+		return nil, err
 	}
 
 	project, id := ids[0], ids[1]
