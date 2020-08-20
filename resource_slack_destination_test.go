@@ -29,20 +29,20 @@ resource "lightstep_slack_destination" "slack" {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccPagerdutyDestinationDestroy,
+		CheckDestroy: testAccSlackDestinationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: missingExpressionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerdutyDestinationExists("lightstep_slack_destination.missing_channel", &destination),
+					testAccCheckSlackDestinationExists("lightstep_slack_destination.missing_channel", &destination),
 				),
 				ExpectError: regexp.MustCompile("Missing required argument: The argument \"channel\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerdutyDestinationExists("lightstep_slack_destination.pagerduty", &destination),
-					resource.TestCheckResourceAttr("lightstep_slack_destination.pagerduty", "channel", "#emergency-room"),
+					testAccCheckSlackDestinationExists("lightstep_slack_destination.slack", &destination),
+					resource.TestCheckResourceAttr("lightstep_slack_destination.slack", "channel", "#emergency-room"),
 				),
 			},
 		},
@@ -59,7 +59,7 @@ func TestAccSlackDestinationImport(t *testing.T) {
 				Config: `
 resource "lightstep_slack_destination" "imported" {
   project_name = "terraform-provider-tests"
-  channel = "@pbernier"
+  channel = "#terraform-provider-acceptance-tests"
 }
 `,
 			},
