@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
@@ -18,19 +17,22 @@ func resourcePagerdutyDestination() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Lightstep project name",
 			},
 			"destination_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Lightstep destination name",
 			},
 			"integration_key": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "PagerDuty Service Integration Key. To create one follow the docs here - https://support.pagerduty.com/docs/services-and-integrations#add-integrations-to-an-existing-service",
 			},
 		},
 	}
@@ -59,9 +61,9 @@ func resourcePagerdutyDestinationCreate(d *schema.ResourceData, m interface{}) e
 func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*lightstep.Client)
 
-	ids := strings.Split(d.Id(), ".")
-	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_pagerduty_destination. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
+	ids, err := splitID(d.Id())
+	if err != nil {
+		return err
 	}
 
 	project, id := ids[0], ids[1]

@@ -20,7 +20,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_ORG", nil),
-				Description: "The name of the Lighstep organization",
+				Description: "The name of the Lightstep organization",
 			},
 		},
 
