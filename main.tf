@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "YOUR STAGING PROJECT HERE"
+  default = "YOUR PROJECT HERE"
 }
 
 ##############################################################
@@ -57,9 +57,9 @@ resource "lightstep_condition" "beemo_ops" {
 }
 
 
-//#############################################################
-//# Destinations
-//#############################################################
+##############################################################
+## Destinations
+##############################################################
 
 resource "lightstep_webhook_destination" "webhook" {
   project_name     = var.project
