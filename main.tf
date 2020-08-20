@@ -1,6 +1,6 @@
 variable "project" {
   type    = string
-  default = "YOUR STAGING PROJECT HERE"
+  default = "YOUR PROJECT HERE"
 }
 
 ##############################################################
