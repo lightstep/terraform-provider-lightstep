@@ -1,3 +1,8 @@
+provider "lightstep" {
+  host = "https://api.lightstep.com/public/v0.2"
+  organization = "LightStep"
+}
+
 variable "project" {
   type    = string
   default = "YOUR PROJECT HERE"
