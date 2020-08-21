@@ -1,5 +1,6 @@
 provider "lightstep" {
-  host = "public"
+  environment = "staging"
+  api_key_env_var = "LIGHTSTEP_STAGING_API_KEY"
   organization = "LightStep"
 }
 
