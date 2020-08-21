@@ -11,8 +11,8 @@ import (
 func resourceWebhookDestination() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceWebhookDestinationCreate,
-		Read:   resourceWebhookDestinationRead,
-		Delete: resourceWebhookDestinationDelete,
+		Read:   resourceDestinationRead,
+		Delete: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceWebhookDestinationImport,
 		},
@@ -67,19 +67,7 @@ func resourceWebhookDestinationCreate(d *schema.ResourceData, m interface{}) err
 	}
 
 	d.SetId(destination.ID)
-	return resourceWebhookDestinationRead(d, m)
-}
-
-func resourceWebhookDestinationRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-	_, err := client.GetDestination(d.Get("project_name").(string), d.Id())
-	return err
-}
-
-func resourceWebhookDestinationDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-	err := client.DeleteDestination(d.Get("project_name").(string), d.Id())
-	return err
+	return resourceDestinationRead(d, m)
 }
 
 func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -87,7 +75,7 @@ func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_webhook_destination. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
