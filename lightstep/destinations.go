@@ -6,14 +6,6 @@ import (
 	"net/http"
 )
 
-type DestinationType string
-
-const (
-	PAGERDUTY_DESTINATION_TYPE DestinationType = "pagerduty"
-	WEBHOOK_DESTINATION_TYPE   DestinationType = "webhook"
-	SLACK_DESTINATION_TYPE     DestinationType = "slack"
-)
-
 type Destination struct {
 	Type       string      `json:"type"`
 	Attributes interface{} `json:"attributes"`
@@ -22,9 +14,15 @@ type Destination struct {
 
 type WebhookAttributes struct {
 	Name            string                 `json:"name"`
-	DestinationType DestinationType        `json:"destination_type"`
+	DestinationType string                 `json:"destination_type"`
 	URL             string                 `json:"url"`
 	CustomHeaders   map[string]interface{} `json:"custom_headers,omitempty"`
+}
+
+type PagerdutyAttributes struct {
+	Name            string `json:"name"`
+	IntegrationKey  string `json:"integration_key"`
+	DestinationType string `json:"destination_type"`
 }
 
 func (c *Client) CreateDestination(
