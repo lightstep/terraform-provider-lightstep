@@ -1,5 +1,5 @@
 provider "lightstep" {
-  host = "https://api.lightstep.com"
+  host = "https://api.lightstep.com/public/v0.2"
   organization = "LightStep"
 }
 
