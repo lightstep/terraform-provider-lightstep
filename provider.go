@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -22,10 +24,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_ORG", nil),
 				Description: "The name of the Lightstep organization",
 			},
-			"host": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_HOST", "https://api.lightstep.com/public/v0.2"),
+			"environment": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "public",
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^(staging|meta|public)$`), "Must be one of: staging, meta, public"),
+				Description:  "The name of the Lightstep environment, must be one of: staging, meta, public.",
 			},
 		},
 
@@ -47,6 +51,7 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		context.Background(),
 		d.Get("api_key").(string),
 		d.Get("organization").(string),
+		d.Get("environment").(string),
 	)
 
 	return client, nil

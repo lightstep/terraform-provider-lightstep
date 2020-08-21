@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 type Headers map[string]string
@@ -50,16 +49,18 @@ type Client struct {
 }
 
 // NewClient gets a client for the public API
-func NewClient(ctx context.Context, apiKey string, orgName string) *Client {
-	baseUrl := os.Getenv("LIGHTSTEP_HOST")
-	if baseUrl == "" {
-		baseUrl = "https://api.lightstep.com/public/v0.2"
+func NewClient(ctx context.Context, apiKey string, orgName string, env string) *Client {
+	var baseURL string
+
+	if env == "public" {
+		baseURL = fmt.Sprintf("https://api.lightstep.com/public/v0.2/%v", orgName)
+	} else {
+		baseURL = fmt.Sprintf("https://api-%v.lightstep.com/public/v0.2/%v", env, orgName)
 	}
-	baseURLWithOrg := fmt.Sprintf("%v/%v", baseUrl, orgName)
 
 	return &Client{
 		apiKey:      apiKey,
-		baseURL:     baseURLWithOrg,
+		baseURL:     baseURL,
 		client:      http.DefaultClient,
 		contentType: "application/vnd.api+json",
 	}
