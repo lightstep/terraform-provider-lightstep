@@ -14,13 +14,6 @@ import (
 func TestAccSlackDestination(t *testing.T) {
 	var destination lightstep.Destination
 
-	//	destinationConfig := `
-	//resource "lightstep_slack_destination" "slack" {
-	// project_name = "terraform-provider-tests"
-	// channel = "#emergency-room"
-	//}
-	//`
-
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
 	project_name = "terraform-provider-tests"
