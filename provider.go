@@ -22,6 +22,11 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_ORG", nil),
 				Description: "The name of the Lightstep organization",
 			},
+			"host": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_HOST", "https://api.lightstep.com/public/v0.2"),
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
