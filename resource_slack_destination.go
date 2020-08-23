@@ -10,7 +10,7 @@ import (
 func resourceSlackDestination() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceSlackDestinationCreate,
-		Read:   resourceDestinationRead,
+		Read:   resourceSlackDestinationRead,
 		Delete: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceSlackDestinationImport,
@@ -26,25 +26,35 @@ func resourceSlackDestination() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Slack channel name. Either #channel or @handle.",
+				Description: "One of: slack channel name (#channel), channel ID, handle name (@user).",
 			},
 		},
 	}
+}
+func resourceSlackDestinationRead(d *schema.ResourceData, m interface{}) error {
+	client := m.(*lightstep.Client)
+	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
+	if err != nil {
+		return fmt.Errorf("failed to get destination %v. Err: %v\n", d.Id(), err)
+	}
+
+	channel := dest.Attributes.(map[string]interface{})["channel"]
+	err = d.Set("channel", channel)
+	return err
+
 }
 
 func resourceSlackDestinationCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	dest := lightstep.Destination{
-		Type: "destination",
-	}
-
 	attrs := lightstep.SlackAttributes{
 		Channel:         d.Get("channel").(string),
 		DestinationType: "slack",
 	}
-
-	dest.Attributes = attrs
+	dest := lightstep.Destination{
+		Type:       "destination",
+		Attributes: attrs,
+	}
 
 	destination, err := client.CreateDestination(d.Get("project_name").(string), dest)
 	if err != nil {

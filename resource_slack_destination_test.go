@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -16,16 +15,10 @@ func TestAccSlackDestination(t *testing.T) {
 
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
-	project_name = "terraform-provider-tests"
-	channel = "#emergency-room"
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
 }
 `
-	missingExpressionConfig := `
-	resource "lightstep_slack_destination" "missing_channel" {
-	project_name = "terraform-provider-tests"
-	}
-	`
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -37,13 +30,6 @@ resource "lightstep_slack_destination" "slack" {
 					testAccCheckSlackDestinationExists("lightstep_slack_destination.slack", &destination),
 					resource.TestCheckResourceAttr("lightstep_slack_destination.slack", "channel", "#emergency-room"),
 				),
-			},
-			{
-				Config: missingExpressionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSlackDestinationExists("lightstep_slack_destination.missing_channel", &destination),
-				),
-				ExpectError: regexp.MustCompile("Missing required argument: The argument \"channel\" is required, but no definition was found."),
 			},
 		},
 	})
@@ -97,8 +83,6 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *lights
 	}
 }
 
-// WHY ISN't DESTROY WORKING
-
 func testAccSlackDestinationDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
 	for _, r := range s.RootModule().Resources {
@@ -106,12 +90,12 @@ func testAccSlackDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := conn.GetDestination(test_project, r.Primary.ID)
+		d, err := conn.GetDestination(test_project, r.Primary.ID)
 		if err == nil {
-			return fmt.Errorf("Destination with ID (%v) still exists.", r.Primary.ID)
-
+			if d.ID == r.Primary.ID {
+				return fmt.Errorf("Destination with ID (%v) still exists.", r.Primary.ID)
+			}
 		}
-
 	}
 	return nil
 }
