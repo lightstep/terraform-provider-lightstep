@@ -70,27 +70,38 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetStream(
+	s, err := client.GetStream(
 		d.Get("project_name").(string),
 		d.Id(),
 	)
 	if err != nil {
 		return err
 	}
+	d.Set("stream_name", s.Attributes.Name)       // nolint
+	d.Set("custom_data", s.Attributes.CustomData) // nolint
+	d.Set("query", s.Attributes.Query)            // nolint
 	return nil
 }
 
 func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	if d.HasChange("query") {
-		if err := client.DeleteStream(
-			d.Get("project_name").(string),
-			d.Id(),
-		); err != nil {
-			return err
-		}
+
+	s := lightstep.Stream{
+		Type: "stream",
+		ID:   d.Id(),
 	}
-	return resourceStreamCreate(d, m)
+
+	if d.HasChange("stream_name") {
+		s.Attributes.Name = d.Get("stream_name").(string)
+	}
+
+	_, err := client.UpdateStream(d.Get("project_name").(string),
+		d.Id(), s)
+	if err != nil {
+		return err
+	}
+
+	return resourceStreamRead(d, m)
 }
 
 func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {

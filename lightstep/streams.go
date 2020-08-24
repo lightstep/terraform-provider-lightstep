@@ -95,6 +95,30 @@ func (c *Client) GetStream(projectName string, StreamID string) (Stream, error) 
 	return s, err
 }
 
+func (c *Client) UpdateStream(projectName string,
+	streamID string,
+	stream Stream,
+) (Stream, error) {
+
+	var (
+		s    Stream
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(&stream)
+	if err != nil {
+		return s, err
+	}
+
+	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/streams/%v", projectName, streamID), Envelope{Data: bytes}, &resp)
+	if err != nil {
+		return s, err
+	}
+
+	err = json.Unmarshal(resp.Data, &s)
+	return s, err
+}
+
 func (c *Client) DeleteStream(projectName string, StreamID string) error {
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, nil)
 	if err != nil {
