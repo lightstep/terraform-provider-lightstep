@@ -1,9 +1,10 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"testing"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider
