@@ -1,5 +1,6 @@
 provider "lightstep" {
-  host = "https://api.lightstep.com/public/v0.2"
+  environment = "staging"
+  api_key_env_var = "LIGHTSTEP_STAGING_API_KEY"
   organization = "LightStep"
 }
 
@@ -82,4 +83,9 @@ resource "lightstep_pagerduty_destination" "pd" {
   project_name = var.project
   destination_name = "My Destination"
   integration_key = "eec7e430f6gd489b8e91ebcae17a3f42"
+}
+
+resource "lightstep_slack_destination" "slack" {
+  project_name = var.project
+  channel = "#urgent-care"
 }

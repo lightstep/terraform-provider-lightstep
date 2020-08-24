@@ -25,6 +25,11 @@ type PagerdutyAttributes struct {
 	DestinationType string `json:"destination_type"`
 }
 
+type SlackAttributes struct {
+	Channel         string `json:"channel"`
+	DestinationType string `json:"destination_type"`
+}
+
 func (c *Client) CreateDestination(
 	project string,
 	destination Destination) (Destination, error) {
@@ -60,7 +65,6 @@ func (c *Client) GetDestination(projectName string, destinationID string) (Desti
 	if err != nil {
 		return dest, err
 	}
-
 	err = json.Unmarshal(resp.Data, &dest)
 
 	return dest, err
