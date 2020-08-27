@@ -2,101 +2,45 @@
 
 ## Getting Started
 * Install Terraform (v0.12)
-* Set LIGHTSTEP_API_KEY & LIGHTSTEP_ORG environment variables
-* Set your project name in the variable block of `main.tf`
-* Build the binary 
-```bash
-
-> mkdir -p ~/.terraform.d/plugins
-> go build -o ~/.terraform.d/plugins/terraform-provider-lightstep
-> terraform init
-> # write/edit your main.tf file schema
-> terraform plan
-> terraform apply
+* Build the binary & initialize
+```
+make build
+tf init
 ```
 
-# TF File Schema
-
-## Global
-Setting the provider block is optional since you can set LIGHTSTEP_ORG & LIGHTSTEP_API_KEY 
-as environment variables.
-
-```terraform
+* Configure a provider block (see main.tf)
+```
 provider "lightstep" {
-  organization = "[ORG NAME]"
-  api_key      = "[API KEY]"
-  
+  environment = (staging|meta|public)
+  api_key_env_var = (environment variable where your LS api key is stored)
+  organization = (organization name)
 }
 ```
 
-## Streams
-
-```terraform
-resource "lightstep_stream" "[STREAM]" {
-  project_name = "${var.project}"
-  stream_name = "STREAM NAME"
-  query = "QUERY"
-}
-```
-
-To import a stream:
-`terraform import lightstep_stream.<resource name> project.streamID`
-
-## Dashboards
-
-```terraform
-resource "lightstep_dashboard" "[DASHBOARD]" {
-  project_name = "${var.project}"
-  dashboard_name = "DASHBOARD NAME"
-  stream_ids = ["STREAM_IDS"]
-
-}
-
-```
-
-To import a dashboard:
-`terraform import lightstep_stream.<resource name> project.dashboardID`
-
-## Conditions
-
-```
-resource "lightstep_condition" "beemo_errors" {
-  project_name = var.project
-  condition_name = "CONDITION NAME"
-  expression = "EXPRESSION"
-  evaluation_window_ms = MS
-  stream_id = "STREAM_ID"
-}
-```
-
-To import a condition:
-`terraform import lightstep_stream.<resource name> project.conditionID`
-
-## Destinations
-
-#### Webhook Destination
-
-```
-resource "lightstep_webhook_destination" "my_destination" {
-     project_name = var.project
-     destination_name = "NAME OF DESTINATION"
-     url = "https://www.YOUR-URL.net"
-     destination_type = "webhook"
-     custom_headers = {
-       "Access-Control-Max-Age" = "120"
-     }
-   }
-```
-
-To import a destination:
-`terraform import lightstep_destination.<resource_name> <project>.destinationID`
+## Repo Overview
+* **.go-version** - the current version of the terraform provider
+* **provider.go** - top level set up for the provider itself, specifies what resources it can manage
+* **resource_X.go** - set up for each resource specifying how to parse the block from terraform and CRUD/import methods
+* **resource_X_test.go** - acceptance test for the resource that will exercise the full functionality creating/modifying/deleting actual resources in the lightstep-terraform-provider project in LightStep-Integration in public.
+* **lightstep/** - client to communicate to LS 
+* **main.tf** - an terraform config file with examples for every resource
+* **scripts/** - catchall dir to hold scripts, currently holds a script needed for a CI check
 
 
 ## Testing
-The integration tests create, update, and destroy real resources in a dedicated project in public terraform-provider-tests
-[project link](https://app.lightstep.com/terraform-provider-tests/service-directory/android/deployments)
+The integration tests create, update, and destroy real resources in a dedicated project in public:
+[terraform-provider-tests](https://app.lightstep.com/terraform-provider-tests/service-directory/android/deployments)
 
-## TODO
+To run the tests, first get an API key with a Member role for the public environment and run:
+```
+LIGHTSTEP_API_KEY=(your api key here) make acc-test
+```
+
+## CI/CD
+Pre merge PR checks are run in Codefresh [PR Checks](https://g.codefresh.io/pipelines/edit/new/builds?id=5f07aca3392ca7de5bfcf4cb&pipeline=PR_Checks&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week)
+Post merge Codefresh kicks off the [Publish](https://g.codefresh.io/pipelines/edit/new/builds?id=5f0e1166bae1587f1e174066&pipeline=Publish&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week) pipeline which builds and uploads the binary to GCS where make install-tools can fetch it.
+
+## TODO 
 * Streams 
   * Update - What does it mean to change the stream query in the TF file? Is the previous stream no longer required and should be deleted (AS-IS)?
 * Dashboards
