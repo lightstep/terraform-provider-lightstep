@@ -36,6 +36,9 @@ To run the tests, first get an API key with a Member role for the public environ
 LIGHTSTEP_API_KEY=(your api key here) make acc-test
 ```
 
+## CI/CD
+Pre merge PR checks are run in Codefresh [PR Checks](https://g.codefresh.io/pipelines/edit/new/builds?id=5f07aca3392ca7de5bfcf4cb&pipeline=PR_Checks&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week)
+Post merge Codefresh kicks off the [Publish](https://g.codefresh.io/pipelines/edit/new/builds?id=5f0e1166bae1587f1e174066&pipeline=Publish&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week) pipeline which builds and uploads the binary to GCS where make install-tools can fetch it.
 
 ## TODO 
 * Streams 
