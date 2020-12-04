@@ -29,7 +29,13 @@ resource "lightstep_stream" "beemo" {
 ##############################################################
 
 resource "lightstep_stream_dashboard" "customer_charges" {
-  project_name   = var.project
+  project_name = var.project
+  dashboard_name = "Customer Charges"
+  stream_ids = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
+}
+
+resource "lightstep_stream_dashboard" "customer_charges" {
+  project_name = var.project
   dashboard_name = "Customer Charges"
   stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
@@ -55,9 +61,9 @@ resource "lightstep_stream_condition" "beemo_latency" {
 }
 
 resource "lightstep_stream_condition" "beemo_ops" {
-  project_name         = var.project
-  condition_name       = "Abnormally low ops for BEEMO charge"
-  expression           = "ops < 100"
+  project_name = var.project
+  condition_name = "Abnormally low ops for BEEMO charge"
+  expression = "ops < 100"
   evaluation_window_ms = 1200000 # 20 minutes
   stream_id            = lightstep_stream.beemo.id
 }
