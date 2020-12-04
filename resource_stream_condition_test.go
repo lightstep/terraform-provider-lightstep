@@ -10,7 +10,7 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func TestAccCondition(t *testing.T) {
+func TestAccStreamCondition(t *testing.T) {
 	var condition lightstep.Condition
 
 	conditionConfig := `
@@ -20,7 +20,7 @@ resource "lightstep_stream" "beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
-resource "lightstep_condition" "beemo_errors" {
+resource "lightstep_stream_condition" "beemo_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Charge errors for BEEMO"
   expression = "err > .4"
@@ -36,7 +36,7 @@ resource "lightstep_stream" "beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
-resource "lightstep_condition" "beemo_errors" {
+resource "lightstep_stream_condition" "beemo_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Payment Errors for BEEMO"
   expression = "err > .2"
@@ -51,7 +51,7 @@ resource "lightstep_stream" "beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" IN (\"BEEMO\")"
 }
 
-resource "lightstep_condition" "beemo_errors" {
+resource "lightstep_stream_condition" "beemo_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Charge errors for BEEMO"
   expression = "err > 1.4"
@@ -62,45 +62,45 @@ resource "lightstep_condition" "beemo_errors" {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccConditionDestroy,
+		CheckDestroy: testAccStreamConditionDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: badExpressionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConditionExists("lightstep_condition.beemo_errors", &condition),
+					testAccCheckStreamConditionExists("lightstep_stream_condition.beemo_errors", &condition),
 				),
 				ExpectError: regexp.MustCompile("InvalidArgument"),
 			},
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConditionExists("lightstep_condition.beemo_errors", &condition),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "condition_name", "Charge errors for BEEMO"),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "expression", "err > .4"),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "evaluation_window_ms", "300000"),
+					testAccCheckStreamConditionExists("lightstep_stream_condition.beemo_errors", &condition),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "condition_name", "Charge errors for BEEMO"),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > .4"),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "evaluation_window_ms", "300000"),
 				),
 			},
 			{
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckConditionExists("lightstep_condition.beemo_errors", &condition),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "condition_name", "Payment Errors for BEEMO"),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "expression", "err > .2"),
-					resource.TestCheckResourceAttr("lightstep_condition.beemo_errors", "evaluation_window_ms", "500000"),
+					testAccCheckStreamConditionExists("lightstep_stream_condition.beemo_errors", &condition),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "condition_name", "Payment Errors for BEEMO"),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > .2"),
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "evaluation_window_ms", "500000"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccConditionImport(t *testing.T) {
+func TestAccStreamConditionImport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource "lightstep_condition" "import-cond" {
+resource "lightstep_stream_condition" "import-cond" {
 	project_name = "terraform-provider-tests"
 	condition_name = "High Ops"
  	expression = "ops > 10000"
@@ -110,7 +110,7 @@ resource "lightstep_condition" "import-cond" {
 `,
 			},
 			{
-				ResourceName:        "lightstep_condition.import-cond",
+				ResourceName:        "lightstep_stream_condition.import-cond",
 				ImportState:         true,
 				ImportStateVerify:   true,
 				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
@@ -119,7 +119,7 @@ resource "lightstep_condition" "import-cond" {
 	})
 }
 
-func testAccCheckConditionExists(resourceName string, condition *lightstep.Condition) resource.TestCheckFunc {
+func testAccCheckStreamConditionExists(resourceName string, condition *lightstep.Condition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -142,7 +142,7 @@ func testAccCheckConditionExists(resourceName string, condition *lightstep.Condi
 }
 
 // confirms conditions created for test have been destroyed
-func testAccConditionDestroy(s *terraform.State) error {
+func testAccStreamConditionDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
 
 	for _, resource := range s.RootModule().Resources {
@@ -156,8 +156,6 @@ func testAccConditionDestroy(s *terraform.State) error {
 				return fmt.Errorf("Condition with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
-
 	}
-
 	return nil
 }

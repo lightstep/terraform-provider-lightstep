@@ -10,11 +10,11 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func TestAccDashboard(t *testing.T) {
+func TestAccStreamDashboard(t *testing.T) {
 	var dashboard lightstep.Dashboard
 
 	missingStream := `
-resource "lightstep_dashboard" "customer_charges" {
+resource "lightstep_stream_dashboard" "customer_charges" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   dashboard_name = "All Non-BEEMO Charges"
   stream_ids = [lightstep_stream.non_beemo.id]
@@ -28,7 +28,7 @@ resource "lightstep_stream" "non_beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
 }
 
-resource "lightstep_dashboard" "customer_charges" {
+resource "lightstep_stream_dashboard" "customer_charges" {
  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
  dashboard_name = "All Non-BEEMO Charges"
  stream_ids = [lightstep_stream.non_beemo.id]
@@ -41,7 +41,7 @@ resource "lightstep_stream" "non_beemo" {
   query = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
 }
 
-resource "lightstep_dashboard" "customer_charges" {
+resource "lightstep_stream_dashboard" "customer_charges" {
  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
  dashboard_name = "Customer Charges"
  stream_ids = [lightstep_stream.non_beemo.id]
@@ -50,42 +50,42 @@ resource "lightstep_dashboard" "customer_charges" {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccDashboardDestroy,
+		CheckDestroy: testAccStreamDashboardDestroy,
 		// each step is akin to running a `terraform apply`
 		Steps: []resource.TestStep{
 			{
 				Config: missingStream,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_dashboard.customer_charges", &dashboard),
+					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
 				),
 				ExpectError: regexp.MustCompile("config is invalid"),
 			},
 			{
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_dashboard.customer_charges", &dashboard),
-					resource.TestCheckResourceAttr("lightstep_dashboard.customer_charges", "dashboard_name", "All Non-BEEMO Charges"),
+					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
+					resource.TestCheckResourceAttr("lightstep_stream_dashboard.customer_charges", "dashboard_name", "All Non-BEEMO Charges"),
 				),
 			},
 			{
 				Config: updatedNameDashboard,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_dashboard.customer_charges", &dashboard),
-					resource.TestCheckResourceAttr("lightstep_dashboard.customer_charges", "dashboard_name", "Customer Charges"),
+					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
+					resource.TestCheckResourceAttr("lightstep_stream_dashboard.customer_charges", "dashboard_name", "Customer Charges"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccDashboardImport(t *testing.T) {
+func TestAccStreamDashboardImport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource "lightstep_dashboard" "ingress" {
+resource "lightstep_stream_dashboard" "ingress" {
 	project_name = "terraform-provider-tests"
  	dashboard_name = "to import"
  	stream_ids = ["CrwM5g63"]
@@ -93,7 +93,7 @@ resource "lightstep_dashboard" "ingress" {
 `,
 			},
 			{
-				ResourceName:        "lightstep_dashboard.ingress",
+				ResourceName:        "lightstep_stream_dashboard.ingress",
 				ImportState:         true,
 				ImportStateVerify:   true,
 				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
@@ -128,7 +128,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashb
 }
 
 // confirms that dashboards created during test run have been destroyed
-func testAccDashboardDestroy(s *terraform.State) error {
+func testAccStreamDashboardDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
 
 	for _, resource := range s.RootModule().Resources {
