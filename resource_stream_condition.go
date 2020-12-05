@@ -45,7 +45,7 @@ func resourceStreamCondition() *schema.Resource {
 func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	condition, err := client.CreateCondition(
+	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
@@ -61,7 +61,7 @@ func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error 
 
 func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetCondition(d.Get("project_name").(string), d.Id())
+	_, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 
 func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	err := client.DeleteCondition(d.Get("project_name").(string), d.Id())
+	err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id())
 	return err
 }
 
@@ -83,7 +83,7 @@ func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error 
 		Expression:         d.Get("expression").(string),
 	}
 
-	_, err := client.UpdateCondition(
+	_, err := client.UpdateStreamCondition(
 		d.Get("project_name").(string),
 		d.Id(),
 		attrs,
@@ -101,7 +101,7 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetCondition(project, id)
+	c, err := client.GetStreamCondition(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

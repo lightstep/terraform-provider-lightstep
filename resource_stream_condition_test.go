@@ -131,7 +131,7 @@ func testAccCheckStreamConditionExists(resourceName string, condition *lightstep
 		}
 
 		client := testAccProvider.Meta().(*lightstep.Client)
-		cond, err := client.GetCondition(test_project, tfCondition.Primary.ID)
+		cond, err := client.GetStreamCondition(test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -150,7 +150,7 @@ func testAccStreamConditionDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetCondition(test_project, resource.Primary.ID)
+		s, err := conn.GetStreamCondition(test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Condition with ID (%v) still exists.", resource.Primary.ID)

@@ -35,7 +35,7 @@ type Links struct {
 	Self    string `json:"self"`
 }
 
-func (c *Client) CreateCondition(
+func (c *Client) CreateStreamCondition(
 	projectName string,
 	conditionName string,
 	expression string,
@@ -78,7 +78,7 @@ func (c *Client) CreateCondition(
 	return cond, err
 }
 
-func (c *Client) UpdateCondition(
+func (c *Client) UpdateStreamCondition(
 	projectName string,
 	conditionID string,
 	attributes StreamConditionAttributes,
@@ -113,7 +113,7 @@ func (c *Client) UpdateCondition(
 	return cond, err
 }
 
-func (c *Client) GetCondition(projectName string, conditionID string) (StreamCondition, error) {
+func (c *Client) GetStreamCondition(projectName string, conditionID string) (StreamCondition, error) {
 	var (
 		cond StreamCondition
 		resp Envelope
@@ -130,7 +130,7 @@ func (c *Client) GetCondition(projectName string, conditionID string) (StreamCon
 	return cond, err
 }
 
-func (c *Client) DeleteCondition(projectName string, conditionID string) error {
+func (c *Client) DeleteStreamCondition(projectName string, conditionID string) error {
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
