@@ -118,6 +118,7 @@ resource "lightstep_stream_condition" "import-cond" {
 		},
 	})
 }
+
 func testAccCheckStreamConditionExists(resourceName string, condition *lightstep.StreamCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
