@@ -77,7 +77,7 @@ func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error 
 func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	attrs := lightstep.ConditionAttributes{
+	attrs := lightstep.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
 		EvaluationWindowMS: d.Get("evaluation_window_ms").(int),
 		Expression:         d.Get("expression").(string),
