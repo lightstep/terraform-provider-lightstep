@@ -42,6 +42,7 @@ func Provider() *schema.Provider {
 			"lightstep_stream":                resourceStream(),
 			"lightstep_stream_dashboard":      resourceStreamDashboard(),
 			"lightstep_stream_condition":      resourceStreamCondition(),
+			"lightstep_metric_condition":      resourceMetricCondition(),
 			"lightstep_webhook_destination":   resourceWebhookDestination(),
 			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 			"lightstep_slack_destination":     resourceSlackDestination(),

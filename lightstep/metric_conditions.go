@@ -29,7 +29,7 @@ type AlertingRule struct {
 type Expression struct {
 	Thresholds         `json:"thresholds"`
 	Operand            string `json:"operand"`
-	EvaluationWindow   int64  `json:"evaluation-window-ms"`
+	EvaluationWindow   int    `json:"evaluation-window-ms"`
 	EvaluationCriteria string `json:"evaluation-criteria"`
 	IsMulti            bool   `json:"is-multi-alert,omitempty"`
 	IsNoData           bool   `json:"enable-no-data-alert,omitempty"`
