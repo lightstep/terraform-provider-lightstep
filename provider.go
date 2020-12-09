@@ -39,9 +39,9 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"lightstep_dashboard":             resourceDashboard(),
 			"lightstep_stream":                resourceStream(),
-			"lightstep_condition":             resourceCondition(),
+			"lightstep_stream_dashboard":      resourceStreamDashboard(),
+			"lightstep_stream_condition":      resourceStreamCondition(),
 			"lightstep_webhook_destination":   resourceWebhookDestination(),
 			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 			"lightstep_slack_destination":     resourceSlackDestination(),

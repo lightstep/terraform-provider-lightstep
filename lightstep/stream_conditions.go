@@ -6,21 +6,21 @@ import (
 	"net/http"
 )
 
-type Condition struct {
-	Type          string                 `json:"type,omitempty"`
-	ID            string                 `json:"id,omitempty"`
-	Attributes    ConditionAttributes    `json:"attributes"`
-	Relationships ConditionRelationships `json:"relationships,omitempty"`
+type StreamCondition struct {
+	Type          string                       `json:"type,omitempty"`
+	ID            string                       `json:"id,omitempty"`
+	Attributes    StreamConditionAttributes    `json:"attributes"`
+	Relationships StreamConditionRelationships `json:"relationships,omitempty"`
 }
 
-type ConditionAttributes struct {
+type StreamConditionAttributes struct {
 	Name               string                 `json:"name,omitempty"`
 	EvaluationWindowMS int                    `json:"eval-window-ms,omitempty"`
 	Expression         string                 `json:"expression,omitempty"`
 	CustomData         map[string]interface{} `json:"custom-data,omitempty"`
 }
 
-type ConditionRelationships struct {
+type StreamConditionRelationships struct {
 	Stream ConditionStream `json:"stream"`
 }
 
@@ -35,27 +35,27 @@ type Links struct {
 	Self    string `json:"self"`
 }
 
-func (c *Client) CreateCondition(
+func (c *Client) CreateStreamCondition(
 	projectName string,
 	conditionName string,
 	expression string,
 	evaluationWindowMS int,
-	streamID string) (Condition, error) {
+	streamID string) (StreamCondition, error) {
 
 	var (
-		cond Condition
+		cond StreamCondition
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(Condition{
+	bytes, err := json.Marshal(StreamCondition{
 		Type: "condition",
-		Attributes: ConditionAttributes{
+		Attributes: StreamConditionAttributes{
 			Name:               conditionName,
 			EvaluationWindowMS: evaluationWindowMS,
 			Expression:         expression,
 			CustomData:         nil,
 		},
-		Relationships: ConditionRelationships{
+		Relationships: StreamConditionRelationships{
 			Stream: ConditionStream{
 				ID:   streamID,
 				Type: "stream",
@@ -78,17 +78,17 @@ func (c *Client) CreateCondition(
 	return cond, err
 }
 
-func (c *Client) UpdateCondition(
+func (c *Client) UpdateStreamCondition(
 	projectName string,
 	conditionID string,
-	attributes ConditionAttributes,
-) (Condition, error) {
+	attributes StreamConditionAttributes,
+) (StreamCondition, error) {
 	var (
-		cond Condition
+		cond StreamCondition
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(&Condition{
+	bytes, err := json.Marshal(&StreamCondition{
 		ID:         conditionID,
 		Attributes: attributes,
 	})
@@ -113,9 +113,9 @@ func (c *Client) UpdateCondition(
 	return cond, err
 }
 
-func (c *Client) GetCondition(projectName string, conditionID string) (Condition, error) {
+func (c *Client) GetStreamCondition(projectName string, conditionID string) (StreamCondition, error) {
 	var (
-		cond Condition
+		cond StreamCondition
 		resp Envelope
 	)
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
@@ -130,7 +130,7 @@ func (c *Client) GetCondition(projectName string, conditionID string) (Condition
 	return cond, err
 }
 
-func (c *Client) DeleteCondition(projectName string, conditionID string) error {
+func (c *Client) DeleteStreamCondition(projectName string, conditionID string) error {
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)

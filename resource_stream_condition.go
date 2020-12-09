@@ -2,19 +2,20 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"strings"
 )
 
-func resourceCondition() *schema.Resource {
+func resourceStreamCondition() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceConditionCreate,
-		Read:   resourceConditionRead,
-		Delete: resourceConditionDelete,
-		Update: resourceConditionUpdate,
+		Create: resourceStreamConditionCreate,
+		Read:   resourceStreamConditionRead,
+		Delete: resourceStreamConditionDelete,
+		Update: resourceStreamConditionUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceConditionImport,
+			State: resourceStreamConditionImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -41,10 +42,10 @@ func resourceCondition() *schema.Resource {
 	}
 }
 
-func resourceConditionCreate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	condition, err := client.CreateCondition(
+	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
@@ -55,34 +56,34 @@ func resourceConditionCreate(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	d.SetId(condition.ID)
-	return resourceConditionRead(d, m)
+	return resourceStreamConditionRead(d, m)
 }
 
-func resourceConditionRead(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetCondition(d.Get("project_name").(string), d.Id())
+	_, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func resourceConditionDelete(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	err := client.DeleteCondition(d.Get("project_name").(string), d.Id())
+	err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id())
 	return err
 }
 
-func resourceConditionUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	attrs := lightstep.ConditionAttributes{
+	attrs := lightstep.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
 		EvaluationWindowMS: d.Get("evaluation_window_ms").(int),
 		Expression:         d.Get("expression").(string),
 	}
 
-	_, err := client.UpdateCondition(
+	_, err := client.UpdateStreamCondition(
 		d.Get("project_name").(string),
 		d.Id(),
 		attrs,
@@ -91,7 +92,7 @@ func resourceConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	return err
 }
 
-func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*lightstep.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -100,7 +101,7 @@ func resourceConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.R
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetCondition(project, id)
+	c, err := client.GetStreamCondition(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

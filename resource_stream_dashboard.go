@@ -2,20 +2,21 @@ package main
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
-	"strings"
 )
 
-func resourceDashboard() *schema.Resource {
+func resourceStreamDashboard() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDashboardCreate,
-		Read:   resourceDashboardRead,
-		Delete: resourceDashboardDelete,
-		Exists: resourceDashboardExists,
-		Update: resourceDashboardUpdate,
+		Create: resourceStreamDashboardCreate,
+		Read:   resourceStreamDashboardRead,
+		Delete: resourceStreamDashboardDelete,
+		Exists: resourceStreamDashboardExists,
+		Update: resourceStreamDashboardUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceDashboardImport,
+			State: resourceStreamDashboardImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"dashboard_name": {
@@ -37,7 +38,7 @@ func resourceDashboard() *schema.Resource {
 	}
 }
 
-func resourceDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
+func resourceStreamDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
 	client := m.(*lightstep.Client)
 	_, err := client.GetDashboard(
 		d.Get("project_name").(string),
@@ -49,7 +50,7 @@ func resourceDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e e
 	return true, nil
 }
 
-func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDashboardCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
 	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
@@ -64,10 +65,10 @@ func resourceDashboardCreate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	d.SetId(dashboard.ID)
-	return resourceDashboardRead(d, m)
+	return resourceStreamDashboardRead(d, m)
 }
 
-func resourceDashboardRead(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDashboardRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	_, err := client.GetDashboard(
 		d.Get("project_name").(string),
@@ -79,7 +80,7 @@ func resourceDashboardRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDashboardUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
 	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
@@ -96,7 +97,7 @@ func resourceDashboardUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceDashboardDelete(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDashboardDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 	err := client.DeleteDashboard(
 		d.Get("project_name").(string),
@@ -118,7 +119,7 @@ func streamIDsToStreams(ids []interface{}) []lightstep.Stream {
 	return streams
 }
 
-func resourceDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*lightstep.Client)
 
 	ids := strings.Split(d.Id(), ".")
