@@ -34,12 +34,6 @@ resource "lightstep_stream_dashboard" "customer_charges" {
   stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
 
-resource "lightstep_stream_dashboard" "customer_charges" {
-  project_name   = var.project
-  dashboard_name = "Customer Charges"
-  stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
-}
-
 ##############################################################
 ## Conditions
 ##############################################################
@@ -68,7 +62,7 @@ resource "lightstep_stream_condition" "beemo_ops" {
   stream_id            = lightstep_stream.beemo.id
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_metric_condition" "beemo_requests" {
   project_name   = var.project
   condition_name = "Too many requests"
 
@@ -104,11 +98,10 @@ resource "lightstep_metric_condition" "test" {
     }]
 
     group_by {
-      aggregation = "avg"
+      aggregation = "count"
       keys        = ["method"]
     }
   }
->>>>>>> metricConditions can be created, read, deleted (without alertingRules)
 }
 
 ##############################################################
