@@ -34,12 +34,6 @@ resource "lightstep_stream_dashboard" "customer_charges" {
   stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
 
-resource "lightstep_stream_dashboard" "customer_charges" {
-  project_name   = var.project
-  dashboard_name = "Customer Charges"
-  stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
-}
-
 ##############################################################
 ## Conditions
 ##############################################################
@@ -99,7 +93,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
     }]
 
     group_by {
-      aggregation = "avg"
+      aggregation = "count"
       keys        = ["method"]
     }
   }
