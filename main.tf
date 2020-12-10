@@ -62,6 +62,48 @@ resource "lightstep_stream_condition" "beemo_ops" {
   stream_id            = lightstep_stream.beemo.id
 }
 
+resource "lightstep_metric_condition" "beemo_requests" {
+  project_name   = var.project
+  condition_name = "Too many requests"
+
+  evaluation_window   = 120000000
+  evaluation_criteria = "on_average"
+
+  display = "line"
+
+  is_multi   = true
+  is_no_data = true
+
+  thresholds = {
+    operand  = "above"
+    critical = 10
+    warning  = 5
+  }
+
+  query {
+    metric_name         = "requests"
+    query_name          = "a"
+    type                = "single"
+    timeseries_operator = "rate"
+    hidden              = false
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by {
+      aggregation = "count"
+      keys        = ["method"]
+    }
+  }
+}
+
 ##############################################################
 ## Destinations
 ##############################################################
