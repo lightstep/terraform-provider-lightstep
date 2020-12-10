@@ -62,11 +62,11 @@ resource "lightstep_stream_condition" "beemo_ops" {
   stream_id            = lightstep_stream.beemo.id
 }
 
-resource "lightstep_metric_condition" "beemo_requests" {
+resource "lightstep_metric_condition" "beemo-requests" {
   project_name   = var.project
-  condition_name = "Too many requests"
+  condition_name = "test alerting rules"
 
-  evaluation_window   = 120000000
+  evaluation_window   = "two_minutes"
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -75,33 +75,50 @@ resource "lightstep_metric_condition" "beemo_requests" {
   is_no_data = true
 
   thresholds = {
-    operand  = "above"
-    critical = 10
-    warning  = 5
+    operand  = "below"
+    warning  = 10
+    critical = 5
   }
 
   query {
     metric_name         = "requests"
     query_name          = "a"
     type                = "single"
-    timeseries_operator = "rate"
+    timeseries_operator = "delta"
     hidden              = false
 
     include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
-
-    exclude_filters = [{
-      key   = "service"
-      value = "android"
+      key   = "kube_instance"
+      value = "3"
     }]
 
     group_by {
-      aggregation = "count"
-      keys        = ["method"]
+      aggregation = "max"
+      keys        = ["key1", "key2"]
     }
   }
+
+  alerting_rule {
+    id       = lightstep_pagerduty_destination.pd.id
+    renotify = "one_hour"
+
+    include_filters = [
+      {
+        key   = "kube_instance"
+        value = "3"
+      }
+    ]
+  }
+
+  alerting_rule {
+    id       = lightstep_webhook_destination.webhook.id
+    renotify = "one_hour"
+    exclude_filters = [{
+      key   = "kube_instance"
+      value = "1"
+    }]
+  }
+
 }
 
 ##############################################################

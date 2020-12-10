@@ -10,7 +10,39 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-var validQueryNames = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+var (
+	validQueryNames = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
+
+	validEvaluationWindowInput = []string{"two_minutes", "five_minutes", "ten_minutes", "fifteen_minutes", "thirty_minutes", "one_hour", "two_hours", "four_hours"}
+	validEvaluationWindow      = map[string]int{
+		"two_minutes":     120000,
+		"five_minutes":    300000,
+		"ten_minutes":     600000,
+		"fifteen_minutes": 900000,
+		"thirty_minutes":  1800000,
+		"one_hour":        3600000,
+		"two_hours":       7200000,
+		"four_hours":      14400000,
+	}
+
+	validRenotifyInput = []string{"ten_minutes", "twenty_minutes", "thirty_minutes", "forty_minutes", "fifty_minutes", "one_hour", "one_hour_and_a_half", "two_hours", "three_hours", "four_hours", "five_hours", "six_hours", "twelve_hours", "one_day"}
+	validRenotify      = map[string]int{
+		"ten_minutes":         600000,
+		"twenty_minutes":      1200000,
+		"thirty_minutes":      1800000,
+		"forty_minutes":       2400000,
+		"fifty_minutes":       3000000,
+		"one_hour":            3600000,
+		"one_hour_and_a_half": 5400000,
+		"two_hours":           7200000,
+		"three_hours":         10800000,
+		"four_hours":          14400000,
+		"five_hours":          18000000,
+		"six_hours":           21600000,
+		"twelve_hours":        43200000,
+		"one_day":             86400000,
+	}
+)
 
 func resourceMetricCondition() *schema.Resource {
 	return &schema.Resource{
@@ -43,9 +75,9 @@ func resourceMetricCondition() *schema.Resource {
 				ForceNew:     true,
 			},
 			"evaluation_window": {
-				Type:         schema.TypeInt,
+				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.IntBetween(120000000, 604800000000),
+				ValidateFunc: validation.StringInSlice(validEvaluationWindowInput, false),
 				ForceNew:     true,
 			},
 			"evaluation_criteria": {
@@ -94,6 +126,38 @@ func resourceMetricCondition() *schema.Resource {
 					},
 				},
 			},
+			"alerting_rule": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: getAlertingRuleSchema(),
+				},
+			},
+		},
+	}
+}
+
+func getAlertingRuleSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"renotify": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringInSlice(validRenotifyInput, false),
+		},
+		"id": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"include_filters": {
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
+		},
+		"exclude_filters": {
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
 		},
 	}
 }
@@ -183,12 +247,14 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 		Type: "metrics",
 		Name: d.Get("condition_name").(string),
 		Expression: lightstep.Expression{
-			EvaluationWindow:   d.Get("evaluation_window").(int),
 			EvaluationCriteria: d.Get("evaluation_criteria").(string),
 			IsMulti:            d.Get("is_multi").(bool),
 			IsNoData:           d.Get("is_no_data").(bool),
 		},
 	}
+
+	evaluationWindowStr := d.Get("evaluation_window").(string)
+	condition.Attributes.EvaluationWindow = validEvaluationWindow[evaluationWindowStr]
 
 	tfThresholds := d.Get("thresholds").(map[string]interface{})
 	thresholds, err := buildThresholds(tfThresholds)
@@ -220,6 +286,13 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 
 	condition.Attributes.Queries = queries
 
+	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").([]interface{}))
+	if err != nil {
+		return err
+	}
+
+	condition.Attributes.AlertingRules = alertingRules
+
 	created, err := client.CreateMetricCondition(d.Get("project_name").(string), condition)
 	if err != nil {
 		return err
@@ -245,6 +318,50 @@ func resourceMetricConditionDelete(d *schema.ResourceData, m interface{}) error 
 	return err
 }
 
+func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule, error) {
+	newRules := []lightstep.AlertingRule{}
+
+	alertingRules := []map[string]interface{}{}
+	for _, ruleIn := range alertingRulesIn {
+		alertingRules = append(alertingRules, ruleIn.(map[string]interface{}))
+	}
+
+	for _, rule := range alertingRules {
+		newRule := lightstep.AlertingRule{
+			MessageDestinationID: rule["id"].(string),
+		}
+
+		newRule.UpdateInterval = validRenotify[rule["renotify"].(string)]
+
+		var includes []interface{}
+		var excludes []interface{}
+
+		filters := rule["include_filters"]
+		if filters != nil {
+			err := validateFilters(filters.([]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			includes = filters.([]interface{})
+		}
+
+		filters = rule["exclude_filters"]
+		if filters != nil {
+			err := validateFilters(filters.([]interface{}))
+			if err != nil {
+				return nil, err
+			}
+			excludes = filters.([]interface{})
+		}
+
+		newFilters := buildLabelFilters(includes, excludes)
+		newRule.MatchOn = lightstep.MatchOn{GroupBy: newFilters}
+
+		newRules = append(newRules, newRule)
+	}
+	return newRules, nil
+}
+
 func buildQueries(queriesIn []interface{}, display string) ([]lightstep.MetricQueryWithAttributes, error) {
 	newQueries := []lightstep.MetricQueryWithAttributes{}
 	queries := []map[string]interface{}{}
@@ -264,23 +381,23 @@ func buildQueries(queriesIn []interface{}, display string) ([]lightstep.MetricQu
 			},
 		}
 
-		includes := query["include_filters"].([]interface{})
-		if len(includes) > 0 {
-			err := validateFilters(includes)
+		includes := query["include_filters"]
+		if includes != nil {
+			err := validateFilters(includes.([]interface{}))
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		excludes := query["exclude_filters"].([]interface{})
-		if len(excludes) > 0 {
-			err := validateFilters(excludes)
+		excludes := query["exclude_filters"]
+		if excludes != nil {
+			err := validateFilters(excludes.([]interface{}))
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		filters := buildLabelFilters(includes, excludes)
+		filters := buildLabelFilters(includes.([]interface{}), excludes.([]interface{}))
 		newQuery.Query.Filters = filters
 
 		groupBy, ok := query["group_by"]
@@ -339,7 +456,7 @@ func buildThresholds(thresholds map[string]interface{}) (lightstep.Thresholds, e
 }
 
 func buildLabelFilters(includes []interface{}, excludes []interface{}) []lightstep.LabelFilter {
-	filters := []lightstep.LabelFilter{}
+	var filters []lightstep.LabelFilter
 
 	if len(includes) > 0 {
 		for _, includeFilter := range includes {
