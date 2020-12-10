@@ -83,7 +83,6 @@ resource "lightstep_metric_condition" "beemo-requests" {
   query {
     metric_name         = "requests"
     query_name          = "a"
-    type                = "single"
     timeseries_operator = "delta"
     hidden              = false
 

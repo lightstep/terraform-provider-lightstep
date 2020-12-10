@@ -14,22 +14,20 @@ func resourceMetricCondition() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMetricConditionCreate,
 		Read:   resourceMetricConditionRead,
+		Update: resourceMetricConditionUpdate,
 		Delete: resourceMetricConditionDelete,
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"condition_name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: true,
 			},
 			"thresholds": {
 				Type: schema.TypeMap,
@@ -38,37 +36,31 @@ func resourceMetricCondition() *schema.Resource {
 				},
 				Required:     true,
 				ValidateFunc: validateThresholds,
-				ForceNew:     true,
 			},
 			"evaluation_window": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(validEvaluationWindowInput, false),
-				ForceNew:     true,
 			},
 			"evaluation_criteria": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"on_average", "at_least_once", "always", "in_total"}, false),
-				ForceNew:     true,
 			},
 			"display": {
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"line", "bar", "area"}, false),
-				ForceNew:     true,
 			},
 			"is_multi": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 			"is_no_data": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
-				ForceNew: true,
 			},
 			"query": {
 				Type:     schema.TypeList,
@@ -76,18 +68,15 @@ func resourceMetricCondition() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: getQuerySchema(),
 				},
-				ForceNew: true,
 			},
 			"composite_query": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"query_formula": {
 							Type:     schema.TypeString,
 							Required: true,
-							ForceNew: true,
 						},
 					},
 				},
@@ -95,7 +84,6 @@ func resourceMetricCondition() *schema.Resource {
 			"alerting_rule": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchema(),
 				},
@@ -136,11 +124,6 @@ func getQuerySchema() map[string]*schema.Schema {
 		},
 		"hidden": {
 			Type:     schema.TypeBool,
-			Required: true,
-			ForceNew: true,
-		},
-		"type": {
-			Type:     schema.TypeString,
 			Required: true,
 		},
 		"query_name": {
@@ -232,7 +215,7 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 
 	display := d.Get("display").(string)
 
-	queries, err := buildQueries(d.Get("query").([]interface{}), display)
+	queries, err := buildSingleQueries(d.Get("query").([]interface{}), display)
 	if err != nil {
 		return err
 	}
@@ -276,6 +259,68 @@ func resourceMetricConditionRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 	return nil
+}
+
+func resourceMetricConditionUpdate(d *schema.ResourceData, m interface{}) error {
+	client := m.(*lightstep.Client)
+
+	attrs := lightstep.MetricConditionAttributes{
+		Type: "metrics",
+		Name: d.Get("condition_name").(string),
+		Expression: lightstep.Expression{
+			EvaluationCriteria: d.Get("evaluation_criteria").(string),
+			IsMulti:            d.Get("is_multi").(bool),
+			IsNoData:           d.Get("is_no_data").(bool),
+		},
+	}
+
+	evaluationWindowStr := d.Get("evaluation_window").(string)
+	attrs.EvaluationWindow = validEvaluationWindow[evaluationWindowStr]
+
+	tfThresholds := d.Get("thresholds").(map[string]interface{})
+	thresholds, err := buildThresholds(tfThresholds)
+	if err != nil {
+		return err
+	}
+	attrs.Thresholds = thresholds
+	attrs.Operand = tfThresholds["operand"].(string)
+
+	display := d.Get("display").(string)
+
+	queries, err := buildSingleQueries(d.Get("query").([]interface{}), display)
+	if err != nil {
+		return err
+	}
+
+	compositeQuery, found := d.GetOk("composite_query")
+	if found {
+		c := compositeQuery.(map[string]interface{})
+		query := lightstep.MetricQueryWithAttributes{
+			Name:    c["query_formula"].(string),
+			Type:    "composite",
+			Hidden:  false,
+			Display: display,
+			Query:   lightstep.MetricQuery{},
+		}
+		queries = append(queries, query)
+	}
+
+	attrs.Queries = queries
+
+	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").([]interface{}))
+	if err != nil {
+		return err
+	}
+
+	attrs.AlertingRules = alertingRules
+
+	_, err = client.UpdateMetricCondition(
+		d.Get("project_name").(string),
+		d.Id(),
+		attrs,
+	)
+
+	return err
 }
 
 func resourceMetricConditionDelete(d *schema.ResourceData, m interface{}) error {
@@ -328,7 +373,7 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule
 	return newRules, nil
 }
 
-func buildQueries(queriesIn []interface{}, display string) ([]lightstep.MetricQueryWithAttributes, error) {
+func buildSingleQueries(queriesIn []interface{}, display string) ([]lightstep.MetricQueryWithAttributes, error) {
 	newQueries := []lightstep.MetricQueryWithAttributes{}
 	queries := []map[string]interface{}{}
 	for _, queryIn := range queriesIn {
@@ -338,7 +383,7 @@ func buildQueries(queriesIn []interface{}, display string) ([]lightstep.MetricQu
 	for _, query := range queries {
 		newQuery := lightstep.MetricQueryWithAttributes{
 			Name:    query["query_name"].(string),
-			Type:    query["type"].(string),
+			Type:    "single",
 			Hidden:  query["hidden"].(bool),
 			Display: display,
 			Query: lightstep.MetricQuery{
