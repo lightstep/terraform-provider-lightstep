@@ -37,7 +37,7 @@ resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "2m" 
+  evaluation_window   = "2m"
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -63,7 +63,7 @@ resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "2m" 
+  evaluation_window   = "2m"
   evaluation_criteria = "on_average"
 
   display = "line"

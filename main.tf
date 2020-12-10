@@ -93,8 +93,8 @@ resource "lightstep_metric_condition" "beemo-requests" {
     }]
 
     group_by {
-      aggregation = "count"
-      keys        = ["method"]
+      aggregation = "max"
+      keys        = ["key1", "key2"]
     }
   }
 
