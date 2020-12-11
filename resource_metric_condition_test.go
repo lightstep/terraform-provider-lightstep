@@ -12,6 +12,23 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
+var (
+	k = "key"
+	v = "value"
+
+	includeFilter = lightstep.LabelFilter{
+		Key:     k,
+		Value:   v,
+		Operand: "eq",
+	}
+
+	excludeFilter = lightstep.LabelFilter{
+		Key:     k,
+		Value:   v,
+		Operand: "neq",
+	}
+)
+
 func TestAccMetricCondition(t *testing.T) {
 	var condition lightstep.MetricCondition
 
@@ -20,7 +37,7 @@ resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = 120000000 
+  evaluation_window   = "2m" 
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -37,11 +54,16 @@ resource "lightstep_metric_condition" "errors" {
 `
 
 	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
 resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = 120000000 
+  evaluation_window   = "2m" 
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -77,6 +99,18 @@ resource "lightstep_metric_condition" "test" {
       keys = ["method"]
     }
   }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    renotify = "1h"
+
+    include_filters = [
+      {
+        key   = "project_name"
+        value = "catlab"
+      }
+    ]
+  }
 }
 `
 
@@ -98,7 +132,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "condition_name", "Too many requests"),
-					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "120000000"),
+					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "2m"),
 					resource.TestCheckResourceAttr(resourceName, "evaluation_criteria", "on_average"),
 					resource.TestCheckResourceAttr(resourceName, "display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "is_multi", "true"),
@@ -218,21 +252,6 @@ func TestBuildLabelFilters(t *testing.T) {
 		expected []lightstep.LabelFilter
 	}
 
-	k := "key"
-	v := "value"
-
-	includeFilter := lightstep.LabelFilter{
-		Key:     k,
-		Value:   v,
-		Operand: "eq",
-	}
-
-	excludeFilter := lightstep.LabelFilter{
-		Key:     k,
-		Value:   v,
-		Operand: "neq",
-	}
-
 	cases := []filtersCase{
 		// valid empty includes, valid excludes
 		{
@@ -260,7 +279,7 @@ func TestBuildLabelFilters(t *testing.T) {
 				includeFilter,
 			},
 		},
-		// PASS valid includes valid excludes
+		// valid includes valid excludes
 		{
 			includes: []interface{}{
 				map[string]interface{}{
@@ -283,6 +302,114 @@ func TestBuildLabelFilters(t *testing.T) {
 
 	for _, c := range cases {
 		result := buildLabelFilters(c.includes, c.excludes)
+		require.Equal(t, c.expected, result)
+	}
+}
+
+func TestBuildAlertingRules(t *testing.T) {
+	type alertingRuleCase struct {
+		rules    []interface{}
+		expected []lightstep.AlertingRule
+	}
+
+	id := "abc123"
+	renotify := "1h"
+	renotifyMillis := 3600000
+
+	cases := []alertingRuleCase{
+		// without includes or excludes
+		{
+			rules: []interface{}{
+				map[string]interface{}{
+					"id":       id,
+					"renotify": renotify,
+				},
+			},
+			expected: []lightstep.AlertingRule{
+				{
+					MessageDestinationID: id,
+					UpdateInterval:       renotifyMillis,
+				},
+			},
+		},
+		// with includes
+		{
+			rules: []interface{}{
+				map[string]interface{}{
+					"id":       id,
+					"renotify": renotify,
+					"include_filters": []interface{}{
+						map[string]interface{}{
+							"key":   k,
+							"value": v,
+						},
+					},
+				},
+			},
+			expected: []lightstep.AlertingRule{
+				{
+					MessageDestinationID: id,
+					UpdateInterval:       renotifyMillis,
+					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{includeFilter}},
+				},
+			},
+		},
+		// with excludes
+		{
+			rules: []interface{}{
+				map[string]interface{}{
+					"id":       id,
+					"renotify": renotify,
+					"exclude_filters": []interface{}{
+						map[string]interface{}{
+							"key":   k,
+							"value": v,
+						},
+					},
+				},
+			},
+			expected: []lightstep.AlertingRule{
+				{
+					MessageDestinationID: id,
+					UpdateInterval:       renotifyMillis,
+					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{excludeFilter}},
+				},
+			},
+		},
+		// with both includes excludes
+		{
+			rules: []interface{}{
+				map[string]interface{}{
+					"id":       id,
+					"renotify": renotify,
+					"include_filters": []interface{}{
+						map[string]interface{}{
+							"key":   k,
+							"value": v,
+						},
+					},
+					"exclude_filters": []interface{}{
+						map[string]interface{}{
+							"key":   k,
+							"value": v,
+						},
+					},
+				},
+			},
+			expected: []lightstep.AlertingRule{
+				{
+					MessageDestinationID: id,
+					UpdateInterval:       renotifyMillis,
+					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{includeFilter, excludeFilter}},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		result, err := buildAlertingRules(c.rules)
+		require.NoError(t, err)
+		require.Equal(t, c.expected, result)
 		require.Equal(t, c.expected, result)
 	}
 }

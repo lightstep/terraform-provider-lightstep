@@ -6,7 +6,7 @@ build:
 install:
 	@terraform init
 
-.PHONY: check_deps
+.PHONY: check-deps
 check_deps:
 	@go mod tidy -v
 
@@ -28,7 +28,7 @@ lint:
 
 .PHONY: acc-test
 acc-test:
-	TF_ACC=true go test -v
+	TF_ACC=true LIGHTSTEP_ORG="LightStep" go test -v
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
