@@ -37,7 +37,7 @@ resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "2m" 
+  evaluation_window   = "2m"
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -63,7 +63,7 @@ resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "2m" 
+  evaluation_window   = "2m"
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -80,7 +80,66 @@ resource "lightstep_metric_condition" "test" {
   query {
     metric_name         = "requests"
     query_name          = "a"
-    type                = "single"
+    timeseries_operator = "rate"
+    hidden              = false
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by  {
+      aggregation = "avg"
+      keys = ["method"]
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    renotify = "1h"
+
+    include_filters = [
+      {
+        key   = "project_name"
+        value = "catlab"
+      }
+    ]
+  }
+}
+`
+
+	updatedConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  condition_name = "updated"
+
+  evaluation_window   = "1h" 
+  evaluation_criteria = "at_least_once"
+
+  display = "line"
+
+  is_multi   = true
+  is_no_data = false
+
+  thresholds = {
+    operand  = "above"
+    critical  = 10
+    warning = 5
+  }
+
+  query {
+    metric_name         = "requests"
+    query_name          = "a"
     timeseries_operator = "rate"
     hidden              = false
 
@@ -139,6 +198,18 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "is_no_data", "true"),
 				),
 			},
+			{
+				Config: updatedConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "condition_name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "1h"),
+					resource.TestCheckResourceAttr(resourceName, "evaluation_criteria", "at_least_once"),
+					resource.TestCheckResourceAttr(resourceName, "display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "is_multi", "true"),
+					resource.TestCheckResourceAttr(resourceName, "is_no_data", "false"),
+				),
+			},
 		},
 	})
 }
@@ -165,7 +236,6 @@ func testAccCheckMetricConditionExists(resourceName string, condition *lightstep
 	}
 }
 
-// confirms conditions created for test have been destroyed
 func testAccMetricConditionDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
 	for _, resource := range s.RootModule().Resources {
