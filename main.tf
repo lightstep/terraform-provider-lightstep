@@ -111,7 +111,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
   alerting_rule {
     id       = lightstep_webhook_destination.webhook.id
-    renotify = "one_hour"
+    renotify = "1h"
     exclude_filters = [{
       key   = "kube_instance"
       value = "1"

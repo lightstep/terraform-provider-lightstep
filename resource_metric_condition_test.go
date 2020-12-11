@@ -101,7 +101,7 @@ resource "lightstep_metric_condition" "test" {
 
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
-    renotify = "one_hour"
+    renotify = "1h"
 
     include_filters = [
       {
@@ -123,7 +123,7 @@ resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   condition_name = "updated"
 
-  evaluation_window   = "one_hour" 
+  evaluation_window   = "1h" 
   evaluation_criteria = "at_least_once"
 
   display = "line"
@@ -203,7 +203,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "condition_name", "updated"),
-					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "one_hour"),
+					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "1h"),
 					resource.TestCheckResourceAttr(resourceName, "evaluation_criteria", "at_least_once"),
 					resource.TestCheckResourceAttr(resourceName, "display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "is_multi", "true"),
