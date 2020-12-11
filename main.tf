@@ -1,12 +1,12 @@
 provider "lightstep" {
-  environment     = "staging"
-  api_key_env_var = "LIGHTSTEP_STAGING_API_KEY"
+  environment     = "meta"
+  api_key_env_var = "LIGHTSTEP_API_KEY_META"
   organization    = "LightStep"
 }
 
 variable "project" {
   type    = string
-  default = "YOUR PROJECT HERE"
+  default = "lightstep-staging"
 }
 
 ##############################################################
@@ -66,7 +66,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
   project_name   = var.project
   condition_name = "test alerting rules"
 
-  evaluation_window   = "two_minutes"
+  evaluation_window   = "2m"
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -100,7 +100,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
   alerting_rule {
     id       = lightstep_pagerduty_destination.pd.id
-    renotify = "one_hour"
+    renotify = "1h"
 
     include_filters = [
       {

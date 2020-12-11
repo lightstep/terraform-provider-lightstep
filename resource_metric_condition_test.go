@@ -37,7 +37,7 @@ resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "two_minutes" 
+  evaluation_window   = "2m" 
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -63,7 +63,7 @@ resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   condition_name = "Too many requests"
 
-  evaluation_window   = "two_minutes" 
+  evaluation_window   = "2m" 
   evaluation_criteria = "on_average"
 
   display = "line"
@@ -102,7 +102,7 @@ resource "lightstep_metric_condition" "test" {
 
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
-    renotify = "one_hour"
+    renotify = "1h"
 
     include_filters = [
       {
@@ -132,7 +132,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "condition_name", "Too many requests"),
-					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "two_minutes"),
+					resource.TestCheckResourceAttr(resourceName, "evaluation_window", "2m"),
 					resource.TestCheckResourceAttr(resourceName, "evaluation_criteria", "on_average"),
 					resource.TestCheckResourceAttr(resourceName, "display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "is_multi", "true"),
@@ -313,7 +313,7 @@ func TestBuildAlertingRules(t *testing.T) {
 	}
 
 	id := "abc123"
-	renotify := "one_hour"
+	renotify := "1h"
 	renotifyMillis := 3600000
 
 	cases := []alertingRuleCase{

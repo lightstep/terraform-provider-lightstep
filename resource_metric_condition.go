@@ -10,40 +10,6 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-var (
-	validQueryNames = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
-
-	validEvaluationWindowInput = []string{"two_minutes", "five_minutes", "ten_minutes", "fifteen_minutes", "thirty_minutes", "one_hour", "two_hours", "four_hours"}
-	validEvaluationWindow      = map[string]int{
-		"two_minutes":     120000,
-		"five_minutes":    300000,
-		"ten_minutes":     600000,
-		"fifteen_minutes": 900000,
-		"thirty_minutes":  1800000,
-		"one_hour":        3600000,
-		"two_hours":       7200000,
-		"four_hours":      14400000,
-	}
-
-	validRenotifyInput = []string{"ten_minutes", "twenty_minutes", "thirty_minutes", "forty_minutes", "fifty_minutes", "one_hour", "one_hour_and_a_half", "two_hours", "three_hours", "four_hours", "five_hours", "six_hours", "twelve_hours", "one_day"}
-	validRenotify      = map[string]int{
-		"ten_minutes":         600000,
-		"twenty_minutes":      1200000,
-		"thirty_minutes":      1800000,
-		"forty_minutes":       2400000,
-		"fifty_minutes":       3000000,
-		"one_hour":            3600000,
-		"one_hour_and_a_half": 5400000,
-		"two_hours":           7200000,
-		"three_hours":         10800000,
-		"four_hours":          14400000,
-		"five_hours":          18000000,
-		"six_hours":           21600000,
-		"twelve_hours":        43200000,
-		"one_day":             86400000,
-	}
-)
-
 func resourceMetricCondition() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMetricConditionCreate,
