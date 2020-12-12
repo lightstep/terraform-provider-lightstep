@@ -41,9 +41,9 @@ resource "lightstep_metric_condition" "errors" {
 	  evaluation_criteria = "on_average"
 	  is_multi   = true
 	  is_no_data = true
-		operand  = "above"
+      operand  = "above"
 	
-	  thresholds = {
+	  thresholds {
 		critical  = 10
 		warning = 5
 	  }
@@ -67,7 +67,7 @@ resource "lightstep_metric_condition" "test" {
 	  is_multi   = true
 	  is_no_data = true
       operand  = "above"
-	  thresholds = {
+	  thresholds {
 		critical  = 10
 		warning = 5
 	  }
@@ -125,7 +125,7 @@ resource "lightstep_metric_condition" "test" {
 	  is_multi   = true
 	  is_no_data = false
       operand  = "above"
-	  thresholds = {
+	  thresholds {
 		critical  = 10
 		warning = 5
 	  }
