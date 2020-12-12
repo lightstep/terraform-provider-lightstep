@@ -1,8 +1,6 @@
 package main
 
 var (
-	validQueryNames = []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"}
-
 	validEvaluationWindow = map[string]int{
 		"2m":  120000,
 		"5m":  300000,
