@@ -87,18 +87,6 @@ func resourceMetricCondition() *schema.Resource {
 					Schema: getQuerySchema(),
 				},
 			},
-			"composite_query": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"query_formula": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
-			},
 			"alerting_rule": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -138,20 +126,19 @@ func getQuerySchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
-			Required: true,
+			Optional: true, // optional for composite formula
 		},
 		"hidden": {
 			Type:     schema.TypeBool,
 			Required: true,
 		},
 		"query_name": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringInSlice(validQueryNames, false),
+			Type:     schema.TypeString,
+			Required: true,
 		},
 		"timeseries_operator": {
 			Type:         schema.TypeString,
-			Required:     true,
+			Optional:     true,
 			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "mean", "last"}, false),
 		},
 		"include_filters": {
@@ -249,18 +236,6 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 	queries, err := buildSingleQueries(d.Get("metric_query").([]interface{}))
 	if err != nil {
 		return nil, err
-	}
-
-	compositeQuery, found := d.GetOk("composite_query")
-	if found {
-		c := compositeQuery.(map[string]interface{})
-		query := lightstep.MetricQueryWithAttributes{
-			Name:   c["query_formula"].(string),
-			Type:   "composite",
-			Hidden: false,
-			Query:  lightstep.MetricQuery{},
-		}
-		queries = append(queries, query)
 	}
 
 	attributes.Queries = queries
@@ -550,6 +525,15 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	for _, q := range c.Attributes.Queries {
 		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
 
+		var groupBy []interface{}
+		if len(q.Query.GroupBy.LabelKeys) > 0 {
+			groupBy = []interface{}{
+				map[string]interface{}{
+					"aggregation_method": q.Query.GroupBy.Aggregation,
+					"keys":               q.Query.GroupBy.LabelKeys,
+				},
+			}
+		}
 		queries = append(queries, map[string]interface{}{
 			"metric":              q.Query.Metric,
 			"hidden":              q.Hidden,
@@ -557,12 +541,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 			"timeseries_operator": q.Query.TimeseriesOperator,
 			"include_filters":     includeFilters,
 			"exclude_filters":     excludeFilters,
-			"group_by": []interface{}{
-				map[string]interface{}{
-					"aggregation_method": q.Query.GroupBy.Aggregation,
-					"keys":               q.Query.GroupBy.LabelKeys,
-				},
-			},
+			"group_by":            groupBy,
 		})
 	}
 
