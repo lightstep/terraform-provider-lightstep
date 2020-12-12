@@ -90,14 +90,14 @@ resource "lightstep_metric_condition" "test" {
     }]
 
     group_by  {
-      aggregation = "avg"
+      aggregation_method = "avg"
       keys = ["method"]
     }
   }
 
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
-    renotify = "1h"
+    update_interval = "1h"
 
     include_filters = [
       {
@@ -148,14 +148,14 @@ resource "lightstep_metric_condition" "test" {
     }]
 
     group_by  {
-      aggregation = "avg"
+      aggregation_method = "avg"
       keys = ["method"]
     }
   }
 
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
-    renotify = "1h"
+    update_interval = "1h"
 
     include_filters = [
       {
