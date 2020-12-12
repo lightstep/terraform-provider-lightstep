@@ -391,8 +391,8 @@ func TestBuildAlertingRules(t *testing.T) {
 		{
 			rules: []interface{}{
 				map[string]interface{}{
-					"id":       id,
-					"renotify": renotify,
+					"id":              id,
+					"update_interval": renotify,
 				},
 			},
 			expected: []lightstep.AlertingRule{
@@ -406,8 +406,8 @@ func TestBuildAlertingRules(t *testing.T) {
 		{
 			rules: []interface{}{
 				map[string]interface{}{
-					"id":       id,
-					"renotify": renotify,
+					"id":              id,
+					"update_interval": renotify,
 					"include_filters": []interface{}{
 						map[string]interface{}{
 							"key":   k,
@@ -428,8 +428,8 @@ func TestBuildAlertingRules(t *testing.T) {
 		{
 			rules: []interface{}{
 				map[string]interface{}{
-					"id":       id,
-					"renotify": renotify,
+					"id":              id,
+					"update_interval": renotify,
 					"exclude_filters": []interface{}{
 						map[string]interface{}{
 							"key":   k,
@@ -450,8 +450,8 @@ func TestBuildAlertingRules(t *testing.T) {
 		{
 			rules: []interface{}{
 				map[string]interface{}{
-					"id":       id,
-					"renotify": renotify,
+					"id":              id,
+					"update_interval": renotify,
 					"include_filters": []interface{}{
 						map[string]interface{}{
 							"key":   k,
@@ -494,70 +494,11 @@ func TestBuildGroupBy(t *testing.T) {
 		Aggregation: aggregation,
 	}
 
-	result := buildGroupBy(aggregation, []interface{}{method, environment})
+	result := lightstep.GroupBy{
+		Aggregation: aggregation,
+		LabelKeys:   []string{method, environment},
+	}
 	require.Equal(t, expected, result)
-}
-
-func TestValidateThresholds(t *testing.T) {
-	type thresholdCase struct {
-		thresholds map[string]interface{}
-		shouldErr  bool
-	}
-
-	cases := []thresholdCase{
-		// valid critical, warning and operand
-		{
-			thresholds: map[string]interface{}{
-				"critical": "2",
-				"warning":  "1",
-				"operand":  "above",
-			},
-			shouldErr: false,
-		},
-		// valid critical and operand
-		{
-			thresholds: map[string]interface{}{
-				"critical": "2",
-				"operand":  "above",
-			},
-			shouldErr: false,
-		},
-		// missing critical
-		{
-			thresholds: map[string]interface{}{
-				"warning": "1",
-				"operand": "above",
-			},
-			shouldErr: true,
-		},
-		// incorrect operand 'below'
-		{
-			thresholds: map[string]interface{}{
-				"critical": "2",
-				"warning":  "1",
-				"operand":  "below",
-			},
-			shouldErr: true,
-		},
-		// incorrect operand 'above'
-		{
-			thresholds: map[string]interface{}{
-				"critical": "1",
-				"warning":  "2",
-				"operand":  "above",
-			},
-			shouldErr: true,
-		},
-	}
-
-	for _, c := range cases {
-		_, errs := validateThresholds(c.thresholds, "")
-		if c.shouldErr {
-			require.NotEmpty(t, errs)
-		} else {
-			require.Empty(t, errs)
-		}
-	}
 }
 
 func TestValidateFilters(t *testing.T) {
