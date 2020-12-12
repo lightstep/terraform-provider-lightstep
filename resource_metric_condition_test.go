@@ -251,61 +251,35 @@ func TestBuildThresholds(t *testing.T) {
 	type thresholdCase struct {
 		thresholds map[string]interface{}
 		expected   lightstep.Thresholds
-		shouldErr  bool
 	}
 
 	cases := []thresholdCase{
 		// valid critical
 		{
 			thresholds: map[string]interface{}{
-				"critical": "5",
+				"critical": 5.0,
 			},
 			expected: lightstep.Thresholds{
 				Critical: 5,
 			},
-			shouldErr: false,
 		},
 		// valid critical and warning
 		{
 			thresholds: map[string]interface{}{
-				"critical": "5",
-				"warning":  "10",
+				"critical": 5.0,
+				"warning":  10.0,
 			},
 			expected: lightstep.Thresholds{
-				Critical: 5,
-				Warning:  10,
+				Critical: 5.0,
+				Warning:  10.0,
 			},
-			shouldErr: false,
-		},
-		// valid critical, invalid warning
-		{
-			thresholds: map[string]interface{}{
-				"critical": "5",
-				"warning":  10,
-			},
-			expected:  lightstep.Thresholds{},
-			shouldErr: true,
-		},
-		// invalid critical, valid warning
-		{
-			thresholds: map[string]interface{}{
-				"critical": 5,
-				"warning":  "10",
-			},
-			expected:  lightstep.Thresholds{},
-			shouldErr: true,
 		},
 	}
 
 	for _, c := range cases {
-		result, err := buildThresholds(c.thresholds)
-		if c.shouldErr {
-			require.Error(t, err)
-		} else {
-			require.NoError(t, err)
-			require.Equal(t, c.expected.Critical, result.Critical)
-			require.Equal(t, c.expected.Warning, result.Warning)
-		}
+		result := buildThresholds(c.thresholds)
+		require.Equal(t, c.expected.Critical, result.Critical)
+		require.Equal(t, c.expected.Warning, result.Warning)
 	}
 }
 

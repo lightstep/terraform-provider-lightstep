@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -214,10 +213,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
 
 	tfThresholds := expression["thresholds"].([]interface{})[0].(map[string]interface{})
-	thresholds, err := buildThresholds(tfThresholds)
-	if err != nil {
-		return nil, err
-	}
+	thresholds := buildThresholds(tfThresholds)
 
 	attributes := &lightstep.MetricConditionAttributes{
 		Type:        "metrics",
@@ -335,9 +331,10 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 
 	for _, query := range queries {
 		newQuery := lightstep.MetricQueryWithAttributes{
-			Name:   query["query_name"].(string),
-			Type:   "single",
-			Hidden: query["hidden"].(bool),
+			Name:    query["query_name"].(string),
+			Type:    "single",
+			Hidden:  query["hidden"].(bool),
+			Display: "line",
 			Query: lightstep.MetricQuery{
 				Metric:             query["metric"].(string),
 				TimeseriesOperator: query["timeseries_operator"].(string),
@@ -369,7 +366,7 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 			newQuery.Query.GroupBy =
 				lightstep.GroupBy{
 					Aggregation: g["aggregation_method"].(string),
-					LabelKeys:   g["keys"].([]string),
+					LabelKeys:   buildKeys(g["keys"].([]interface{})),
 				}
 		}
 		newQueries = append(newQueries, newQuery)
@@ -377,36 +374,27 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 	return newQueries, nil
 }
 
-func buildThresholds(thresholds map[string]interface{}) (lightstep.Thresholds, error) {
+func buildKeys(keysIn []interface{}) []string {
+	var keys []string
+	for _, k := range keysIn {
+		keys = append(keys, k.(string))
+	}
+	return keys
+}
+
+func buildThresholds(thresholds map[string]interface{}) lightstep.Thresholds {
 	t := lightstep.Thresholds{}
 
 	critical, ok := thresholds["critical"]
 	if ok {
-		critical, isString := critical.(string)
-		if !isString {
-			return t, fmt.Errorf("thresholds must be string, got: %T", critical)
-		}
-
-		c, err := strconv.ParseFloat(critical, 64)
-		if err != nil {
-			return t, err
-		}
-		t.Critical = c
+		t.Critical = critical.(float64)
 	}
 
 	warning, ok := thresholds["warning"]
 	if ok {
-		warning, isString := warning.(string)
-		if !isString {
-			return t, fmt.Errorf("thresholds must be string, got: %T", warning)
-		}
-		w, err := strconv.ParseFloat(warning, 64)
-		if err != nil {
-			return t, err
-		}
-		t.Warning = w
+		t.Warning = warning.(float64)
 	}
-	return t, nil
+	return t
 }
 
 func buildLabelFilters(includes []interface{}, excludes []interface{}) []lightstep.LabelFilter {

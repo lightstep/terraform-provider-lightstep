@@ -1,0 +1,135 @@
+{
+  "version": 4,
+  "terraform_version": "0.12.26",
+  "serial": 5,
+  "lineage": "b51d56c9-95af-eff3-79e6-a418b7d9d6d9",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "lightstep_metric_condition",
+      "name": "beemo-requests",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "alerting_rule": [
+              {
+                "exclude_filters": null,
+                "id": "9Jdcxtd8",
+                "include_filters": [
+                  {
+                    "key": "kube_instance",
+                    "value": "3"
+                  }
+                ],
+                "update_interval": "1h"
+              },
+              {
+                "exclude_filters": [
+                  {
+                    "key": "kube_instance",
+                    "value": "1"
+                  }
+                ],
+                "id": "9XSfnbLK",
+                "include_filters": null,
+                "update_interval": "1h"
+              }
+            ],
+            "description": null,
+            "expression": [
+              {
+                "evaluation_criteria": "on_average",
+                "evaluation_window": "2m",
+                "is_multi": true,
+                "is_no_data": true,
+                "operand": "below",
+                "thresholds": [
+                  {
+                    "critical": 5,
+                    "warning": 10
+                  }
+                ]
+              }
+            ],
+            "id": "qPZvnbtq",
+            "metric_query": [
+              {
+                "exclude_filters": null,
+                "group_by": [
+                  {
+                    "aggregation_method": "max",
+                    "keys": [
+                      "key1",
+                      "key2"
+                    ]
+                  }
+                ],
+                "hidden": false,
+                "include_filters": [
+                  {
+                    "key": "kube_instance",
+                    "value": "3"
+                  }
+                ],
+                "metric": "requests",
+                "query_name": "a",
+                "timeseries_operator": "delta"
+              }
+            ],
+            "name": "test alerting rules",
+            "project_name": "lightstep-staging",
+            "type": null
+          },
+          "private": "bnVsbA==",
+          "dependencies": [
+            "lightstep_pagerduty_destination.pd",
+            "lightstep_webhook_destination.webhook"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "lightstep_pagerduty_destination",
+      "name": "pd",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "destination_name": "My Destination",
+            "id": "9Jdcxtd8",
+            "integration_key": "eec7e430f6gd489b8e91ebcae17a3f42",
+            "project_name": "lightstep-staging"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "lightstep_webhook_destination",
+      "name": "webhook",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "custom_headers": {
+              "Cache-Control": "max-age=0",
+              "Referrer-Policy": "no-referrer"
+            },
+            "destination_name": "my svc",
+            "id": "9XSfnbLK",
+            "project_name": "lightstep-staging",
+            "url": "https://www.downforeveryoneorjustme.com"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "version": 4,
+  "terraform_version": "0.12.26",
+  "serial": 7,
+  "lineage": "b51d56c9-95af-eff3-79e6-a418b7d9d6d9",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "lightstep_webhook_destination",
+      "name": "webhook",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "custom_headers": {
+              "Cache-Control": "max-age=0",
+              "Referrer-Policy": "no-referrer"
+            },
+            "destination_name": "my svc",
+            "id": "9XSfnbLK",
+            "project_name": "lightstep-staging",
+            "url": "https://www.downforeveryoneorjustme.com"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    }
+  ]
+}

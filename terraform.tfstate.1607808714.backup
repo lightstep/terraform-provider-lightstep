@@ -1,0 +1,49 @@
+{
+  "version": 4,
+  "terraform_version": "0.12.26",
+  "serial": 6,
+  "lineage": "b51d56c9-95af-eff3-79e6-a418b7d9d6d9",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "lightstep_pagerduty_destination",
+      "name": "pd",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "destination_name": "My Destination",
+            "id": "9Jdcxtd8",
+            "integration_key": "eec7e430f6gd489b8e91ebcae17a3f42",
+            "project_name": "lightstep-staging"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "lightstep_webhook_destination",
+      "name": "webhook",
+      "provider": "provider.lightstep",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "custom_headers": {
+              "Cache-Control": "max-age=0",
+              "Referrer-Policy": "no-referrer"
+            },
+            "destination_name": "my svc",
+            "id": "9XSfnbLK",
+            "project_name": "lightstep-staging",
+            "url": "https://www.downforeveryoneorjustme.com"
+          },
+          "private": "bnVsbA=="
+        }
+      ]
+    }
+  ]
+}

@@ -73,8 +73,8 @@ resource "lightstep_metric_condition" "beemo-requests" {
       is_no_data = true
       operand  = "below"
       thresholds {
-        warning  = 10
-        critical = 5
+        warning  = 10.0
+        critical = 5.0
       }
   }
 
