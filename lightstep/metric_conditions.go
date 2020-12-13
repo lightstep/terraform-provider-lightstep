@@ -14,6 +14,7 @@ type MetricCondition struct {
 
 type MetricConditionAttributes struct {
 	Name          string `json:"name"`
+	Description   string `json:"description"`
 	Type          string `json:"condition_type"`
 	Expression    `json:"expression"`
 	Queries       []MetricQueryWithAttributes `json:"metric-queries"`
@@ -36,8 +37,8 @@ type Expression struct {
 }
 
 type Thresholds struct {
-	Warning  int `json:"warning,omitempty"`
-	Critical int `json:"critical"`
+	Warning  float64 `json:"warning,omitempty"`
+	Critical float64 `json:"critical"`
 }
 
 type MetricQueryWithAttributes struct {
