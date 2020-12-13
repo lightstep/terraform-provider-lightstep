@@ -362,12 +362,17 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 
 		groupBy, ok := query["group_by"]
 		if ok {
-			g := groupBy.([]interface{})[0].(map[string]interface{})
-			newQuery.Query.GroupBy =
-				lightstep.GroupBy{
-					Aggregation: g["aggregation_method"].(string),
-					LabelKeys:   buildKeys(g["keys"].([]interface{})),
+			if groupBy != nil {
+				arr := groupBy.([]interface{})
+				if len(arr) > 0 {
+					g := arr[0].(map[string]interface{})
+					newQuery.Query.GroupBy =
+						lightstep.GroupBy{
+							Aggregation: g["aggregation_method"].(string),
+							LabelKeys:   buildKeys(g["keys"].([]interface{})),
+						}
 				}
+			}
 		}
 		newQueries = append(newQueries, newQuery)
 	}
