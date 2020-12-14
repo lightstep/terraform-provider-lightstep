@@ -330,14 +330,19 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 	}
 
 	for _, query := range queries {
+		metric := query["metric"].(string)
+		queryType := "single"
+		if metric == "" {
+			queryType = "composite"
+		}
 		newQuery := lightstep.MetricQueryWithAttributes{
 			Name:    query["query_name"].(string),
-			Type:    "single",
+			Type:    queryType,
 			Hidden:  query["hidden"].(bool),
 			Display: "line",
 			Query: lightstep.MetricQuery{
-				Metric:             query["metric"].(string),
 				TimeseriesOperator: query["timeseries_operator"].(string),
+				Metric:             metric,
 			},
 		}
 
