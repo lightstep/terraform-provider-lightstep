@@ -165,11 +165,11 @@ func getQuerySchema() map[string]*schema.Schema {
 						Elem: &schema.Schema{
 							Type: schema.TypeString,
 						},
-						Required: true,
+						Optional: true,
 					},
 				},
 			},
-			Optional: true,
+			Required: true,
 		},
 	}
 }
