@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
@@ -157,7 +158,7 @@ func getQuerySchema() map[string]*schema.Schema {
 				Schema: map[string]*schema.Schema{
 					"aggregation_method": {
 						Type:         schema.TypeString,
-						Required:     true,
+						Optional:     true,
 						ValidateFunc: validation.StringInSlice([]string{"sum", "avg", "max", "min", "count", "count_non_zero"}, true),
 					},
 					"keys": {
@@ -169,7 +170,7 @@ func getQuerySchema() map[string]*schema.Schema {
 					},
 				},
 			},
-			Required: true,
+			Optional: true,
 		},
 	}
 }
@@ -229,7 +230,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 		},
 	}
 
-	queries, err := buildSingleQueries(d.Get("metric_query").([]interface{}))
+	queries, err := buildQueries(d.Get("metric_query").([]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +323,7 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule
 	return newRules, nil
 }
 
-func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttributes, error) {
+func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttributes, error) {
 	var newQueries []lightstep.MetricQueryWithAttributes
 	var queries []map[string]interface{}
 	for _, queryIn := range queriesIn {
@@ -365,19 +366,21 @@ func buildSingleQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAtt
 		filters := buildLabelFilters(includes.([]interface{}), excludes.([]interface{}))
 		newQuery.Query.Filters = filters
 
-		groupBy, ok := query["group_by"]
-		if ok {
-			if groupBy != nil {
-				arr := groupBy.([]interface{})
-				if len(arr) > 0 {
-					g := arr[0].(map[string]interface{})
-					newQuery.Query.GroupBy =
-						lightstep.GroupBy{
-							Aggregation: g["aggregation_method"].(string),
-							LabelKeys:   buildKeys(g["keys"].([]interface{})),
-						}
+		groupBy := query["group_by"]
+		err := validateGroupBy(groupBy, newQuery.Type)
+		if err != nil {
+			return nil, err
+		}
+
+		if newQuery.Type == "single" {
+			arr := groupBy.([]interface{})
+			g := arr[0].(map[string]interface{})
+
+			newQuery.Query.GroupBy =
+				lightstep.GroupBy{
+					Aggregation: g["aggregation_method"].(string),
+					LabelKeys:   buildKeys(g["keys"].([]interface{})),
 				}
-			}
 		}
 		newQueries = append(newQueries, newQuery)
 	}
@@ -461,6 +464,33 @@ func validateFilters(filters []interface{}) error {
 			return fmt.Errorf("value must be a string. got: %T", value)
 		}
 	}
+	return nil
+}
+
+func validateGroupBy(groupBy interface{}, queryType string) error {
+	// groupBy is invalid for composite queries
+	if queryType == "composite" {
+		if groupBy != nil {
+			return fmt.Errorf("invalid block group_by found on composite")
+		}
+		return nil
+	}
+
+	// groupBy and aggregationMethod are required for single queries
+	if groupBy == nil {
+		return fmt.Errorf("missing required block group_by for single query")
+	}
+
+	if len(groupBy.([]interface{})) == 0 {
+		return fmt.Errorf("missing fields in group_by found on composite")
+	}
+
+	g := groupBy.([]interface{})[0].(map[string]interface{})
+	_, hasAggMethod := g["aggregation_method"]
+	if !hasAggMethod {
+		return fmt.Errorf("missing required field aggregation_method on group_by")
+	}
+
 	return nil
 }
 

@@ -63,23 +63,23 @@ resource "lightstep_stream_condition" "beemo_ops" {
 }
 
 resource "lightstep_metric_condition" "beemo-requests" {
-  project_name = var.project
-  name         = "test alerting rules"
+  project_name   = var.project
+  name = "test alerting rules"
 
-  expression {
-    evaluation_window   = "2m"
-    evaluation_criteria = "on_average"
-    is_multi            = true
-    is_no_data          = true
-    operand             = "below"
-    thresholds {
-      warning  = 10.0
-      critical = 5.0
-    }
+    expression {
+      evaluation_window   = "2m"
+      evaluation_criteria = "on_average"
+      is_multi   = true
+      is_no_data = true
+      operand  = "below"
+      thresholds {
+        warning  = 10.0
+        critical = 5.0
+      }
   }
 
   metric_query {
-    metric              = "requests"
+    metric         = "requests"
     query_name          = "a"
     timeseries_operator = "delta"
     hidden              = false
@@ -91,12 +91,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
     group_by {
       aggregation_method = "max"
-      keys               = ["key1", "key2"]
+      keys        = ["key1", "key2"]
     }
   }
 
   alerting_rule {
-    id              = lightstep_pagerduty_destination.pd.id
+    id       = lightstep_pagerduty_destination.pd.id
     update_interval = "1h"
 
     include_filters = [
@@ -108,7 +108,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
   }
 
   alerting_rule {
-    id              = lightstep_webhook_destination.webhook.id
+    id       = lightstep_webhook_destination.webhook.id
     update_interval = "1h"
     exclude_filters = [{
       key   = "kube_instance"

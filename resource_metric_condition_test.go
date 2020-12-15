@@ -444,23 +444,6 @@ func TestBuildAlertingRules(t *testing.T) {
 	}
 }
 
-func TestBuildGroupBy(t *testing.T) {
-	method := "method"
-	environment := "kube_environment"
-	aggregation := "max"
-
-	expected := lightstep.GroupBy{
-		LabelKeys:   []string{method, environment},
-		Aggregation: aggregation,
-	}
-
-	result := lightstep.GroupBy{
-		Aggregation: aggregation,
-		LabelKeys:   []string{method, environment},
-	}
-	require.Equal(t, expected, result)
-}
-
 func TestValidateFilters(t *testing.T) {
 	type filterCase struct {
 		filters   []interface{}
@@ -520,6 +503,95 @@ func TestValidateFilters(t *testing.T) {
 
 	for _, c := range cases {
 		err := validateFilters(c.filters)
+		if c.expectErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+	}
+}
+
+func TestValidateGroupBy(t *testing.T) {
+	const (
+		single    = "single"
+		composite = "composite"
+	)
+	type groupByCase struct {
+		groupBy   interface{}
+		queryType string
+		expectErr bool
+	}
+
+	cases := []groupByCase{
+		// single, nil groupBy
+		{
+			groupBy:   nil,
+			queryType: single,
+			expectErr: true,
+		},
+		// single, empty groupBy
+		{
+			groupBy:   []interface{}{},
+			queryType: single,
+			expectErr: true,
+		},
+		// single, missing groupBy aggregation_method
+		{
+			groupBy: []interface{}{
+				map[string]interface{}{
+					"keys": []string{"key1"},
+				},
+			},
+			queryType: single,
+			expectErr: true,
+		},
+		// single, no keys (valid)
+		{
+			groupBy: []interface{}{
+				map[string]interface{}{
+					"aggregation_method": "avg",
+				},
+			},
+			queryType: single,
+			expectErr: false,
+		},
+		// composite, nil groupBy
+		{
+			groupBy:   nil,
+			queryType: composite,
+			expectErr: false,
+		},
+		// composite, empty groupBy
+		{
+			groupBy:   []interface{}{},
+			queryType: composite,
+			expectErr: true,
+		},
+		// composite, with groupBy no keys
+		{
+			groupBy: []interface{}{
+				map[string]interface{}{
+					"aggregation_method": "avg",
+				},
+			},
+			queryType: composite,
+			expectErr: true,
+		},
+		// composite, with groupBy
+		{
+			groupBy: []interface{}{
+				map[string]interface{}{
+					"aggregation_method": "avg",
+					"keys":               []string{"key1"},
+				},
+			},
+			queryType: composite,
+			expectErr: true,
+		},
+	}
+
+	for _, c := range cases {
+		err := validateGroupBy(c.groupBy, c.queryType)
 		if c.expectErr {
 			require.Error(t, err)
 		} else {
