@@ -178,7 +178,7 @@ func getThresholdSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"critical": {
 			Type:     schema.TypeFloat,
-			Required: true,
+			Optional: true,
 		},
 		"warning": {
 			Type:     schema.TypeFloat,
