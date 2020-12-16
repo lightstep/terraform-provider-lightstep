@@ -472,13 +472,13 @@ func validateFilters(filters []interface{}) error {
 func validateGroupBy(groupBy interface{}, queryType string) error {
 	// groupBy is invalid for composite queries
 	if queryType == "composite" {
-		if len(groupBy.([]interface{})) > 0 {
+		if groupBy != nil && len(groupBy.([]interface{})) > 0 {
 			return fmt.Errorf("invalid block group_by found on composite")
 		}
 		return nil
 	}
 
-	if len(groupBy.([]interface{})) == 0 {
+	if groupBy == nil || len(groupBy.([]interface{})) == 0 {
 		return fmt.Errorf("missing fields in group_by found on composite")
 	}
 

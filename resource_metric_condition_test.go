@@ -529,7 +529,7 @@ func TestValidateGroupBy(t *testing.T) {
 		{
 			groupBy:   []interface{}{},
 			queryType: composite,
-			expectErr: true,
+			expectErr: false,
 		},
 		// composite, with groupBy no keys
 		{
