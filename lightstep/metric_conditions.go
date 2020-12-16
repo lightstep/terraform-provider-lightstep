@@ -13,10 +13,10 @@ type MetricCondition struct {
 }
 
 type MetricConditionAttributes struct {
-	Name          string `json:"name"`
-	Description   string `json:"description"`
-	Type          string `json:"condition_type"`
-	Expression    `json:"expression"`
+	Name          string                      `json:"name"`
+	Description   string                      `json:"description"`
+	Type          string                      `json:"condition_type"`
+	Expression    Expression                  `json:"expression"`
 	Queries       []MetricQueryWithAttributes `json:"metric-queries"`
 	AlertingRules []AlertingRule              `json:"alerting-rules,omitempty"`
 }
@@ -28,17 +28,17 @@ type AlertingRule struct {
 }
 
 type Expression struct {
-	Thresholds         `json:"thresholds"`
-	Operand            string `json:"operand"`
-	EvaluationWindow   int    `json:"evaluation-window-ms"`
-	EvaluationCriteria string `json:"evaluation-criteria"`
-	IsMulti            bool   `json:"is-multi-alert,omitempty"`
-	IsNoData           bool   `json:"enable-no-data-alert,omitempty"`
+	Thresholds         Thresholds `json:"thresholds"`
+	Operand            string     `json:"operand"`
+	EvaluationWindow   int        `json:"evaluation-window-ms"`
+	EvaluationCriteria string     `json:"evaluation-criteria"`
+	IsMulti            bool       `json:"is-multi-alert,omitempty"`
+	IsNoData           bool       `json:"enable-no-data-alert,omitempty"`
 }
 
 type Thresholds struct {
-	Warning  float64 `json:"warning,omitempty"`
-	Critical float64 `json:"critical"`
+	Warning  *float64 `json:"warning,omitempty"`
+	Critical *float64 `json:"critical,omitempty"`
 }
 
 type MetricQueryWithAttributes struct {

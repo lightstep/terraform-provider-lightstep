@@ -213,8 +213,7 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightstep.MetricConditionAttributes, error) {
 	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
 
-	tfThresholds := expression["thresholds"].([]interface{})[0].(map[string]interface{})
-	thresholds := buildThresholds(tfThresholds)
+	thresholds := buildThresholds(d)
 
 	attributes := &lightstep.MetricConditionAttributes{
 		Type:        "metrics",
@@ -395,18 +394,21 @@ func buildKeys(keysIn []interface{}) []string {
 	return keys
 }
 
-func buildThresholds(thresholds map[string]interface{}) lightstep.Thresholds {
+func buildThresholds(d *schema.ResourceData) lightstep.Thresholds {
 	t := lightstep.Thresholds{}
 
-	critical, ok := thresholds["critical"]
-	if ok {
-		t.Critical = critical.(float64)
+	critical, cOk := d.GetOk("expression.0.thresholds.0.critical")
+	if cOk {
+		c := critical.(float64)
+		t.Critical = &c
 	}
 
-	warning, ok := thresholds["warning"]
-	if ok {
-		t.Warning = warning.(float64)
+	warning, wOk := d.GetOk("expression.0.thresholds.0.warning")
+	if wOk {
+		w := warning.(float64)
+		t.Warning = &w
 	}
+
 	return t
 }
 
@@ -470,18 +472,13 @@ func validateFilters(filters []interface{}) error {
 func validateGroupBy(groupBy interface{}, queryType string) error {
 	// groupBy is invalid for composite queries
 	if queryType == "composite" {
-		if groupBy != nil {
+		if groupBy != nil && len(groupBy.([]interface{})) > 0 {
 			return fmt.Errorf("invalid block group_by found on composite")
 		}
 		return nil
 	}
 
-	// groupBy and aggregationMethod are required for single queries
-	if groupBy == nil {
-		return fmt.Errorf("missing required block group_by for single query")
-	}
-
-	if len(groupBy.([]interface{})) == 0 {
+	if groupBy == nil || len(groupBy.([]interface{})) == 0 {
 		return fmt.Errorf("missing fields in group_by found on composite")
 	}
 
@@ -530,18 +527,24 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return nil, err
 	}
 
+	thresholdEntries := map[string]interface{}{}
+
+	if c.Attributes.Expression.Thresholds.Critical != nil {
+		thresholdEntries["critical"] = *c.Attributes.Expression.Thresholds.Critical
+	}
+	if c.Attributes.Expression.Thresholds.Warning != nil {
+		thresholdEntries["warning"] = *c.Attributes.Expression.Thresholds.Warning
+	}
+
 	err = d.Set("expression", []map[string]interface{}{
 		{
-			"evaluation_window":   GetEvaluationWindowValue(c.Attributes.EvaluationWindow),
-			"evaluation_criteria": c.Attributes.EvaluationCriteria,
+			"evaluation_window":   GetEvaluationWindowValue(c.Attributes.Expression.EvaluationWindow),
+			"evaluation_criteria": c.Attributes.Expression.EvaluationCriteria,
 			"is_multi":            c.Attributes.Expression.IsMulti,
 			"is_no_data":          c.Attributes.Expression.IsNoData,
-			"operand":             c.Attributes.Operand,
+			"operand":             c.Attributes.Expression.Operand,
 			"thresholds": []interface{}{
-				map[string]interface{}{
-					"critical": c.Attributes.Critical,
-					"warning":  c.Attributes.Warning,
-				},
+				thresholdEntries,
 			},
 		},
 	})
