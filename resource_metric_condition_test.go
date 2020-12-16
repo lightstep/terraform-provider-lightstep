@@ -239,42 +239,6 @@ func testAccMetricConditionDestroy(s *terraform.State) error {
 	return nil
 }
 
-func TestBuildThresholds(t *testing.T) {
-	type thresholdCase struct {
-		thresholds map[string]interface{}
-		expected   lightstep.Thresholds
-	}
-
-	cases := []thresholdCase{
-		// valid critical
-		{
-			thresholds: map[string]interface{}{
-				"critical": 5.0,
-			},
-			expected: lightstep.Thresholds{
-				Critical: 5,
-			},
-		},
-		// valid critical and warning
-		{
-			thresholds: map[string]interface{}{
-				"critical": 5.0,
-				"warning":  10.0,
-			},
-			expected: lightstep.Thresholds{
-				Critical: 5.0,
-				Warning:  10.0,
-			},
-		},
-	}
-
-	for _, c := range cases {
-		result := buildThresholds(c.thresholds)
-		require.Equal(t, c.expected.Critical, result.Critical)
-		require.Equal(t, c.expected.Warning, result.Warning)
-	}
-}
-
 func TestBuildLabelFilters(t *testing.T) {
 	type filtersCase struct {
 		includes []interface{}
