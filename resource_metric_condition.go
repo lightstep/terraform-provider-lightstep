@@ -233,7 +233,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 		},
 	}
 
-	numSecPerPoint, ok := d.GetOk("expression.0.num-sec-per-point")
+	numSecPerPoint, ok := d.GetOk("expression.0.num_sec_per_point")
 	if ok {
 		i := numSecPerPoint.(int)
 		attributes.Expression.NumSecPerPoint = &i
@@ -553,7 +553,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 			"is_multi":            c.Attributes.Expression.IsMulti,
 			"is_no_data":          c.Attributes.Expression.IsNoData,
 			"operand":             c.Attributes.Expression.Operand,
-			"num-sec-per-point":   c.Attributes.Expression.NumSecPerPoint,
+			"num_sec_per_point":   c.Attributes.Expression.NumSecPerPoint,
 			"thresholds": []interface{}{
 				thresholdEntries,
 			},
