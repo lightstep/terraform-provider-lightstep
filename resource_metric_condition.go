@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -182,12 +183,14 @@ func getQuerySchema() map[string]*schema.Schema {
 func getThresholdSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"critical": {
-			Type:     schema.TypeFloat,
+			Type:     schema.TypeString,
 			Optional: true,
+			Default:  "",
 		},
 		"warning": {
-			Type:     schema.TypeFloat,
+			Type:     schema.TypeString,
 			Optional: true,
+			Default:  "",
 		},
 	}
 }
@@ -217,7 +220,10 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightstep.MetricConditionAttributes, error) {
 	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
 
-	thresholds := buildThresholds(d)
+	thresholds, err := buildThresholds(d)
+	if err != nil {
+		return nil, err
+	}
 
 	attributes := &lightstep.MetricConditionAttributes{
 		Type:        "metrics",
@@ -267,7 +273,6 @@ func resourceMetricConditionRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -413,22 +418,28 @@ func buildKeys(keysIn []interface{}) []string {
 	return keys
 }
 
-func buildThresholds(d *schema.ResourceData) lightstep.Thresholds {
+func buildThresholds(d *schema.ResourceData) (lightstep.Thresholds, error) {
 	t := lightstep.Thresholds{}
 
-	critical, cOk := d.GetOk("expression.0.thresholds.0.critical")
-	if cOk {
-		c := critical.(float64)
+	critical := d.Get("expression.0.thresholds.0.critical")
+	if critical != "" {
+		c, err := strconv.ParseFloat(critical.(string), 64)
+		if err != nil {
+			return t, err
+		}
 		t.Critical = &c
 	}
 
-	warning, wOk := d.GetOk("expression.0.thresholds.0.warning")
-	if wOk {
-		w := warning.(float64)
+	warning := d.Get("expression.0.thresholds.0.warning")
+	if warning != "" {
+		w, err := strconv.ParseFloat(warning.(string), 64)
+		if err != nil {
+			return t, err
+		}
 		t.Warning = &w
 	}
 
-	return t
+	return t, nil
 }
 
 func buildLabelFilters(includes []interface{}, excludes []interface{}) []lightstep.LabelFilter {
@@ -558,14 +569,11 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 	thresholdEntries := map[string]interface{}{}
 
 	if c.Attributes.Expression.Thresholds.Critical != nil {
-		thresholdEntries["critical"] = *c.Attributes.Expression.Thresholds.Critical
-	} else {
-		thresholdEntries["critical"] = nil
+		thresholdEntries["critical"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Critical, 'f', -1, 64)
 	}
+
 	if c.Attributes.Expression.Thresholds.Warning != nil {
-		thresholdEntries["warning"] = *c.Attributes.Expression.Thresholds.Warning
-	} else {
-		thresholdEntries["warning"] = nil
+		thresholdEntries["warning"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Warning, 'f', -1, 64)
 	}
 
 	err = d.Set("expression", []map[string]interface{}{
