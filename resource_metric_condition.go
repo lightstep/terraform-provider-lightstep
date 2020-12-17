@@ -598,7 +598,7 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
 
 		var groupBy []interface{}
-		if len(q.Query.GroupBy.LabelKeys) > 0 {
+		if q.Query.GroupBy.Aggregation != "" || len(q.Query.GroupBy.LabelKeys) > 0 {
 			groupBy = []interface{}{
 				map[string]interface{}{
 					"aggregation_method": q.Query.GroupBy.Aggregation,
@@ -606,6 +606,7 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 				},
 			}
 		}
+
 		queries = append(queries, map[string]interface{}{
 			"metric":              q.Query.Metric,
 			"hidden":              q.Hidden,
