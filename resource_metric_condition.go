@@ -68,6 +68,10 @@ func resourceMetricCondition() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
 						},
+						"num_sec_per_point": {
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
 						"thresholds": {
 							Type:     schema.TypeList,
 							MaxItems: 1,
@@ -227,6 +231,12 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 			EvaluationWindow:   validEvaluationWindow[expression["evaluation_window"].(string)],
 			Thresholds:         thresholds,
 		},
+	}
+
+	numSecPerPoint, ok := d.GetOk("expression.0.num_sec_per_point")
+	if ok {
+		i := numSecPerPoint.(int)
+		attributes.Expression.NumSecPerPoint = &i
 	}
 
 	queries, err := buildQueries(d.Get("metric_query").([]interface{}))
@@ -543,6 +553,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 			"is_multi":            c.Attributes.Expression.IsMulti,
 			"is_no_data":          c.Attributes.Expression.IsNoData,
 			"operand":             c.Attributes.Expression.Operand,
+			"num_sec_per_point":   c.Attributes.Expression.NumSecPerPoint,
 			"thresholds": []interface{}{
 				thresholdEntries,
 			},

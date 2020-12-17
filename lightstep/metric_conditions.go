@@ -34,6 +34,7 @@ type Expression struct {
 	EvaluationCriteria string     `json:"evaluation-criteria"`
 	IsMulti            bool       `json:"is-multi-alert,omitempty"`
 	IsNoData           bool       `json:"enable-no-data-alert,omitempty"`
+	NumSecPerPoint     *int        `json:"num-sec-per-point,omitempty"`
 }
 
 type Thresholds struct {
