@@ -74,12 +74,12 @@ func resourceMetricCondition() *schema.Resource {
 						},
 						"thresholds": {
 							Type:     schema.TypeList,
+							Required: true,
 							MaxItems: 1,
 							MinItems: 1,
 							Elem: &schema.Resource{
 								Schema: getThresholdSchema(),
 							},
-							Required: true,
 						},
 					},
 				},
@@ -258,10 +258,16 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 func resourceMetricConditionRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
 
-	_, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
+	cond, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
 		return err
 	}
+
+	err = readResourceDataFromMetricCondition(d.Get("project_name").(string), cond, d)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -279,7 +285,7 @@ func resourceMetricConditionUpdate(d *schema.ResourceData, m interface{}) error 
 		*attrs,
 	)
 
-	return err
+	return resourceMetricConditionRead(d, m)
 }
 
 func resourceMetricConditionDelete(d *schema.ResourceData, m interface{}) error {
@@ -517,33 +523,46 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 	d.SetId(id)
 
-	err = d.Set("project_name", project)
+	err = readResourceDataFromMetricCondition(project, c, d)
 	if err != nil {
 		return nil, err
+	}
+
+	return []*schema.ResourceData{d}, nil
+}
+
+func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondition, d *schema.ResourceData) error {
+	err := d.Set("project_name", project)
+	if err != nil {
+		return err
 	}
 
 	err = d.Set("name", c.Attributes.Name)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = d.Set("description", c.Attributes.Description)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = d.Set("type", "metric_alert")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	thresholdEntries := map[string]interface{}{}
 
 	if c.Attributes.Expression.Thresholds.Critical != nil {
 		thresholdEntries["critical"] = *c.Attributes.Expression.Thresholds.Critical
+	} else {
+		thresholdEntries["critical"] = nil
 	}
 	if c.Attributes.Expression.Thresholds.Warning != nil {
 		thresholdEntries["warning"] = *c.Attributes.Expression.Thresholds.Warning
+	} else {
+		thresholdEntries["warning"] = nil
 	}
 
 	err = d.Set("expression", []map[string]interface{}{
@@ -560,7 +579,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 		},
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var queries []interface{}
@@ -589,7 +608,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 	err = d.Set("metric_query", queries)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var alertingRules []interface{}
@@ -603,12 +622,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 			"exclude_filters": excludeFilters,
 		})
 	}
-	err = d.Set("alerting_rule", alertingRules)
-	if err != nil {
-		return nil, err
-	}
-
-	return []*schema.ResourceData{d}, nil
+	return d.Set("alerting_rule", alertingRules)
 }
 
 func getIncludeExcludeFilters(filters []lightstep.LabelFilter) ([]interface{}, []interface{}) {
