@@ -284,6 +284,9 @@ func resourceMetricConditionUpdate(d *schema.ResourceData, m interface{}) error 
 		d.Id(),
 		*attrs,
 	)
+	if err != nil {
+		return err
+	}
 
 	return resourceMetricConditionRead(d, m)
 }
