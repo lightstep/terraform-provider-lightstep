@@ -615,6 +615,7 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 		queries = append(queries, map[string]interface{}{
 			"metric":              q.Query.Metric,
 			"hidden":              q.Hidden,
+			"display":             q.Display,
 			"query_name":          q.Name,
 			"timeseries_operator": q.Query.TimeseriesOperator,
 			"include_filters":     includeFilters,
