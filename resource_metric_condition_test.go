@@ -64,18 +64,19 @@ resource "lightstep_metric_condition" "test" {
   expression {
 	  evaluation_window   = "2m"
 	  evaluation_criteria = "on_average"
-	  is_multi   = true
-	  is_no_data = true
-      operand  = "above"
+	  is_multi            = true
+	  is_no_data          = true
+      operand             = "above"
 	  thresholds {
 		critical  = 10
-		warning = 5
+		warning   = 5
 	  }
   }
 
   metric_query {
-    metric         = "requests"
+    metric              = "requests"
     query_name          = "a"
+    display             = "line"
     timeseries_operator = "rate"
     hidden              = false
 
@@ -91,12 +92,12 @@ resource "lightstep_metric_condition" "test" {
 
     group_by  {
       aggregation_method = "avg"
-      keys = ["method"]
+      keys               = ["method"]
     }
   }
 
   alerting_rule {
-    id          = lightstep_slack_destination.slack.id
+    id              = lightstep_slack_destination.slack.id
     update_interval = "1h"
 
     include_filters = [
@@ -112,27 +113,27 @@ resource "lightstep_metric_condition" "test" {
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
+  channel      = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
-  name = "updated"
+  name         = "updated"
 
   expression {
 	  evaluation_window   = "1h" 
 	  evaluation_criteria = "at_least_once"
-	  is_multi   = true
-	  is_no_data = false
-      operand  = "above"
+	  is_multi            = true
+	  is_no_data          = false
+      operand             = "above"
 	  thresholds {
 		critical  = 10
-		warning = 5
+		warning   = 5
 	  }
   }
 
   metric_query {
-    metric         = "requests"
+    metric              = "requests"
     query_name          = "a"
     timeseries_operator = "rate"
     hidden              = false
@@ -154,7 +155,7 @@ resource "lightstep_metric_condition" "test" {
   }
 
   alerting_rule {
-    id          = lightstep_slack_destination.slack.id
+    id              = lightstep_slack_destination.slack.id
     update_interval = "1h"
 
     include_filters = [

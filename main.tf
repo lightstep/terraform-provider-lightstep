@@ -81,6 +81,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
   metric_query {
     metric              = "requests"
     query_name          = "a"
+    display             = "line"
     timeseries_operator = "delta"
     hidden              = false
 

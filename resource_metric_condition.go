@@ -141,6 +141,11 @@ func getQuerySchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Required: true,
 		},
+		"display": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar"}, false),
+		},
 		"timeseries_operator": {
 			Type:         schema.TypeString,
 			Optional:     true,
@@ -361,9 +366,9 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 		}
 		newQuery := lightstep.MetricQueryWithAttributes{
 			Name:    query["query_name"].(string),
-			Type:    queryType,
 			Hidden:  query["hidden"].(bool),
-			Display: "line",
+			Display: query["display"].(string),
+			Type:    queryType,
 			Query: lightstep.MetricQuery{
 				TimeseriesOperator: query["timeseries_operator"].(string),
 				Metric:             metric,
