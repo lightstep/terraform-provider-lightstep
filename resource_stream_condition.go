@@ -88,7 +88,10 @@ func readResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.St
 		return err
 	}
 
-	if err := d.Set("stream_id", sc.Relationships.Stream.ID); err != nil {
+	rel := strings.Split(sc.Relationships.Stream.Links.Related, "/")
+	streamID := rel[len(rel)-1]
+
+	if err := d.Set("stream_id", streamID); err != nil {
 		return err
 	}
 
