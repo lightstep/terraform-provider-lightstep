@@ -70,13 +70,32 @@ func resourceStreamDashboardCreate(d *schema.ResourceData, m interface{}) error 
 
 func resourceStreamDashboardRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetDashboard(
-		d.Get("project_name").(string),
-		d.Id(),
-	)
+	dashboard, err := client.GetDashboard(d.Get("project_name").(string), d.Id())
 	if err != nil {
 		return err
 	}
+
+	if err := readResourceDataFromStreamDashboard(d, dashboard); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard lightstep.Dashboard) error {
+	if err := d.Set("dashboard_name", dashboard.Attributes.Name); err != nil {
+		return err
+	}
+
+	var streamIDs []string
+	for _, stream := range dashboard.Attributes.Streams {
+		streamIDs = append(streamIDs, stream.ID)
+	}
+
+	if err := d.Set("stream_ids", streamIDs); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -132,14 +151,24 @@ func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
+
 	var streamIDs []string
 	for _, stream := range dashboard.Attributes.Streams {
 		streamIDs = append(streamIDs, stream.ID)
 	}
 
 	d.SetId(id)
-	d.Set("project_name", project)                     // nolint  these values are fetched from LS
-	d.Set("dashboard_name", dashboard.Attributes.Name) // nolint   and are known to be valid
-	d.Set("stream_ids", streamIDs)                     // nolint
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	if err := d.Set("dashboard_name", dashboard.Attributes.Name); err != nil {
+		return []*schema.ResourceData{}, err
+	}
+
+	if err := d.Set("stream_ids", streamIDs); err != nil {
+		return []*schema.ResourceData{d}, err
+	}
+
 	return []*schema.ResourceData{d}, nil
 }

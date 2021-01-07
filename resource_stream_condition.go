@@ -50,21 +50,48 @@ func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error 
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
 		d.Get("evaluation_window_ms").(int),
-		d.Get("stream_id").(string))
-
+		d.Get("stream_id").(string),
+	)
 	if err != nil {
 		return err
 	}
+
 	d.SetId(condition.ID)
-	return resourceStreamConditionRead(d, m)
+	return nil
 }
 
 func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	_, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
+	projectName := d.Get("project_name").(string)
+	streamCond, err := client.GetStreamCondition(projectName, d.Id())
 	if err != nil {
 		return err
 	}
+
+	if err := readResourceDataFromStreamCondition(d, streamCond); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
+	if err := d.Set("condition_name", sc.Attributes.Name); err != nil {
+		return err
+	}
+
+	if err := d.Set("expression", sc.Attributes.Expression); err != nil {
+		return err
+	}
+
+	if err := d.Set("evaluation_window_ms", sc.Attributes.EvaluationWindowMS); err != nil {
+		return err
+	}
+
+	if err := d.Set("stream_id", sc.Relationships.Stream.ID); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -108,17 +135,32 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 	// stream ID does not get returned from getCondition
 	// need to follow the links in relationships to get stream ID
-	stream_id, err := client.GetStreamIDByLink(c.Relationships.Stream.Links.Related)
+	streamID, err := client.GetStreamIDByLink(c.Relationships.Stream.Links.Related)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
 	d.SetId(id)
-	d.Set("project_name", project)                                 //nolint these are values fetched from the api
-	d.Set("condition_name", c.Attributes.Name)                     //nolint so we know that they are valid
-	d.Set("expression", c.Attributes.Expression)                   //nolint
-	d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS) //nolint
-	d.Set("stream_id", stream_id)                                  //nolint
+
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, nil
+	}
+
+	if err := d.Set("condition_name", c.Attributes.Name); err != nil {
+		return []*schema.ResourceData{}, nil
+	}
+
+	if err := d.Set("expression", c.Attributes.Expression); err != nil {
+		return []*schema.ResourceData{}, nil
+	}
+
+	if err := d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS); err != nil {
+		return []*schema.ResourceData{}, nil
+	}
+
+	if err := d.Set("stream_id", streamID); err != nil {
+		return []*schema.ResourceData{}, nil
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
