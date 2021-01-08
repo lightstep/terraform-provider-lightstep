@@ -44,7 +44,6 @@ func resourceStreamCondition() *schema.Resource {
 
 func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-
 	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
@@ -56,26 +55,21 @@ func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
-	d.SetId(condition.ID)
-	return nil
+	return setResourceDataFromStreamCondition(d, condition)
 }
 
 func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	projectName := d.Get("project_name").(string)
-	streamCond, err := client.GetStreamCondition(projectName, d.Id())
+	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := readResourceDataFromStreamCondition(d, streamCond); err != nil {
-		return err
-	}
-
-	return nil
+	return setResourceDataFromStreamCondition(d, condition)
 }
 
-func readResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
+// update terraform state with stream condition API call response
+func setResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
 	if err := d.Set("condition_name", sc.Attributes.Name); err != nil {
 		return err
 	}
@@ -90,7 +84,6 @@ func readResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.St
 
 	rel := strings.Split(sc.Relationships.Stream.Links.Related, "/")
 	streamID := rel[len(rel)-1]
-
 	if err := d.Set("stream_id", streamID); err != nil {
 		return err
 	}
@@ -100,26 +93,23 @@ func readResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.St
 
 func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-	err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id())
-	return err
+	return client.DeleteStreamCondition(d.Get("project_name").(string), d.Id())
 }
 
 func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error {
 	client := m.(*lightstep.Client)
-
 	attrs := lightstep.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
 		EvaluationWindowMS: d.Get("evaluation_window_ms").(int),
 		Expression:         d.Get("expression").(string),
 	}
 
-	_, err := client.UpdateStreamCondition(
-		d.Get("project_name").(string),
-		d.Id(),
-		attrs,
-	)
+	condition, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return setResourceDataFromStreamCondition(d, condition)
 }
 
 func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -131,38 +121,18 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetStreamCondition(project, id)
-	if err != nil {
-		return []*schema.ResourceData{}, err
-	}
-
-	// stream ID does not get returned from getCondition
-	// need to follow the links in relationships to get stream ID
-	streamID, err := client.GetStreamIDByLink(c.Relationships.Stream.Links.Related)
+	condition, err := client.GetStreamCondition(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
 
 	d.SetId(id)
-
 	if err := d.Set("project_name", project); err != nil {
 		return []*schema.ResourceData{}, nil
 	}
 
-	if err := d.Set("condition_name", c.Attributes.Name); err != nil {
-		return []*schema.ResourceData{}, nil
-	}
-
-	if err := d.Set("expression", c.Attributes.Expression); err != nil {
-		return []*schema.ResourceData{}, nil
-	}
-
-	if err := d.Set("evaluation_window_ms", c.Attributes.EvaluationWindowMS); err != nil {
-		return []*schema.ResourceData{}, nil
-	}
-
-	if err := d.Set("stream_id", streamID); err != nil {
-		return []*schema.ResourceData{}, nil
+	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+		return []*schema.ResourceData{d}, err
 	}
 
 	return []*schema.ResourceData{d}, nil
