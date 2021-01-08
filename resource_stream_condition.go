@@ -55,6 +55,8 @@ func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error 
 		return err
 	}
 
+	d.SetId(condition.ID)
+
 	return setResourceDataFromStreamCondition(d, condition)
 }
 
@@ -66,29 +68,6 @@ func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	return setResourceDataFromStreamCondition(d, condition)
-}
-
-// update terraform state with stream condition API call response
-func setResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
-	if err := d.Set("condition_name", sc.Attributes.Name); err != nil {
-		return err
-	}
-
-	if err := d.Set("expression", sc.Attributes.Expression); err != nil {
-		return err
-	}
-
-	if err := d.Set("evaluation_window_ms", sc.Attributes.EvaluationWindowMS); err != nil {
-		return err
-	}
-
-	rel := strings.Split(sc.Relationships.Stream.Links.Related, "/")
-	streamID := rel[len(rel)-1]
-	if err := d.Set("stream_id", streamID); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error {
@@ -104,12 +83,12 @@ func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error 
 		Expression:         d.Get("expression").(string),
 	}
 
-	condition, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
+	cond, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
 	if err != nil {
 		return err
 	}
 
-	return setResourceDataFromStreamCondition(d, condition)
+	return setResourceDataFromStreamCondition(d, cond)
 }
 
 func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -136,4 +115,27 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+// update terraform state with stream condition API call response
+func setResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
+	if err := d.Set("condition_name", sc.Attributes.Name); err != nil {
+		return err
+	}
+
+	if err := d.Set("expression", sc.Attributes.Expression); err != nil {
+		return err
+	}
+
+	if err := d.Set("evaluation_window_ms", sc.Attributes.EvaluationWindowMS); err != nil {
+		return err
+	}
+
+	rel := strings.Split(sc.Relationships.Stream.Links.Related, "/")
+	streamID := rel[len(rel)-1]
+	if err := d.Set("stream_id", streamID); err != nil {
+		return err
+	}
+
+	return nil
 }
