@@ -39,13 +39,13 @@ resource "lightstep_metric_condition" "errors" {
   expression {
 	  evaluation_window   = "2m"
 	  evaluation_criteria = "on_average"
-	  is_multi   = true
-	  is_no_data = true
-      operand  = "above"
+	  is_multi            = true
+	  is_no_data          = true
+      operand             = "above"
 	
 	  thresholds {
 		critical  = 10
-		warning = 5
+		warning   = 5
 	  }
   }
 }
@@ -137,6 +137,8 @@ resource "lightstep_metric_condition" "test" {
     query_name          = "a"
     timeseries_operator = "rate"
     hidden              = false
+    display             = "line"
+
 
     include_filters = [{
       key   = "project_name"
