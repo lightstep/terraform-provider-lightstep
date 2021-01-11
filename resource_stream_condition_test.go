@@ -23,7 +23,7 @@ resource "lightstep_stream" "beemo" {
 resource "lightstep_stream_condition" "beemo_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Charge errors for BEEMO"
-  expression = "err > .4"
+  expression = "err > 0.4"
   evaluation_window_ms = 300000
   stream_id = lightstep_stream.beemo.id
 }
@@ -39,7 +39,7 @@ resource "lightstep_stream" "beemo" {
 resource "lightstep_stream_condition" "beemo_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   condition_name = "Payment Errors for BEEMO"
-  expression = "err > .2"
+  expression = "err > 0.2"
   evaluation_window_ms = 500000
   stream_id = lightstep_stream.beemo.id
 }
@@ -76,7 +76,8 @@ resource "lightstep_stream_condition" "beemo_errors" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckStreamConditionExists("lightstep_stream_condition.beemo_errors", &condition),
 					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "condition_name", "Charge errors for BEEMO"),
-					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > .4"),
+					// the lightstep API returns the threshold as 0.4 and not .4
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > 0.4"),
 					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "evaluation_window_ms", "300000"),
 				),
 			},
@@ -85,7 +86,8 @@ resource "lightstep_stream_condition" "beemo_errors" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckStreamConditionExists("lightstep_stream_condition.beemo_errors", &condition),
 					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "condition_name", "Payment Errors for BEEMO"),
-					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > .2"),
+					// the lightstep API returns the threshold as 0.2 and not .2
+					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "expression", "err > 0.2"),
 					resource.TestCheckResourceAttr("lightstep_stream_condition.beemo_errors", "evaluation_window_ms", "500000"),
 				),
 			},
