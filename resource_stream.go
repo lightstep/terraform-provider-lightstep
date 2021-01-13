@@ -1,21 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStream() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceStreamCreate,
-		Read:   resourceStreamRead,
-		Update: resourceStreamUpdate,
-		Delete: resourceStreamDelete,
+		CreateContext: resourceStreamCreate,
+		Read:          resourceStreamRead,
+		Update:        resourceStreamUpdate,
+		Delete:        resourceStreamDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceStreamImport,
 		},
@@ -44,10 +46,11 @@ func resourceStream() *schema.Resource {
 	}
 }
 
-func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 	client := m.(*lightstep.Client)
 
-	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+	err := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		stream, err := client.CreateStream(
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
@@ -64,8 +67,24 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 		}
 
 		d.SetId(stream.ID)
-		return resource.NonRetryableError(resourceStreamRead(d, m))
+		if err := resourceStreamRead(d, m); err != nil {
+			return resource.NonRetryableError(err)
+		}
+
+		return nil
 	})
+
+	if err != nil {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "Resource create error",
+			Detail:   fmt.Sprintf("Resource create error: %v", err),
+		})
+
+		return diags
+	}
+
+	return diags
 }
 
 func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
