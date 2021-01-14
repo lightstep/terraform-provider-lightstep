@@ -88,7 +88,7 @@ func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, 
 
 	client := m.(*lightstep.Client)
 	if err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to detele stream condition: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to delete stream condition: %v", err))
 	}
 
 	return diags
