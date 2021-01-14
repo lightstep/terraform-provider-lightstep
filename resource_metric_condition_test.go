@@ -178,7 +178,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("required field is not set"),
+				ExpectError: regexp.MustCompile("Required attribute is not set"),
 			},
 			{
 				Config: conditionConfig,

@@ -38,7 +38,7 @@ resource "lightstep_pagerduty_destination" "pagerduty" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckPagerdutyDestinationExists("lightstep_pagerduty_destination.missing_pagerduty", &destination),
 				),
-				ExpectError: regexp.MustCompile("Missing required argument: The argument \"integration_key\" is required, but no definition was found."),
+				ExpectError: regexp.MustCompile("The argument \"integration_key\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,

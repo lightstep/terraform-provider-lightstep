@@ -41,7 +41,7 @@ resource "lightstep_webhook_destination" "webhook" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.missing_webhook", &destination),
 				),
-				ExpectError: regexp.MustCompile("Missing required argument: The argument \"url\" is required, but no definition was found."),
+				ExpectError: regexp.MustCompile("The argument \"url\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,
