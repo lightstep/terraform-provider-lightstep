@@ -46,6 +46,7 @@ func resourceStreamCondition() *schema.Resource {
 
 func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
@@ -59,7 +60,6 @@ func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(condition.ID)
-
 	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
 	}
@@ -69,6 +69,7 @@ func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, 
 
 func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
@@ -84,6 +85,7 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 
 func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	if err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele stream condition: %v", err))
@@ -94,6 +96,7 @@ func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, 
 
 func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	attrs := lightstep.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
@@ -107,7 +110,7 @@ func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to set stream condition from API response to terraform state: %v", err))
 	}
 
 	return diags
