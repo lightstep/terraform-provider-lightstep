@@ -50,7 +50,6 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
-
 	if err := resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		stream, err := client.CreateStream(
 			d.Get("project_name").(string),
