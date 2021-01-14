@@ -1,19 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStreamCondition() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceStreamConditionCreate,
-		Read:   resourceStreamConditionRead,
-		Delete: resourceStreamConditionDelete,
-		Update: resourceStreamConditionUpdate,
+		CreateContext: resourceStreamConditionCreate,
+		ReadContext:   resourceStreamConditionRead,
+		DeleteContext: resourceStreamConditionDelete,
+		UpdateContext: resourceStreamConditionUpdate,
 		Importer: &schema.ResourceImporter{
 			State: resourceStreamConditionImport,
 		},
@@ -42,7 +44,9 @@ func resourceStreamCondition() *schema.Resource {
 	}
 }
 
-func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
@@ -52,30 +56,47 @@ func resourceStreamConditionCreate(d *schema.ResourceData, m interface{}) error 
 		d.Get("stream_id").(string),
 	)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("Failed to create stream condition: %v", err))
 	}
 
 	d.SetId(condition.ID)
+	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
+	}
 
-	return setResourceDataFromStreamCondition(d, condition)
+	return diags
 }
 
-func resourceStreamConditionRead(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("Failed to get stream condition: %v", err))
 	}
 
-	return setResourceDataFromStreamCondition(d, condition)
+	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
+	}
+
+	return diags
 }
 
-func resourceStreamConditionDelete(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
-	return client.DeleteStreamCondition(d.Get("project_name").(string), d.Id())
+	if err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to delete stream condition: %v", err))
+	}
+
+	return diags
 }
 
-func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	attrs := lightstep.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
@@ -83,12 +104,16 @@ func resourceStreamConditionUpdate(d *schema.ResourceData, m interface{}) error 
 		Expression:         d.Get("expression").(string),
 	}
 
-	cond, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
+	condition, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("Failed to update stream condition: %v", err))
 	}
 
-	return setResourceDataFromStreamCondition(d, cond)
+	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to set stream condition from API response to terraform state: %v", err))
+	}
+
+	return diags
 }
 
 func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {

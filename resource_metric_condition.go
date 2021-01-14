@@ -1,22 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceMetricCondition() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMetricConditionCreate,
-		Read:   resourceMetricConditionRead,
-		Update: resourceMetricConditionUpdate,
-		Delete: resourceMetricConditionDelete,
+		CreateContext: resourceMetricConditionCreate,
+		ReadContext:   resourceMetricConditionRead,
+		UpdateContext: resourceMetricConditionUpdate,
+		DeleteContext: resourceMetricConditionDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceMetricConditionImport,
 		},
@@ -195,12 +196,11 @@ func getThresholdSchema() map[string]*schema.Schema {
 	}
 }
 
-func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error {
+func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*lightstep.Client)
-
 	attributes, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
 	}
 
 	condition := lightstep.MetricCondition{
@@ -210,11 +210,77 @@ func resourceMetricConditionCreate(d *schema.ResourceData, m interface{}) error 
 
 	created, err := client.CreateMetricCondition(d.Get("project_name").(string), condition)
 	if err != nil {
-		return err
+		return diag.FromErr(fmt.Errorf("Failed to create metric condition: %v", err))
 	}
 
 	d.SetId(created.ID)
-	return resourceMetricConditionRead(d, m)
+	return resourceMetricConditionRead(ctx, d, m)
+}
+
+func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := m.(*lightstep.Client)
+	cond, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v", err))
+	}
+
+	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), cond, d); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err))
+	}
+
+	return diags
+}
+
+func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	client := m.(*lightstep.Client)
+	attrs, err := getMetricConditionAttributesFromResource(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
+	}
+
+	if _, err := client.UpdateMetricCondition(d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to update metric condition: %v", err))
+	}
+
+	return resourceMetricConditionRead(ctx, d, m)
+}
+
+func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := m.(*lightstep.Client)
+	if err := client.DeleteMetricCondition(d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
+	}
+
+	// d.SetId("") is automatically called assuming delete returns no errors, but
+	// it is added here for explicitness.
+	d.SetId("")
+	return diags
+}
+
+func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+	}
+
+	project, id := ids[0], ids[1]
+	c, err := client.GetMetricCondition(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition: %v", err)
+	}
+
+	d.SetId(id)
+	if err := setResourceDataFromMetricCondition(project, c, d); err != nil {
+		return nil, fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightstep.MetricConditionAttributes, error) {
@@ -259,47 +325,6 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 
 	attributes.AlertingRules = alertingRules
 	return attributes, nil
-}
-
-func resourceMetricConditionRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-
-	cond, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
-	if err != nil {
-		return err
-	}
-
-	err = readResourceDataFromMetricCondition(d.Get("project_name").(string), cond, d)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func resourceMetricConditionUpdate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-
-	attrs, err := getMetricConditionAttributesFromResource(d)
-	if err != nil {
-		return err
-	}
-
-	_, err = client.UpdateMetricCondition(
-		d.Get("project_name").(string),
-		d.Id(),
-		*attrs,
-	)
-	if err != nil {
-		return err
-	}
-
-	return resourceMetricConditionRead(d, m)
-}
-
-func resourceMetricConditionDelete(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-	err := client.DeleteMetricCondition(d.Get("project_name").(string), d.Id())
-	return err
 }
 
 func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule, error) {
@@ -521,49 +546,21 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 	return nil
 }
 
-func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
-
-	ids := strings.Split(d.Id(), ".")
-	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+func setResourceDataFromMetricCondition(project string, c lightstep.MetricCondition, d *schema.ResourceData) error {
+	if err := d.Set("project_name", project); err != nil {
+		return fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
 
-	project, id := ids[0], ids[1]
-	c, err := client.GetMetricCondition(project, id)
-	if err != nil {
-		return []*schema.ResourceData{}, err
+	if err := d.Set("name", c.Attributes.Name); err != nil {
+		return fmt.Errorf("Unable to set name resource field: %v", err)
 	}
 
-	d.SetId(id)
-
-	err = readResourceDataFromMetricCondition(project, c, d)
-	if err != nil {
-		return nil, err
+	if err := d.Set("description", c.Attributes.Description); err != nil {
+		return fmt.Errorf("Unable to set description resource field: %v", err)
 	}
 
-	return []*schema.ResourceData{d}, nil
-}
-
-func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondition, d *schema.ResourceData) error {
-	err := d.Set("project_name", project)
-	if err != nil {
-		return err
-	}
-
-	err = d.Set("name", c.Attributes.Name)
-	if err != nil {
-		return err
-	}
-
-	err = d.Set("description", c.Attributes.Description)
-	if err != nil {
-		return err
-	}
-
-	err = d.Set("type", "metric_alert")
-	if err != nil {
-		return err
+	if err := d.Set("type", "metric_alert"); err != nil {
+		return fmt.Errorf("Unable to set type resource field: %v", err)
 	}
 
 	thresholdEntries := map[string]interface{}{}
@@ -576,7 +573,7 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 		thresholdEntries["warning"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Warning, 'f', -1, 64)
 	}
 
-	err = d.Set("expression", []map[string]interface{}{
+	if err := d.Set("expression", []map[string]interface{}{
 		{
 			"evaluation_window":   GetEvaluationWindowValue(c.Attributes.Expression.EvaluationWindow),
 			"evaluation_criteria": c.Attributes.Expression.EvaluationCriteria,
@@ -588,9 +585,8 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 				thresholdEntries,
 			},
 		},
-	})
-	if err != nil {
-		return err
+	}); err != nil {
+		return fmt.Errorf("Unable to set expression resource field: %v", err)
 	}
 
 	var queries []interface{}
@@ -618,9 +614,8 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 		})
 	}
 
-	err = d.Set("metric_query", queries)
-	if err != nil {
-		return err
+	if err := d.Set("metric_query", queries); err != nil {
+		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
 	}
 
 	var alertingRules []interface{}
@@ -634,7 +629,12 @@ func readResourceDataFromMetricCondition(project string, c lightstep.MetricCondi
 			"exclude_filters": excludeFilters,
 		})
 	}
-	return d.Set("alerting_rule", alertingRules)
+
+	if err := d.Set("alerting_rule", alertingRules); err != nil {
+		return fmt.Errorf("Unable to set alerting_rule resource field: %v", err)
+	}
+
+	return nil
 }
 
 func getIncludeExcludeFilters(filters []lightstep.LabelFilter) ([]interface{}, []interface{}) {

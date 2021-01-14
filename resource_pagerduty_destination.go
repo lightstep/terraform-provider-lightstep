@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourcePagerdutyDestination() *schema.Resource {
 	return &schema.Resource{
-		Create: resourcePagerdutyDestinationCreate,
-		Read:   resourceDestinationRead,
-		Delete: resourceDestinationDelete,
+		CreateContext: resourcePagerdutyDestinationCreate,
+		ReadContext:   resourceDestinationRead,
+		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourcePagerdutyDestinationImport,
 		},
@@ -38,9 +40,8 @@ func resourcePagerdutyDestination() *schema.Resource {
 	}
 }
 
-func resourcePagerdutyDestinationCreate(d *schema.ResourceData, m interface{}) error {
+func resourcePagerdutyDestinationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*lightstep.Client)
-
 	destination, err := client.CreateDestination(d.Get("project_name").(string),
 		lightstep.Destination{
 			Type: "destination",
@@ -51,11 +52,11 @@ func resourcePagerdutyDestinationCreate(d *schema.ResourceData, m interface{}) e
 			},
 		})
 	if err != nil {
-		return fmt.Errorf("Error creating %v.\nErr:%v\n", destination, err)
+		return diag.FromErr(fmt.Errorf("Failed to create pagerduty destination: %v", err))
 	}
 
 	d.SetId(destination.ID)
-	return resourceDestinationRead(d, m)
+	return resourceDestinationRead(ctx, d, m)
 }
 
 func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -69,15 +70,22 @@ func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) (
 	project, id := ids[0], ids[1]
 	c, err := client.GetDestination(project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, err
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get pagerduty destination: %v", err)
 	}
+
 	d.SetId(c.ID)
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+	}
 
 	attributes := c.Attributes.(map[string]interface{})
+	if err := d.Set("destination_name", attributes["name"]); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set destination_name resource field: %v", err)
+	}
 
-	d.Set("project_name", project)                          // nolint  these values are fetched from LS
-	d.Set("destination_name", attributes["name"])           // nolint  and known to be valid
-	d.Set("integration_key", attributes["integration_key"]) // nolint
+	if err := d.Set("integration_key", attributes["integration_key"]); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set integration_key resource field: %v", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

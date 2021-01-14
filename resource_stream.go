@@ -1,21 +1,23 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStream() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceStreamCreate,
-		Read:   resourceStreamRead,
-		Update: resourceStreamUpdate,
-		Delete: resourceStreamDelete,
+		CreateContext: resourceStreamCreate,
+		ReadContext:   resourceStreamRead,
+		UpdateContext: resourceStreamUpdate,
+		DeleteContext: resourceStreamDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceStreamImport,
 		},
@@ -44,10 +46,11 @@ func resourceStream() *schema.Resource {
 	}
 }
 
-func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
+func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
 
-	return resource.Retry(d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+	client := m.(*lightstep.Client)
+	if err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		stream, err := client.CreateStream(
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
@@ -64,26 +67,39 @@ func resourceStreamCreate(d *schema.ResourceData, m interface{}) error {
 		}
 
 		d.SetId(stream.ID)
-		return resource.NonRetryableError(resourceStreamRead(d, m))
-	})
-}
+		if err := resourceStreamRead(ctx, d, m); err != nil {
+			if len(err) == 0 {
+				return resource.NonRetryableError(fmt.Errorf("Failed to read stream: %v", err))
+			}
 
-func resourceStreamRead(d *schema.ResourceData, m interface{}) error {
-	client := m.(*lightstep.Client)
-	s, err := client.GetStream(
-		d.Get("project_name").(string),
-		d.Id(),
-	)
-	if err != nil {
-		return err
+			return resource.NonRetryableError(fmt.Errorf(err[0].Summary))
+		}
+
+		return nil
+	}); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to create stream: %v", err))
 	}
-	d.Set("stream_name", s.Attributes.Name)       // nolint
-	d.Set("custom_data", s.Attributes.CustomData) // nolint
-	d.Set("query", s.Attributes.Query)            // nolint
-	return nil
+
+	return diags
 }
 
-func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := m.(*lightstep.Client)
+	s, err := client.GetStream(d.Get("project_name").(string), d.Id())
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get stream: %v", err))
+	}
+
+	if err := setResourceDataFromStream(d, s); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to set stream from API response to terraform state: %v", err))
+	}
+
+	return diags
+}
+
+func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*lightstep.Client)
 
 	s := lightstep.Stream{
@@ -95,26 +111,25 @@ func resourceStreamUpdate(d *schema.ResourceData, m interface{}) error {
 		s.Attributes.Name = d.Get("stream_name").(string)
 	}
 
-	_, err := client.UpdateStream(d.Get("project_name").(string),
-		d.Id(), s)
-	if err != nil {
-		return err
+	if _, err := client.UpdateStream(d.Get("project_name").(string), d.Id(), s); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to update stream: %v", err))
 	}
 
-	return resourceStreamRead(d, m)
+	return resourceStreamRead(ctx, d, m)
 }
 
-func resourceStreamDelete(d *schema.ResourceData, m interface{}) error {
+func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
-	err := client.DeleteStream(
-		d.Get("project_name").(string),
-		d.Id(),
-	)
-	if err != nil {
-		return err
+	if err := client.DeleteStream(d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to detele stream: %v", err))
 	}
+
+	// d.SetId("") is automatically called assuming delete returns no errors, but
+	// it is added here for explicitness.
 	d.SetId("")
-	return nil
+	return diags
 }
 
 func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -128,13 +143,33 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 	project, id := ids[0], ids[1]
 	stream, err := client.GetStream(project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, err
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get stream: %v", err)
 	}
 
 	d.SetId(id)
-	d.Set("project_name", project)               //nolint project_name is already valid since it is used in API call above
-	d.Set("stream_name", stream.Attributes.Name) //nolint stream_name or query because they are received from API call
-	d.Set("query", stream.Attributes.Query)      //nolint
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+	}
+
+	if err := setResourceDataFromStream(d, stream); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream from API response to terraform state: %v", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error {
+	if err := d.Set("stream_name", s.Attributes.Name); err != nil {
+		return fmt.Errorf("Unable to set stream_name resource field: %v", err)
+	}
+
+	if err := d.Set("custom_data", s.Attributes.CustomData); err != nil {
+		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
+	}
+
+	if err := d.Set("query", s.Attributes.Query); err != nil {
+		return fmt.Errorf("Unable to set query resource field: %v", err)
+	}
+
+	return nil
 }

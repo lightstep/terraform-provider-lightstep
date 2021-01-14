@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -17,7 +17,7 @@ func TestAccStreamDashboard(t *testing.T) {
 resource "lightstep_stream_dashboard" "customer_charges" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   dashboard_name = "All Non-BEEMO Charges"
-  stream_ids = [lightstep_stream.non_beemo.id]
+  stream_ids = ["no-existing"]
 }
 `
 
@@ -58,7 +58,7 @@ resource "lightstep_stream_dashboard" "customer_charges" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
 				),
-				ExpectError: regexp.MustCompile("config is invalid"),
+				ExpectError: regexp.MustCompile("InvalidArgument"),
 			},
 			{
 				Config: dashboardConfig,

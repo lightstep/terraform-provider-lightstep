@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -178,7 +178,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("required field is not set"),
+				ExpectError: regexp.MustCompile("Required attribute is not set"),
 			},
 			{
 				Config: conditionConfig,

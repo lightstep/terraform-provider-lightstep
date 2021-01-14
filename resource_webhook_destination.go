@@ -1,18 +1,20 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceWebhookDestination() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceWebhookDestinationCreate,
-		Read:   resourceDestinationRead,
-		Delete: resourceDestinationDelete,
+		CreateContext: resourceWebhookDestinationCreate,
+		ReadContext:   resourceDestinationRead,
+		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceWebhookDestinationImport,
 		},
@@ -41,13 +43,12 @@ func resourceWebhookDestination() *schema.Resource {
 	}
 }
 
-func resourceWebhookDestinationCreate(d *schema.ResourceData, m interface{}) error {
+func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*lightstep.Client)
 
 	dest := lightstep.Destination{
 		Type: "destination",
 	}
-
 	attrs := lightstep.WebhookAttributes{
 		Name:            d.Get("destination_name").(string),
 		DestinationType: "webhook",
@@ -60,14 +61,13 @@ func resourceWebhookDestinationCreate(d *schema.ResourceData, m interface{}) err
 	}
 
 	dest.Attributes = attrs
-
 	destination, err := client.CreateDestination(d.Get("project_name").(string), dest)
 	if err != nil {
-		return fmt.Errorf("Error creating %v.\nErr:%v\n", destination, err)
+		return diag.FromErr(fmt.Errorf("Failed to create webhook destination %s: %v", destination, err))
 	}
 
 	d.SetId(destination.ID)
-	return resourceDestinationRead(d, m)
+	return resourceDestinationRead(ctx, d, m)
 }
 
 func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -81,18 +81,27 @@ func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]
 	project, id := ids[0], ids[1]
 	c, err := client.GetDestination(project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, err
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get webhook destination: %v", err)
 	}
+
 	d.SetId(c.ID)
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+	}
 
 	attributes := c.Attributes.(map[string]interface{})
+	if err := d.Set("destination_name", attributes["name"]); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set destination_name resource field: %v", err)
+	}
 
-	d.Set("project_name", project)                // nolint  these values are fetched from LS
-	d.Set("destination_name", attributes["name"]) // nolint  and known to be valid
-	d.Set("url", attributes["url"])               // nolint
+	if err := d.Set("url", attributes["url"]); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set url resource field: %v", err)
+	}
 
 	if len(attributes["custom_headers"].(map[string]interface{})) > 0 {
-		d.Set("custom_headers", attributes["custom_headers"]) // nolint
+		if err := d.Set("custom_headers", attributes["custom_headers"]); err != nil {
+			return []*schema.ResourceData{}, fmt.Errorf("Unable to set custom_headers resource field: %v", err)
+		}
 	}
 
 	return []*schema.ResourceData{d}, nil

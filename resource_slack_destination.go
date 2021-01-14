@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceSlackDestination() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceSlackDestinationCreate,
-		Read:   resourceSlackDestinationRead,
-		Delete: resourceDestinationDelete,
+		CreateContext: resourceSlackDestinationCreate,
+		ReadContext:   resourceSlackDestinationRead,
+		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceSlackDestinationImport,
 		},
@@ -31,22 +33,25 @@ func resourceSlackDestination() *schema.Resource {
 		},
 	}
 }
-func resourceSlackDestinationRead(d *schema.ResourceData, m interface{}) error {
+
+func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
 	client := m.(*lightstep.Client)
 	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return fmt.Errorf("failed to get destination %v. Err: %v\n", d.Id(), err)
+		return diag.FromErr(fmt.Errorf("Failed to get destination %v: %v", d.Id(), err))
 	}
 
-	channel := dest.Attributes.(map[string]interface{})["channel"]
-	err = d.Set("channel", channel)
-	return err
+	if err := d.Set("channel", dest.Attributes.(map[string]interface{})["channel"]); err != nil {
+		return diag.FromErr(fmt.Errorf("Unable to set channel resource field: %v", err))
+	}
 
+	return diags
 }
 
-func resourceSlackDestinationCreate(d *schema.ResourceData, m interface{}) error {
+func resourceSlackDestinationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*lightstep.Client)
-
 	attrs := lightstep.SlackAttributes{
 		Channel:         d.Get("channel").(string),
 		DestinationType: "slack",
@@ -58,11 +63,11 @@ func resourceSlackDestinationCreate(d *schema.ResourceData, m interface{}) error
 
 	destination, err := client.CreateDestination(d.Get("project_name").(string), dest)
 	if err != nil {
-		return fmt.Errorf("Error creating destination to %v.\nErr:%v\n", attrs.Channel, err)
+		return diag.FromErr(fmt.Errorf("Failed to create slack destination %v: %v", attrs.Channel, err))
 	}
 
 	d.SetId(destination.ID)
-	return resourceDestinationRead(d, m)
+	return resourceDestinationRead(ctx, d, m)
 }
 
 func resourceSlackDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -76,14 +81,18 @@ func resourceSlackDestinationImport(d *schema.ResourceData, m interface{}) ([]*s
 	project, id := ids[0], ids[1]
 	c, err := client.GetDestination(project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, err
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get slack destination: %v", err)
 	}
+
 	d.SetId(c.ID)
+	if err := d.Set("project_name", project); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+	}
 
 	attributes := c.Attributes.(map[string]interface{})
-
-	d.Set("project_name", project)          // nolint  these values are fetched from LS
-	d.Set("channel", attributes["channel"]) // nolint  and known to be valid
+	if err := d.Set("channel", attributes["channel"]); err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Unable to set channel resource field: %v", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

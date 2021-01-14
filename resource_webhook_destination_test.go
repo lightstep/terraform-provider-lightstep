@@ -5,9 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -42,7 +41,7 @@ resource "lightstep_webhook_destination" "webhook" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.missing_webhook", &destination),
 				),
-				ExpectError: regexp.MustCompile("Missing required argument: The argument \"url\" is required, but no definition was found."),
+				ExpectError: regexp.MustCompile("The argument \"url\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,

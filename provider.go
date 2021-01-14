@@ -6,8 +6,9 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
@@ -48,17 +49,23 @@ func Provider() *schema.Provider {
 			"lightstep_slack_destination":     resourceSlackDestination(),
 		},
 
-		ConfigureFunc:    configureProvider,
-		TerraformVersion: "v.12.26",
+		ConfigureContextFunc: configureProvider,
+		TerraformVersion:     "v.12.26",
 	}
 }
 
-func configureProvider(d *schema.ResourceData) (interface{}, error) {
+func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	var diags diag.Diagnostics
 	envVar := d.Get("api_key_env_var").(string)
 
 	apiKey, ok := os.LookupEnv(envVar)
 	if !ok {
-		return apiKey, fmt.Errorf("'api_key_env_var' is set to %v - but no api key found.", envVar)
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  "No api key found",
+			Detail:   fmt.Sprintf("'api_key_env_var' is set to %v - but no api key found.", envVar),
+		})
+		return apiKey, diags
 	}
 
 	client := lightstep.NewClient(
@@ -68,5 +75,5 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		d.Get("environment").(string),
 	)
 
-	return client, nil
+	return client, diags
 }
