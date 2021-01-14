@@ -127,6 +127,8 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 		return diag.FromErr(fmt.Errorf("Failed to detele stream: %v", err))
 	}
 
+	// d.SetId("") is automatically called assuming delete returns no errors, but
+	// it is added here for explicitness.
 	d.SetId("")
 	return diags
 }
