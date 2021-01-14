@@ -9,6 +9,7 @@ variable "project" {
   default = "lightstep-staging"
 }
 
+
 ##############################################################
 ## Streams
 ##############################################################
@@ -32,6 +33,40 @@ resource "lightstep_stream_dashboard" "customer_charges" {
   project_name   = var.project
   dashboard_name = "Customer Charges"
   stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
+}
+
+resource "lightstep_metric_dashboard" "customer_charges" {
+  project_name   = var.project
+  dashboard_name = "Customer Charges"
+
+  chart {
+    name = "Requests by Project"
+    rank = 1
+    type = "timeseries"
+
+    y_axis {
+      min = 0.4
+      max = 5.0
+    }
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+      timeseries_operator = "rate"
+      metric              = "requests"
+
+      include_filters = [{
+        key   = "service"
+        value = "iOS"
+      }]
+
+      group_by {
+        aggregation_method = "max"
+        keys               = ["project_name"]
+      }
+    }
+  }
 }
 
 ##############################################################
