@@ -83,6 +83,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
     query_name          = "a"
     timeseries_operator = "delta"
     hidden              = false
+    display             = "line"
 
     include_filters = [{
       key   = "kube_instance"

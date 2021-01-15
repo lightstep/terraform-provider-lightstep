@@ -78,7 +78,7 @@ resource "lightstep_metric_condition" "test" {
     query_name          = "a"
     timeseries_operator = "rate"
     hidden              = false
-
+    display = "line"
     include_filters = [{
       key   = "project_name"
       value = "catlab"
@@ -136,6 +136,7 @@ resource "lightstep_metric_condition" "test" {
     query_name          = "a"
     timeseries_operator = "rate"
     hidden              = false
+	display             = "line"
 
     include_filters = [{
       key   = "project_name"
