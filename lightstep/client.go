@@ -99,29 +99,12 @@ func executeAPIRequest(client *http.Client, req *http.Request, result interface{
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		if resp.StatusCode == http.StatusNotFound {
+			result = nil
+		}
 		return APIClientError{
 			Response: resp,
 			Message:  fmt.Sprintf("status %d (%s): %q", resp.StatusCode, resp.Status, string(body)),
-		}
-	}
-
-	if len(body) == 0 {
-		return APIClientError{
-			Response: resp,
-			Message:  fmt.Sprintf("body empty. status=%v", resp.StatusCode),
-		}
-	}
-
-	contentType := resp.Header.Get("Content-Type")
-	if len(contentType) > 0 && contentType != req.Header.Get("Accept") {
-		return APIClientError{
-			Response: resp,
-			Message: fmt.Sprintf(
-				"content type (%s) is not \"%s\": %q",
-				contentType,
-				req.Header.Get("Accept"),
-				string(body),
-			),
 		}
 	}
 
