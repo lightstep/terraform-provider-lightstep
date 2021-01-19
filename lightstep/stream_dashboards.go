@@ -90,15 +90,15 @@ func (c *Client) UpdateDashboard(
 	return d, err
 }
 
-func (c *Client) GetDashboard(projectName string, dashboardID string) (Dashboard, error) {
+func (c *Client) GetDashboard(projectName string, dashboardID string) (*Dashboard, error) {
 	var (
-		d    Dashboard
+		d    *Dashboard
 		resp Envelope
 	)
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
 	if err != nil {
-		return d, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &d)

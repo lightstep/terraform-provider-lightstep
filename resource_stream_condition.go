@@ -73,10 +73,11 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 	client := m.(*lightstep.Client)
 	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get stream condition: %v", err))
+		d.SetId("")
+		return diags
 	}
 
-	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+	if err := setResourceDataFromStreamCondition(d, *condition); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
 	}
 
@@ -109,7 +110,7 @@ func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("Failed to update stream condition: %v", err))
 	}
 
-	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+	if err := setResourceDataFromStreamCondition(d, *condition); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set stream condition from API response to terraform state: %v", err))
 	}
 
@@ -135,7 +136,7 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return []*schema.ResourceData{}, nil
 	}
 
-	if err := setResourceDataFromStreamCondition(d, condition); err != nil {
+	if err := setResourceDataFromStreamCondition(d, *condition); err != nil {
 		return []*schema.ResourceData{d}, err
 	}
 

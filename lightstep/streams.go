@@ -77,15 +77,15 @@ func (c *Client) ListStreams(projectName string) ([]Stream, error) {
 	return s, err
 }
 
-func (c *Client) GetStream(projectName string, StreamID string) (Stream, error) {
+func (c *Client) GetStream(projectName string, StreamID string) (*Stream, error) {
 	var (
-		s    Stream
+		s    *Stream
 		resp Envelope
 	)
 
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	if err != nil {
-		return s, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &s)

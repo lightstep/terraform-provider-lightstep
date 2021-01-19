@@ -51,9 +51,9 @@ func (c *Client) CreateDestination(
 	return dest, err
 }
 
-func (c *Client) GetDestination(projectName string, destinationID string) (Destination, error) {
+func (c *Client) GetDestination(projectName string, destinationID string) (*Destination, error) {
 	var (
-		dest Destination
+		dest *Destination
 		resp Envelope
 	)
 
@@ -63,7 +63,7 @@ func (c *Client) GetDestination(projectName string, destinationID string) (Desti
 		&resp)
 
 	if err != nil {
-		return dest, err
+		return nil, err
 	}
 	err = json.Unmarshal(resp.Data, &dest)
 

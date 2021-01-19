@@ -113,12 +113,16 @@ func resourceMetricDashboardRead(_ context.Context, d *schema.ResourceData, m in
 	client := m.(*lightstep.Client)
 
 	dashboard, err := client.GetMetricDashboard(d.Get("project_name").(string), d.Id())
-	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v", err))
-
+	if dashboard == nil {
+		d.SetId("")
+		return diags
 	}
 
-	if err := setResourceDataFromMetricDashboard(d.Get("project_name").(string), dashboard, d); err != nil {
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v", err))
+	}
+
+	if err := setResourceDataFromMetricDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err))
 	}
 

@@ -82,9 +82,9 @@ func (c *Client) UpdateStreamCondition(
 	projectName string,
 	conditionID string,
 	attributes StreamConditionAttributes,
-) (StreamCondition, error) {
+) (*StreamCondition, error) {
 	var (
-		cond StreamCondition
+		cond *StreamCondition
 		resp Envelope
 	)
 
@@ -113,21 +113,21 @@ func (c *Client) UpdateStreamCondition(
 	return cond, err
 }
 
-func (c *Client) GetStreamCondition(projectName string, conditionID string) (StreamCondition, error) {
+func (c *Client) GetStreamCondition(projectName string, conditionID string) (*StreamCondition, error) {
 	var (
 		cond StreamCondition
 		resp Envelope
 	)
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
 	if err != nil {
-		return cond, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &cond)
 	if err != nil {
-		return cond, err
+		return nil, err
 	}
-	return cond, err
+	return &cond, err
 }
 
 func (c *Client) DeleteStreamCondition(projectName string, conditionID string) error {

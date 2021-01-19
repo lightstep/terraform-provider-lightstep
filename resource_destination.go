@@ -16,8 +16,11 @@ func resourceDestinationRead(ctx context.Context, d *schema.ResourceData, m inte
 
 	client := m.(*lightstep.Client)
 	if _, err := client.GetDestination(d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get destination: %v", err))
+		d.SetId("")
+		return diags
 	}
+
+	// todo set resource data here?
 
 	return diags
 }

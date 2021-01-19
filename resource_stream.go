@@ -89,10 +89,11 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 	client := m.(*lightstep.Client)
 	s, err := client.GetStream(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get stream: %v", err))
+		d.SetId("")
+		return diags
 	}
 
-	if err := setResourceDataFromStream(d, s); err != nil {
+	if err := setResourceDataFromStream(d, *s); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set stream from API response to terraform state: %v", err))
 	}
 
@@ -151,7 +152,7 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
 
-	if err := setResourceDataFromStream(d, stream); err != nil {
+	if err := setResourceDataFromStream(d, *stream); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream from API response to terraform state: %v", err)
 	}
 

@@ -40,7 +40,8 @@ func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m
 	client := m.(*lightstep.Client)
 	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get destination %v: %v", d.Id(), err))
+		d.SetId("")
+		return diags
 	}
 
 	if err := d.Set("channel", dest.Attributes.(map[string]interface{})["channel"]); err != nil {
