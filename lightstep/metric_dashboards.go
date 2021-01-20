@@ -80,16 +80,16 @@ func (c *Client) CreateMetricDashboard(
 	return cond, err
 }
 
-func (c *Client) GetMetricDashboard(projectName string, id string) (MetricDashboard, error) {
+func (c *Client) GetMetricDashboard(projectName string, id string) (*MetricDashboard, error) {
 	var (
-		d    MetricDashboard
+		d    *MetricDashboard
 		resp Envelope
 	)
 
 	url := getMetricDashboardURL(projectName, id)
 	err := c.CallAPI("GET", url, nil, &resp)
 	if err != nil {
-		return d, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &d)
@@ -100,9 +100,9 @@ func (c *Client) UpdateMetricDashboard(
 	projectName string,
 	dashboardID string,
 	attributes MetricDashboardAttributes,
-) (MetricDashboard, error) {
+) (*MetricDashboard, error) {
 	var (
-		d    MetricDashboard
+		d    *MetricDashboard
 		resp Envelope
 	)
 
@@ -112,7 +112,7 @@ func (c *Client) UpdateMetricDashboard(
 		Attributes: attributes,
 	})
 	if err != nil {
-		return d, err
+		return nil, err
 	}
 
 	url := getMetricDashboardURL(projectName, dashboardID)

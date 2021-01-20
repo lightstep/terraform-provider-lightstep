@@ -115,7 +115,7 @@ func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) res
 			return err
 		}
 
-		*stream = str
+		stream = str
 		return nil
 	}
 

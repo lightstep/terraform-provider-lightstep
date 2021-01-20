@@ -189,7 +189,7 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *lightstep
 			return err
 		}
 
-		*dashboard = dash
+		dashboard = dash
 		return nil
 	}
 }

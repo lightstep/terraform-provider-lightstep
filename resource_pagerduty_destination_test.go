@@ -96,7 +96,7 @@ func testAccCheckPagerdutyDestinationExists(resourceName string, destination *li
 			return err
 		}
 
-		*destination = d
+		destination = d
 		return nil
 	}
 }

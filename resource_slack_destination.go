@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -34,13 +35,18 @@ func resourceSlackDestination() *schema.Resource {
 	}
 }
 
-func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSlackDestinationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
 	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get destination %v: %v", d.Id(), err))
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get slack destination: %v\n", apiErr))
 	}
 
 	if err := d.Set("channel", dest.Attributes.(map[string]interface{})["channel"]); err != nil {

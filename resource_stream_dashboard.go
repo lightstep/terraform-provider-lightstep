@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -68,16 +69,21 @@ func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceStreamDashboardRead(ctx, d, m)
 }
 
-func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
 	dashboard, err := client.GetDashboard(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get stream dashboard: %v", err))
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get stream dashboard: %v\n", apiErr))
 	}
 
-	if err := setResourceDataFromStreamDashboard(d, dashboard); err != nil {
+	if err := setResourceDataFromStreamDashboard(d, *dashboard); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to set stream dashboard response from API to terraform state: %v", err))
 	}
 
@@ -133,7 +139,7 @@ func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 		return []*schema.ResourceData{}, err
 	}
 
-	if err := setResourceDataFromStreamDashboard(d, dashboard); err != nil {
+	if err := setResourceDataFromStreamDashboard(d, *dashboard); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream dashboard from API response to terraform state: %v", err)
 	}
 

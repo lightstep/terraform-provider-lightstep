@@ -77,7 +77,7 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *lights
 			return err
 		}
 
-		*destination = d
+		destination = d
 		return nil
 	}
 }

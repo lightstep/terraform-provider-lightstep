@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,14 +12,20 @@ import (
 )
 
 // these are common across all types of destinations
-func resourceDestinationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDestinationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
-	if _, err := client.GetDestination(d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get destination: %v", err))
+	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
+	if err != nil {
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get destination: %v\n", apiErr))
 	}
-
+	d.SetId(dest.ID)
 	return diags
 }
 

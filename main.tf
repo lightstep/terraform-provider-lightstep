@@ -1,12 +1,12 @@
 provider "lightstep" {
-  environment     = "meta"
-  api_key_env_var = "LIGHTSTEP_API_KEY_META"
+  environment     = "public"
+  api_key_env_var = "LIGHTSTEP_API_KEY_PUBLIC"
   organization    = "LightStep"
 }
 
 variable "project" {
   type    = string
-  default = "lightstep-staging"
+  default = "terraform-provider-tests"
 }
 
 
@@ -31,13 +31,13 @@ resource "lightstep_stream" "beemo" {
 
 resource "lightstep_stream_dashboard" "customer_charges" {
   project_name   = var.project
-  dashboard_name = "Customer Charges"
+  dashboard_name = "Customer Charges (Stream)"
   stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
 }
 
 resource "lightstep_metric_dashboard" "customer_charges" {
   project_name   = var.project
-  dashboard_name = "Customer Charges"
+  dashboard_name = "Customer Charges (Metrics)"
 
   chart {
     name = "Requests by Project"
@@ -99,7 +99,7 @@ resource "lightstep_stream_condition" "beemo_ops" {
 
 resource "lightstep_metric_condition" "beemo-requests" {
   project_name = var.project
-  name         = "test alerting rules"
+  name         = "Beemo Low Requests"
 
   expression {
     evaluation_window   = "2m"

@@ -102,7 +102,7 @@ func testAccCheckWebhookDestinationExists(resourceName string, destination *ligh
 			return err
 		}
 
-		*destination = d
+		destination = d
 		return nil
 	}
 }

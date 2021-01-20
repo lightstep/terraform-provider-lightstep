@@ -34,7 +34,7 @@ type Expression struct {
 	EvaluationCriteria string     `json:"evaluation-criteria"`
 	IsMulti            bool       `json:"is-multi-alert,omitempty"`
 	IsNoData           bool       `json:"enable-no-data-alert,omitempty"`
-	NumSecPerPoint     *int        `json:"num-sec-per-point,omitempty"`
+	NumSecPerPoint     *int       `json:"num-sec-per-point,omitempty"`
 }
 
 type Thresholds struct {
@@ -152,7 +152,7 @@ func (c *Client) UpdateMetricCondition(
 	return cond, err
 }
 
-func (c *Client) GetMetricCondition(projectName string, conditionID string) (MetricCondition, error) {
+func (c *Client) GetMetricCondition(projectName string, conditionID string) (*MetricCondition, error) {
 	var (
 		cond MetricCondition
 		resp Envelope
@@ -161,14 +161,14 @@ func (c *Client) GetMetricCondition(projectName string, conditionID string) (Met
 	url := getURL(projectName, conditionID)
 	err := c.CallAPI("GET", url, nil, &resp)
 	if err != nil {
-		return cond, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(resp.Data, &cond)
 	if err != nil {
-		return cond, err
+		return nil, err
 	}
-	return cond, err
+	return &cond, err
 }
 
 func (c *Client) DeleteMetricCondition(projectName string, conditionID string) error {
