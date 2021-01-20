@@ -138,7 +138,7 @@ func testAccCheckStreamConditionExists(resourceName string, condition *lightstep
 			return err
 		}
 
-		*condition = cond
+		condition = cond
 		return nil
 	}
 }

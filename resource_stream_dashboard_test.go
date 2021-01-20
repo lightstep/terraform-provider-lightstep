@@ -121,7 +121,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashb
 			return err
 		}
 
-		*dashboard = d
+		dashboard = d
 		return nil
 	}
 

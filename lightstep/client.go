@@ -99,9 +99,6 @@ func executeAPIRequest(client *http.Client, req *http.Request, result interface{
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		if resp.StatusCode == http.StatusNotFound {
-			result = nil
-		}
 		return APIClientError{
 			Response: resp,
 			Message:  fmt.Sprintf("status %d (%s): %q", resp.StatusCode, resp.Status, string(body)),
