@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -222,18 +223,18 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceMetricConditionRead(ctx, d, m)
 }
 
-func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMetricConditionRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
 	cond, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
-	if cond == nil {
-		d.SetId("")
-		return diags
-	}
-
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v", err))
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v\n", apiErr))
 	}
 
 	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), *cond, d); err != nil {

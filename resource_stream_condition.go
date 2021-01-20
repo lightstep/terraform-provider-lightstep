@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -72,12 +73,13 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 
 	client := m.(*lightstep.Client)
 	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
-	if condition == nil {
-		d.SetId("")
-		return diags
-	}
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get stream condition: %v", err))
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get stream condition: %v\n", apiErr))
 	}
 
 	if err := setResourceDataFromStreamCondition(d, *condition); err != nil {

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -113,13 +114,13 @@ func resourceMetricDashboardRead(_ context.Context, d *schema.ResourceData, m in
 	client := m.(*lightstep.Client)
 
 	dashboard, err := client.GetMetricDashboard(d.Get("project_name").(string), d.Id())
-	if dashboard == nil {
-		d.SetId("")
-		return diags
-	}
-
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v", err))
+		apiErr := err.(lightstep.APIResponseCarrier)
+		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+			d.SetId("")
+			return diags
+		}
+		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v\n", apiErr))
 	}
 
 	if err := setResourceDataFromMetricDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
