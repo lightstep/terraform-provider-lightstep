@@ -282,8 +282,8 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 
 	project, id := ids[0], ids[1]
 	c, err := client.GetMetricCondition(project, id)
-	if c == nil && err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Metric condition not found. err: %v", err)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition. err: %v", err)
 	}
 
 	d.SetId(id)
