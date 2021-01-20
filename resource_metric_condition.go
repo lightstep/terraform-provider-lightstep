@@ -594,32 +594,7 @@ func setResourceDataFromMetricCondition(project string, c lightstep.MetricCondit
 		return fmt.Errorf("Unable to set expression resource field: %v", err)
 	}
 
-	var queries []interface{}
-	for _, q := range c.Attributes.Queries {
-		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
-
-		var groupBy []interface{}
-		if q.Query.GroupBy.Aggregation != "" || len(q.Query.GroupBy.LabelKeys) > 0 {
-			groupBy = []interface{}{
-				map[string]interface{}{
-					"aggregation_method": q.Query.GroupBy.Aggregation,
-					"keys":               q.Query.GroupBy.LabelKeys,
-				},
-			}
-		}
-
-		queries = append(queries, map[string]interface{}{
-			"metric":              q.Query.Metric,
-			"hidden":              q.Hidden,
-			"display":             q.Display,
-			"query_name":          q.Name,
-			"timeseries_operator": q.Query.TimeseriesOperator,
-			"include_filters":     includeFilters,
-			"exclude_filters":     excludeFilters,
-			"group_by":            groupBy,
-		})
-	}
-
+	queries := getQueriesFromResourceData(c.Attributes.Queries)
 	if err := d.Set("metric_query", queries); err != nil {
 		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
 	}
@@ -660,4 +635,33 @@ func getIncludeExcludeFilters(filters []lightstep.LabelFilter) ([]interface{}, [
 		}
 	}
 	return includeFilters, excludeFilters
+}
+
+func getQueriesFromResourceData(queriesIn []lightstep.MetricQueryWithAttributes) []interface{} {
+	var queries []interface{}
+	for _, q := range queriesIn {
+		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
+
+		var groupBy []interface{}
+		if q.Query.GroupBy.Aggregation != "" || len(q.Query.GroupBy.LabelKeys) > 0 {
+			groupBy = []interface{}{
+				map[string]interface{}{
+					"aggregation_method": q.Query.GroupBy.Aggregation,
+					"keys":               q.Query.GroupBy.LabelKeys,
+				},
+			}
+		}
+
+		queries = append(queries, map[string]interface{}{
+			"metric":              q.Query.Metric,
+			"hidden":              q.Hidden,
+			"display":             q.Display,
+			"query_name":          q.Name,
+			"timeseries_operator": q.Query.TimeseriesOperator,
+			"include_filters":     includeFilters,
+			"exclude_filters":     excludeFilters,
+			"group_by":            groupBy,
+		})
+	}
+	return queries
 }
