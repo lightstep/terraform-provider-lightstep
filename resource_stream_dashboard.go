@@ -73,8 +73,11 @@ func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 
 	client := m.(*lightstep.Client)
 	dashboard, err := client.GetDashboard(d.Get("project_name").(string), d.Id())
-	if err != nil {
+	if dashboard == nil {
 		d.SetId("")
+		return diags
+	}
+	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get stream dashboard: %v", err))
 	}
 

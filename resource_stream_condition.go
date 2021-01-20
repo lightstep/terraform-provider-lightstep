@@ -72,9 +72,12 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 
 	client := m.(*lightstep.Client)
 	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
-	if err != nil {
+	if condition == nil {
 		d.SetId("")
 		return diags
+	}
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get stream condition: %v", err))
 	}
 
 	if err := setResourceDataFromStreamCondition(d, *condition); err != nil {

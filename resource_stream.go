@@ -88,9 +88,13 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 
 	client := m.(*lightstep.Client)
 	s, err := client.GetStream(d.Get("project_name").(string), d.Id())
-	if err != nil {
+	if s == nil {
 		d.SetId("")
 		return diags
+	}
+
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("Failed to get stream: %v", err))
 	}
 
 	if err := setResourceDataFromStream(d, *s); err != nil {
