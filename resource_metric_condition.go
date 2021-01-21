@@ -141,7 +141,7 @@ func getQuerySchema() map[string]*schema.Schema {
 		},
 		"display": {
 			Type:         schema.TypeString,
-			Required:     true,
+			Optional:     true,
 			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar"}, false),
 		},
 		"query_name": {
