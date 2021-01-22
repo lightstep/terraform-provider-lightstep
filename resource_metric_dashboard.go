@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -17,6 +18,9 @@ func resourceMetricDashboard() *schema.Resource {
 		ReadContext:   resourceMetricDashboardRead,
 		UpdateContext: resourceMetricDashboardUpdate,
 		DeleteContext: resourceMetricDashboardDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceMetricDashboardImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
 				Type:     schema.TypeString,
@@ -267,4 +271,26 @@ func resourceMetricDashboardDelete(_ context.Context, d *schema.ResourceData, m 
 	// it is added here for explicitness.
 	d.SetId("")
 	return diags
+}
+
+func resourceMetricDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	client := m.(*lightstep.Client)
+
+	ids := strings.Split(d.Id(), ".")
+	if len(ids) != 2 {
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_dashboard_ID>'")
+	}
+
+	project, id := ids[0], ids[1]
+	dash, err := client.GetMetricDashboard(project, id)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric dashboard. err: %v", err)
+	}
+	d.SetId(id)
+	if err := setResourceDataFromMetricDashboard(project, *dash, d); err != nil {
+		return nil, fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err)
+	}
+
+	return []*schema.ResourceData{d}, nil
+
 }
