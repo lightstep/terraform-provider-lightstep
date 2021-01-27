@@ -183,6 +183,9 @@ func buildCharts(chartsIn []interface{}) ([]lightstep.MetricChart, error) {
 }
 
 func buildYAxis(yAxisIn []interface{}) (*lightstep.YAxis, error) {
+	if len(yAxisIn) == 0 {
+		return nil, nil
+	}
 	y := yAxisIn[0].(map[string]interface{})
 
 	max, ok := y["max"].(float64)
