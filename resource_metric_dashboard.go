@@ -176,14 +176,17 @@ func buildCharts(chartsIn []interface{}) ([]lightstep.MetricChart, error) {
 		if err != nil {
 			return nil, err
 		}
-		c.YAxis = yaxis
+		if yaxis != nil {
+			c.YAxis = yaxis
+		}
+
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
 }
 
 func buildYAxis(yAxisIn []interface{}) (*lightstep.YAxis, error) {
-	if len(yAxisIn) == 0 {
+	if len(yAxisIn) < 1 {
 		return nil, nil
 	}
 	y := yAxisIn[0].(map[string]interface{})
@@ -220,25 +223,24 @@ func setResourceDataFromMetricDashboard(project string, dash lightstep.MetricDas
 	}
 
 	var charts []interface{}
-
 	for _, c := range dash.Attributes.Charts {
+		chart := map[string]interface{}{}
+
 		yMap := map[string]interface{}{}
 
 		if c.YAxis != nil {
 			yMap["max"] = c.YAxis.Max
 			yMap["min"] = c.YAxis.Min
+			chart["y_axis"] = []map[string]interface{}{yMap}
 		}
 
-		queries := getQueriesFromResourceData(c.MetricQueries)
+		chart["query"] = getQueriesFromResourceData(c.MetricQueries)
+		chart["name"] = c.Title
+		chart["rank"] = c.Rank
+		chart["type"] = c.ChartType
+		chart["id"] = c.ID
 
-		charts = append(charts, map[string]interface{}{
-			"name":   c.Title,
-			"rank":   c.Rank,
-			"type":   c.ChartType,
-			"id":     c.ID,
-			"y_axis": []interface{}{yMap},
-			"query":  queries,
-		})
+		charts = append(charts, chart)
 	}
 
 	if err := d.Set("chart", charts); err != nil {
