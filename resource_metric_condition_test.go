@@ -179,7 +179,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("Required attribute is not set"),
+				ExpectError: regexp.MustCompile("Missing required argument"),
 			},
 			{
 				Config: conditionConfig,
@@ -225,15 +225,15 @@ func testAccCheckMetricConditionExists(resourceName string, condition *lightstep
 
 func testAccMetricConditionDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*lightstep.Client)
-	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "metric_alert" {
+	for _, res := range s.RootModule().Resources {
+		if res.Type != "metric_alert" {
 			continue
 		}
 
-		s, err := conn.GetMetricCondition(test_project, resource.Primary.ID)
+		s, err := conn.GetMetricCondition(test_project, res.Primary.ID)
 		if err == nil {
-			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Metric condition with ID (%v) still exists.", resource.Primary.ID)
+			if s.ID == res.Primary.ID {
+				return fmt.Errorf("Metric condition with ID (%v) still exists.", res.Primary.ID)
 			}
 		}
 	}
