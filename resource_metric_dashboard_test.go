@@ -51,6 +51,26 @@ resource "lightstep_metric_dashboard" "test" {
 }
 `
 
+	tqlDashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+  project_name = "terraform-provider-tests"
+  dashboard_name = "Acceptance Test Dashboard"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+      tql                 = "metric m | rate"
+    }
+  }
+}
+`
+
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
   project_name = "terraform-provider-tests"
@@ -138,6 +158,14 @@ resource "lightstep_metric_dashboard" "test" {
 			},
 			{
 				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					// TODO: verify more fields here, I don't understand how to do nested fields
+				),
+			},
+			{
+				Config: tqlDashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),

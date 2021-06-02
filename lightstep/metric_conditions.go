@@ -48,6 +48,7 @@ type MetricQueryWithAttributes struct {
 	Hidden  bool        `json:"hidden"`
 	Display string      `json:"display-type"`
 	Query   MetricQuery `json:"metric-query"`
+	TQLQuery string     `json:"tql-query"`
 }
 
 type MetricQuery struct {
