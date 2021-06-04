@@ -184,6 +184,10 @@ func getQuerySchema() map[string]*schema.Schema {
 			},
 			Optional: true,
 		},
+		"tql": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
 	}
 }
 
@@ -390,6 +394,22 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 	}
 
 	for _, query := range queries {
+
+		// If this chart uses a TQL query
+		tqlQuery := query["tql"].(string)
+		if tqlQuery != "" {
+			newQuery := lightstep.MetricQueryWithAttributes{
+				Name:     query["query_name"].(string),
+				Type:     "tql",
+				Hidden:   query["hidden"].(bool),
+				Display:  query["display"].(string),
+				TQLQuery: tqlQuery,
+			}
+			newQueries = append(newQueries, newQuery)
+			continue
+		}
+
+		// If this chart uses a regular query
 		metric := query["metric"].(string)
 		queryType := "single"
 		if metric == "" {
@@ -667,6 +687,7 @@ func getQueriesFromResourceData(queriesIn []lightstep.MetricQueryWithAttributes)
 			"include_filters":     includeFilters,
 			"exclude_filters":     excludeFilters,
 			"group_by":            groupBy,
+			"tql":                 q.TQLQuery,
 		})
 	}
 	return queries
