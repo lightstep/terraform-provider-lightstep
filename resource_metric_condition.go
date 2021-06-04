@@ -687,6 +687,7 @@ func getQueriesFromResourceData(queriesIn []lightstep.MetricQueryWithAttributes)
 			"include_filters":     includeFilters,
 			"exclude_filters":     excludeFilters,
 			"group_by":            groupBy,
+			"tql":                 q.TQLQuery,
 		})
 	}
 	return queries
