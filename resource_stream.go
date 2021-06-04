@@ -61,7 +61,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		if err != nil {
 			// Fix until lock error is resolved
 			if strings.Contains(err.Error(), "Internal Server Error") {
-				return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet"))
+				return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet: %s", err))
 			} else {
 				return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
 			}
