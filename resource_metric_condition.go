@@ -399,10 +399,10 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 		tqlQuery := query["tql"].(string)
 		if tqlQuery != "" {
 			newQuery := lightstep.MetricQueryWithAttributes{
-				Name:    query["query_name"].(string),
-				Type:    "tql",
-				Hidden:  query["hidden"].(bool),
-				Display: query["display"].(string),
+				Name:     query["query_name"].(string),
+				Type:     "tql",
+				Hidden:   query["hidden"].(bool),
+				Display:  query["display"].(string),
 				TQLQuery: tqlQuery,
 			}
 			newQueries = append(newQueries, newQuery)
