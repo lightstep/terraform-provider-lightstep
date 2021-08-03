@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"strings"
 
@@ -41,21 +42,41 @@ func resourceStreamCondition() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
+			"alerting_rule": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getStreamAlertingRuleSchema(),
+				},
+			},
 		},
 	}
 }
 
+func getStreamAlertingRuleSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"update_interval": {
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
+		},
+		"id": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+	}
+}
 func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
+
 	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
 		d.Get("evaluation_window_ms").(int),
-		d.Get("stream_id").(string),
-	)
+		d.Get("stream_id").(string))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create stream condition: %v", err))
 	}

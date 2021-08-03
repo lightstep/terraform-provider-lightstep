@@ -9,6 +9,20 @@ variable "project" {
   default = "terraform-provider-tests"
 }
 
+terraform {
+  required_providers {
+    lightstep = {
+      # Put the plugin into this directory manually, automatic download not yet supported.
+      # terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/1.44/darwin_amd64/terraform-provider-lightstep
+      source  = "terraform.lightstep.com/lightstep-org/lightstep"
+      version = ">= 1.45"
+      # For more information, see the provider source documentation:
+      #
+      # https://www.terraform.io/docs/configuration/providers.html#provider-source
+    }
+  }
+  required_version = "~> 1.0.0"
+}
 
 ##############################################################
 ## Streams
@@ -76,7 +90,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 resource "lightstep_stream_condition" "beemo_errors" {
   project_name         = var.project
   condition_name       = "Charge errors for BEEMO"
-  expression           = "err > .4"
+  expression           = "err > 0.4"
   evaluation_window_ms = 300000
   stream_id            = lightstep_stream.beemo.id
 }
@@ -97,6 +111,19 @@ resource "lightstep_stream_condition" "beemo_ops" {
   stream_id            = lightstep_stream.beemo.id
 }
 
+resource "lightstep_alerting_rule" "beemo_ops_alerting_rule" {
+  project_name    = var.project
+  condition_id    = lightstep_stream_condition.beemo_ops.id
+  destination_id  = lightstep_slack_destination.slack.id
+  update_interval = "1h"
+}
+
+resource "lightstep_alerting_rule" "beemo_latency_alerting_rule" {
+  project_name    = var.project
+  condition_id    = lightstep_stream_condition.beemo_latency.id
+  destination_id  = lightstep_pagerduty_destination.pd.id
+  update_interval = "1h"
+}
 resource "lightstep_metric_condition" "beemo-requests" {
   project_name = var.project
   name         = "Beemo Low Requests"

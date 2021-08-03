@@ -1,7 +1,7 @@
 # terraform-provider-lightstep
 
 ## Getting Started
-* Install Terraform (v0.12)
+* Install Terraform (v1.0)
 * Build the binary & initialize
 ```
 make build

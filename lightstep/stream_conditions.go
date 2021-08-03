@@ -11,6 +11,7 @@ type StreamCondition struct {
 	ID            string                       `json:"id,omitempty"`
 	Attributes    StreamConditionAttributes    `json:"attributes"`
 	Relationships StreamConditionRelationships `json:"relationships,omitempty"`
+	AlertingRule  StreamAlertingRule           `json:"alerting_rule"`
 }
 
 type StreamConditionAttributes struct {
@@ -75,7 +76,8 @@ func (c *Client) CreateStreamCondition(
 	if err != nil {
 		return cond, err
 	}
-	return cond, err
+
+	return cond, nil
 }
 
 func (c *Client) UpdateStreamCondition(

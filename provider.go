@@ -48,6 +48,7 @@ func Provider() *schema.Provider {
 			"lightstep_webhook_destination":   resourceWebhookDestination(),
 			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 			"lightstep_slack_destination":     resourceSlackDestination(),
+			"lightstep_alerting_rule":         resourceAlertingRule(),
 		},
 
 		ConfigureContextFunc: configureProvider,
