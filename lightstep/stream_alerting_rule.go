@@ -9,7 +9,7 @@ import (
 type StreamAlertingRule struct {
 	Type          string                          `json:"type,omitempty"`
 	ID            string                          `json:"id,omitempty"`
-	Attributes    StreamAlertingAttributes        `json:"attributes"`
+	Attributes    StreamAlertingAttributes        `json:"attributes,omitempty"`
 	Relationships StreamAlertingRuleRelationships `json:"relationships,omitempty"`
 }
 
@@ -18,8 +18,41 @@ type StreamAlertingAttributes struct {
 }
 
 type StreamAlertingRuleRelationships struct {
-	Condition   ConditionStream `json:"condition"`
-	Destination Destination     `json:"destination"`
+	Condition   StreamAlertingRuleCondition   `json:"condition"`
+	Destination StreamAlertingRuleDestination `json:"destination"`
+}
+
+type StreamAlertingRuleCondition struct {
+	Links Links                           `json:"links"`
+	Data  StreamAlertingRuleConditionData `json:"data"`
+}
+
+type StreamAlertingRuleConditionData struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
+}
+
+type StreamAlertingRuleDestination struct {
+	Links Links                           `json:"links"`
+	Data  StreamAlertingRuleConditionData `json:"data"`
+}
+
+// The request and response json is different!
+type StreamAlertingRuleRequest struct {
+	Type          string                                 `json:"type,omitempty"`
+	ID            string                                 `json:"id,omitempty"`
+	Attributes    StreamAlertingAttributes               `json:"attributes,omitempty"`
+	Relationships StreamAlertingRuleRequestRelationships `json:"relationships,omitempty"`
+}
+
+type StreamAlertingRuleRequestRelationships struct {
+	Condition   StreamAlertingRuleRequestRelationshipsDesc `json:"condition"`
+	Destination StreamAlertingRuleRequestRelationshipsDesc `json:"destination"`
+}
+
+type StreamAlertingRuleRequestRelationshipsDesc struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
 }
 
 func (c *Client) CreateAlertingRule(
@@ -33,19 +66,19 @@ func (c *Client) CreateAlertingRule(
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(StreamAlertingRule{
+	bytes, err := json.Marshal(StreamAlertingRuleRequest{
 		Type: "alerting_rule",
 		Attributes: StreamAlertingAttributes{
 			UpdateInterval: updateInterval,
 		},
-		Relationships: StreamAlertingRuleRelationships{
-			Condition: ConditionStream{
+		Relationships: StreamAlertingRuleRequestRelationships{
+			Condition: StreamAlertingRuleRequestRelationshipsDesc{
 				ID:   conditionID,
 				Type: "condition",
 			},
-			Destination: Destination{
-				Type: "destination",
+			Destination: StreamAlertingRuleRequestRelationshipsDesc{
 				ID:   destinationID,
+				Type: "destination",
 			},
 		},
 	})

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"strings"
 
@@ -42,30 +41,10 @@ func resourceStreamCondition() *schema.Resource {
 				Type:     schema.TypeInt,
 				Required: true,
 			},
-			"alerting_rule": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: getStreamAlertingRuleSchema(),
-				},
-			},
 		},
 	}
 }
 
-func getStreamAlertingRuleSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"update_interval": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
-		},
-		"id": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-	}
-}
 func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 

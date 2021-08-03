@@ -11,7 +11,6 @@ type StreamCondition struct {
 	ID            string                       `json:"id,omitempty"`
 	Attributes    StreamConditionAttributes    `json:"attributes"`
 	Relationships StreamConditionRelationships `json:"relationships,omitempty"`
-	AlertingRule  StreamAlertingRule           `json:"alerting_rule"`
 }
 
 type StreamConditionAttributes struct {

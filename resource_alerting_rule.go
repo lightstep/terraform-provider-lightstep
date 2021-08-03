@@ -64,7 +64,7 @@ func resourceAlertingRuleCreate(ctx context.Context, d *schema.ResourceData, m i
 
 	d.SetId(rule.ID)
 	if err := setResourceDataFromAlertingRule(d, rule); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set stream condition response from API to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to set alerting rule response from API to terraform state: %v", err))
 	}
 
 	return diags
@@ -130,11 +130,11 @@ func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schem
 
 // update terraform state with alerting rule API call response
 func setResourceDataFromAlertingRule(d *schema.ResourceData, rule lightstep.StreamAlertingRule) error {
-	if err := d.Set("condition_id", rule.Relationships.Condition.ID); err != nil {
+	if err := d.Set("condition_id", rule.Relationships.Condition.Data.ID); err != nil {
 		return err
 	}
 
-	if err := d.Set("destination_id", rule.Relationships.Destination.ID); err != nil {
+	if err := d.Set("destination_id", rule.Relationships.Destination.Data.ID); err != nil {
 		return err
 	}
 
