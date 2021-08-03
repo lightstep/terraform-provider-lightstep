@@ -52,7 +52,7 @@ func Provider() *schema.Provider {
 		},
 
 		ConfigureContextFunc: configureProvider,
-		TerraformVersion:     "v.12.26",
+		TerraformVersion:     "v1.0.3",
 	}
 }
 
