@@ -115,8 +115,6 @@ func (c *Client) GetAlertingRule(projectName string, alertingRuleID string) (*St
 	return &rule, err
 }
 
-// DeleteAlertingRule delete an alerting rule. Not currently implemented.
-// https://lightstep.atlassian.net/browse/LS-24956
 func (c *Client) DeleteAlertingRule(projectName string, alertingRuleID string) error {
 	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, nil)
 	if err != nil {
