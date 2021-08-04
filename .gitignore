@@ -22,3 +22,4 @@ test.tf
 
 terraform-provider-lightstep_v*
 /.terraform.lock.hcl
+/terraform.d/
