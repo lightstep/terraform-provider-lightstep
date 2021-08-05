@@ -101,7 +101,7 @@ resource "lightstep_slack_destination" "slack" {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccStreamConditionDestroy,
+		CheckDestroy: testAccAlertingRuleDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: badExpressionConfig,
