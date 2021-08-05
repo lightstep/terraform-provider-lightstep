@@ -120,12 +120,37 @@ resource "lightstep_slack_destination" "slack" {
 			{
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAlertingRuleExists("lightstep_stream_condition.beemo_errors", &rule),
+					testAccCheckAlertingRuleExists("lightstep_alerting_rule.beemo_errors", &rule),
 					// How do you reference the ID of an object created by this test here?
 					//resource.TestCheckResourceAttr("lightstep_alerting_rule.beemo_errors", "condition_id", "bar"),
 					//resource.TestCheckResourceAttr("lightstep_alerting_rule.beemo_errors", "destination_id", "foo"),
 					resource.TestCheckResourceAttr("lightstep_alerting_rule.beemo_errors", "update_interval", "2h"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccAlertingRuleImport(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "lightstep_alerting_rule" "import-cond" {
+	project_name = "terraform-provider-tests"
+    destination_id = "tvydr9gV"
+    condition_id = "KN6SX47x"
+	update_interval = "1h"
+}
+`,
+			},
+			{
+				ResourceName:        "lightstep_alerting_rule.import-cond",
+				ImportState:         true,
+				ImportStateVerify:   true,
+				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
 			},
 		},
 	})
