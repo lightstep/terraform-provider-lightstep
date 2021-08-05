@@ -131,31 +131,6 @@ resource "lightstep_slack_destination" "slack" {
 	})
 }
 
-func TestAccAlertingRuleImport(t *testing.T) {
-	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		Steps: []resource.TestStep{
-			{
-				Config: `
-resource "lightstep_alerting_rule" "import-cond" {
-	project_name = "terraform-provider-tests"
-    destination_id = "tvydr9gV"
-    condition_id = "KN6SX47x"
-	update_interval = "1h"
-}
-`,
-			},
-			{
-				ResourceName:        "lightstep_alerting_rule.import-cond",
-				ImportState:         true,
-				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
-			},
-		},
-	})
-}
-
 func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamAlertingRule) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfRule, ok := s.RootModule().Resources[resourceName]
