@@ -2,8 +2,8 @@
 build:
 	@go build -o terraform-provider-lightstep_v$(shell cat .go-version)
 	@rm -f .terraform.lock.hcl
-	@mkdir -p terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/darwin_amd64/
-	@cp terraform-provider-lightstep_v$(shell cat .go-version) terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/darwin_amd64/terraform-provider-lightstep
+	@mkdir -p terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(uname -s)_amd64/
+	@cp terraform-provider-lightstep_v$(shell cat .go-version) terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(uname -s)_amd64/terraform-provider-lightstep
 
 .PHONY: install
 install:
