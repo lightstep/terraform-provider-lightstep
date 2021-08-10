@@ -10,7 +10,7 @@ type CreateRequest struct {
 	Type string `json:"type"`
 }
 
-type Response struct {
+type CreateResponse struct {
 	Type string `json:"type"`
 	ID   string `json:"id"`
 }
@@ -26,7 +26,7 @@ type RelatedResourceWithLinks struct {
 }
 
 type StreamAlertingRuleResponse struct {
-	Response
+	CreateResponse
 	Attributes    StreamAlertingRuleAttributes            `json:"attributes,omitempty"`
 	Relationships StreamAlertingRuleResponseRelationships `json:"relationships,omitempty"`
 	Links         Links                                   `json:"links"`
