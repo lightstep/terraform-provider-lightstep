@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccStreamAlertingRule(t *testing.T) {
-	var rule lightstep.StreamAlertingRule
+	var rule lightstep.StreamAlertingRuleResponse
 
 	ruleConfig := `
 resource "lightstep_stream" "beemo" {
@@ -155,7 +155,7 @@ resource "lightstep_alerting_rule" "import-cond" {
 	})
 }
 
-func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamAlertingRule) resource.TestCheckFunc {
+func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamAlertingRuleResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfRule, ok := s.RootModule().Resources[resourceName]
 		if !ok {

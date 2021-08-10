@@ -6,77 +6,78 @@ import (
 	"net/http"
 )
 
-type StreamAlertingRule struct {
-	Type          string                          `json:"type,omitempty"`
-	ID            string                          `json:"id,omitempty"`
-	Attributes    StreamAlertingAttributes        `json:"attributes,omitempty"`
-	Relationships StreamAlertingRuleRelationships `json:"relationships,omitempty"`
+type CreateRequest struct {
+	Type string `json:"type"`
 }
 
-type StreamAlertingAttributes struct {
-	UpdateInterval int `json:"update-interval-ms"`
-}
-
-type StreamAlertingRuleRelationships struct {
-	Condition   StreamAlertingRuleCondition   `json:"condition"`
-	Destination StreamAlertingRuleDestination `json:"destination"`
-}
-
-type StreamAlertingRuleCondition struct {
-	Links Links                           `json:"links"`
-	Data  StreamAlertingRuleConditionData `json:"data"`
-}
-
-type StreamAlertingRuleConditionData struct {
+type Response struct {
 	Type string `json:"type"`
 	ID   string `json:"id"`
 }
 
-type StreamAlertingRuleDestination struct {
-	Links Links                           `json:"links"`
-	Data  StreamAlertingRuleConditionData `json:"data"`
+type RelatedResourceObject struct {
+	Type string `json:"type"`
+	ID   string `json:"id"`
 }
 
-// The request and response json is different!
+type RelatedResourceWithLinks struct {
+	Links Links                 `json:"links"`
+	Data  RelatedResourceObject `json:"data"`
+}
+
+type StreamAlertingRuleResponse struct {
+	Response
+	Attributes    StreamAlertingRuleAttributes            `json:"attributes,omitempty"`
+	Relationships StreamAlertingRuleResponseRelationships `json:"relationships,omitempty"`
+	Links         Links                                   `json:"links"`
+}
+
 type StreamAlertingRuleRequest struct {
-	Type          string                                 `json:"type,omitempty"`
-	ID            string                                 `json:"id,omitempty"`
-	Attributes    StreamAlertingAttributes               `json:"attributes,omitempty"`
+	CreateRequest
+	Attributes    StreamAlertingRuleAttributes           `json:"attributes,omitempty"`
 	Relationships StreamAlertingRuleRequestRelationships `json:"relationships,omitempty"`
 }
 
-type StreamAlertingRuleRequestRelationships struct {
-	Condition   StreamAlertingRuleRequestRelationshipsDesc `json:"condition"`
-	Destination StreamAlertingRuleRequestRelationshipsDesc `json:"destination"`
+type StreamAlertingRuleAttributes struct {
+	UpdateInterval int `json:"update-interval-ms"`
 }
 
-type StreamAlertingRuleRequestRelationshipsDesc struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
+type StreamAlertingRuleRequestRelationships struct {
+	Condition   RelatedResourceObject `json:"condition"`
+	Destination RelatedResourceObject `json:"destination"`
+}
+
+type StreamAlertingRuleResponseRelationships struct {
+	Condition   RelatedResourceWithLinks `json:"condition"`
+	Destination RelatedResourceWithLinks `json:"destination"`
+	Project     RelatedResourceWithLinks `json:"project"`
+	Stream      RelatedResourceWithLinks `json:"stream"`
 }
 
 func (c *Client) CreateAlertingRule(
 	projectName string,
 	updateInterval int,
 	destinationID string,
-	conditionID string) (StreamAlertingRule, error) {
+	conditionID string) (StreamAlertingRuleResponse, error) {
 
 	var (
-		rule StreamAlertingRule
+		rule StreamAlertingRuleResponse
 		resp Envelope
 	)
 
 	bytes, err := json.Marshal(StreamAlertingRuleRequest{
-		Type: "alerting_rule",
-		Attributes: StreamAlertingAttributes{
+		CreateRequest: CreateRequest{
+			Type: "alerting_rule",
+		},
+		Attributes: StreamAlertingRuleAttributes{
 			UpdateInterval: updateInterval,
 		},
 		Relationships: StreamAlertingRuleRequestRelationships{
-			Condition: StreamAlertingRuleRequestRelationshipsDesc{
+			Condition: RelatedResourceObject{
 				ID:   conditionID,
 				Type: "condition",
 			},
-			Destination: StreamAlertingRuleRequestRelationshipsDesc{
+			Destination: RelatedResourceObject{
 				ID:   destinationID,
 				Type: "destination",
 			},
@@ -98,9 +99,9 @@ func (c *Client) CreateAlertingRule(
 	return rule, err
 }
 
-func (c *Client) GetAlertingRule(projectName string, alertingRuleID string) (*StreamAlertingRule, error) {
+func (c *Client) GetAlertingRule(projectName string, alertingRuleID string) (*StreamAlertingRuleResponse, error) {
 	var (
-		rule StreamAlertingRule
+		rule StreamAlertingRuleResponse
 		resp Envelope
 	)
 	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, &resp)

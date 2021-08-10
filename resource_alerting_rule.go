@@ -129,7 +129,7 @@ func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schem
 }
 
 // update terraform state with alerting rule API call response
-func setResourceDataFromAlertingRule(d *schema.ResourceData, rule lightstep.StreamAlertingRule) error {
+func setResourceDataFromAlertingRule(d *schema.ResourceData, rule lightstep.StreamAlertingRuleResponse) error {
 	if err := d.Set("condition_id", rule.Relationships.Condition.Data.ID); err != nil {
 		return err
 	}
