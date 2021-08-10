@@ -75,7 +75,8 @@ func (c *Client) CreateStreamCondition(
 	if err != nil {
 		return cond, err
 	}
-	return cond, err
+
+	return cond, nil
 }
 
 func (c *Client) UpdateStreamCondition(

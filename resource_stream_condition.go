@@ -49,13 +49,13 @@ func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	var diags diag.Diagnostics
 
 	client := m.(*lightstep.Client)
+
 	condition, err := client.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
 		d.Get("evaluation_window_ms").(int),
-		d.Get("stream_id").(string),
-	)
+		d.Get("stream_id").(string))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create stream condition: %v", err))
 	}

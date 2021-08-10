@@ -1,0 +1,62 @@
+# More examples of Codefresh YAML can be found at
+# https://codefresh.io/docs/docs/yaml-examples/examples/
+
+version: "1.0"
+# Stages can help you organize your steps in stages
+stages:
+  - "clone"
+  - "build"
+  - "validate"
+
+steps:
+  clone:
+    stage: clone
+    title: Cloning repository
+    type: git-clone
+    repo: lightstep/terraform-provider-lightstep
+    revision: "${{CF_REVISION}}"
+    git: github
+  build:
+    stage: build
+    title: Building binary
+    type: freestyle
+    working_directory: ${{CF_VOLUME_PATH}}
+    arguments:
+      image: golang:1.16-alpine
+      commands:
+        - mkdir -p ${{CF_VOLUME_PATH}}/terraform-provider-lightstep/terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(cat ${{CF_VOLUME_PATH}}/terraform-provider-lightstep/.go-version)/linux_amd64/
+        - cd terraform-provider-lightstep && go build -o ${{CF_VOLUME_PATH}}/terraform-provider-lightstep/terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(cat ${{CF_VOLUME_PATH}}/terraform-provider-lightstep/.go-version)/linux_amd64/terraform-provider-lightstep
+  validate:
+    stage: validate
+    title: Validating schema
+    type: freestyle
+    working_directory: ${{CF_VOLUME_PATH}}/terraform-provider-lightstep
+    arguments:
+      image: hashicorp/terraform:1.0.3
+      commands:
+        - terraform init -plugin-dir ${{CF_VOLUME_PATH}}/terraform-provider-lightstep/terraform.d/plugins
+        - cf_export LIGHTSTEP_ORG="LightStep"
+        - export LIGHTSTEP_ORG="LightStep"
+        - terraform validate
+  test:
+    stage: validate
+    title: Running tests
+    type: freestyle
+    working_directory: ${{CF_VOLUME_PATH}}/terraform-provider-lightstep
+    arguments:
+      image: golang:1.16
+      commands:
+        - make test
+        - make acc-test
+  checks:
+    stage: validate
+    title: Running go checks
+    type: freestyle
+    working_directory: ${{CF_VOLUME_PATH}}/terraform-provider-lightstep
+    arguments:
+      image: circleci/golang:1.16.3
+      commands:
+        - bash --help
+        - make fmt; make ensure-clean-repo
+        - make check_deps; make ensure-clean-repo
+        - make install-golangci-lint; ./bin/golangci-lint run --deadline 3m0s --no-config ./... --verbose;git diff #make ensure-clean-repo
