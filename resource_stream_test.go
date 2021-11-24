@@ -29,6 +29,14 @@ resource "lightstep_stream" "aggie_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Aggie Errors"
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
+  custom_data = [
+  {
+	// This name field is special and becomes the key
+	"name": "object1"
+	"url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+	"key" = "value",
+  },
+  ]
 }
 `
 
@@ -58,6 +66,7 @@ resource "lightstep_stream" "aggie_errors" {
 					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "stream_name", "Aggie Errors"),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "query", "service IN (\"aggie\") AND \"error\" IN (\"true\")"),
+					//resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data", "service IN (\"aggie\") AND \"error\" IN (\"true\")"),
 				),
 			},
 			{

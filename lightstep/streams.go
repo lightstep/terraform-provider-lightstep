@@ -3,6 +3,7 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -13,22 +14,63 @@ type Stream struct {
 }
 
 type StreamAttributes struct {
-	Name       string                 `json:"name"`
-	Query      string                 `json:"query"`
-	CustomData map[string]interface{} `json:"custom-data,omitempty"`
+	Name       string                       `json:"name"`
+	Query      string                       `json:"query"`
+	CustomData map[string]map[string]string `json:"custom_data,omitempty"`
 }
 
 func (c *Client) CreateStream(
 	projectName string,
 	name string,
 	query string,
-	customData map[string]interface{},
+	customData []interface{},
 ) (Stream, error) {
+
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println("[DEBUG] Creating stream...")
 
 	var (
 		s    Stream
 		resp Envelope
 	)
+
+	// This is what Lightstep expects
+	//"custom_data": {
+	//	"object1": {
+	//		"url": "http://",
+	//		"key": "value"
+	//	},
+	//	"object2": {
+	//		"key": "value"
+	//	}
+	//},
+	lsCustomData := make(map[string]map[string]string)
+
+	// This is what we have (terraform doesn't support a map of maps natively.
+	//	custom_data = [
+	//	  {
+	//      // This name field is special and becomes the key
+	//	  	"name": "object1"
+	//  	"url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+	//      "key" = "value",
+	//    },
+	//  ]
+
+	log.Printf("[INFO] %#v\n", customData)
+	log.Printf("[INFO] %#v\n", len(customData))
+	// The "name" key is special and must exist
+	for _, value := range customData {
+		v := value.(map[string]interface{})
+		name := v["name"].(string)
+
+		lsCustomData[name] = make(map[string]string)
+		for key, value := range v {
+			if key == "name" {
+				continue
+			}
+			lsCustomData[name][key] = value.(string)
+		}
+	}
 
 	bytes, err := json.Marshal(
 		Stream{
@@ -36,12 +78,14 @@ func (c *Client) CreateStream(
 			Attributes: StreamAttributes{
 				Name:       name,
 				Query:      query,
-				CustomData: customData,
+				CustomData: lsCustomData,
 			},
 		})
 	if err != nil {
 		return s, err
 	}
+
+	log.Printf("[INFO] %v\n", string(bytes))
 
 	err = c.CallAPI(
 		"POST",

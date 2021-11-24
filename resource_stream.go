@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -37,8 +38,11 @@ func resourceStream() *schema.Resource {
 				ForceNew: true,
 			},
 			"custom_data": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeList,
 				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeMap,
+				},
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
@@ -56,7 +60,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
-			d.Get("custom_data").(map[string]interface{}),
+			d.Get("custom_data").([]interface{}),
 		)
 		if err != nil {
 			// Fix until lock error is resolved
@@ -169,7 +173,43 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 		return fmt.Errorf("Unable to set stream_name resource field: %v", err)
 	}
 
-	if err := d.Set("custom_data", s.Attributes.CustomData); err != nil {
+	// Convert custom_data to list
+	customData := []map[string]string{}
+	log.Printf("[INFO] custom_data: %#v", s.Attributes.CustomData)
+	// This is what Lightstep sends
+	//"custom_data": {
+	//	"object1": {
+	//		"url": "http://",
+	//		"key": "value"
+	//	},
+	//	"object2": {
+	//		"key": "value"
+	//	}
+	//},
+
+	// This is what terraform expects
+	//	custom_data = [
+	//	  {
+	//      // This name field is special and becomes the key
+	//	  	"name": "object1"
+	//  	"url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+	//      "key" = "value",
+	//    },
+	//  ]
+	for _, data := range s.Attributes.CustomData {
+		log.Printf("[INFO] data: %#v", data)
+		d := make(map[string]string)
+
+		for k, v := range data {
+			// k is "object1"
+			// v is map of key,values
+			d[k] = v
+		}
+
+		customData = append(customData, d)
+	}
+
+	if err := d.Set("custom_data", customData); err != nil {
 		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
 	}
 
