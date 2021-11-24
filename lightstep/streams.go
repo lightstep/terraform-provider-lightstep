@@ -3,7 +3,6 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -14,9 +13,14 @@ type Stream struct {
 }
 
 type StreamAttributes struct {
-	Name       string                       `json:"name"`
-	Query      string                       `json:"query"`
+	Name  string `json:"name"`
+	Query string `json:"query"`
+
+	// "custom_data" on set, but "custom-data" on get
 	CustomData map[string]map[string]string `json:"custom_data,omitempty"`
+
+	// Hack until https://lightstep.atlassian.net/browse/LS-26494 is fixed.
+	CustomDataGet map[string]map[string]string `json:"custom-data,omitempty"`
 }
 
 func (c *Client) CreateStream(
@@ -25,9 +29,6 @@ func (c *Client) CreateStream(
 	query string,
 	customData []interface{},
 ) (Stream, error) {
-
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.Println("[DEBUG] Creating stream...")
 
 	var (
 		s    Stream
@@ -56,8 +57,6 @@ func (c *Client) CreateStream(
 	//    },
 	//  ]
 
-	log.Printf("[INFO] %#v\n", customData)
-	log.Printf("[INFO] %#v\n", len(customData))
 	// The "name" key is special and must exist
 	for _, value := range customData {
 		v := value.(map[string]interface{})
@@ -84,8 +83,6 @@ func (c *Client) CreateStream(
 	if err != nil {
 		return s, err
 	}
-
-	log.Printf("[INFO] %v\n", string(bytes))
 
 	err = c.CallAPI(
 		"POST",

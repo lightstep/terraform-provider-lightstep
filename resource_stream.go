@@ -175,7 +175,7 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 
 	// Convert custom_data to list
 	customData := []map[string]string{}
-	log.Printf("[INFO] custom_data: %#v", s.Attributes.CustomData)
+
 	// This is what Lightstep sends
 	//"custom_data": {
 	//	"object1": {
@@ -196,10 +196,12 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 	//      "key" = "value",
 	//    },
 	//  ]
-	for _, data := range s.Attributes.CustomData {
-		log.Printf("[INFO] data: %#v", data)
+	// Hack until https://lightstep.atlassian.net/browse/LS-26494 is fixed.
+	log.Printf("[DEBUG] custom_data: %v\n", s.Attributes.CustomDataGet)
+	for name, data := range s.Attributes.CustomDataGet {
 		d := make(map[string]string)
 
+		d["name"] = name
 		for k, v := range data {
 			// k is "object1"
 			// v is map of key,values
@@ -209,9 +211,12 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 		customData = append(customData, d)
 	}
 
+	log.Printf("[DEBUG] customData: %v\n", customData)
 	if err := d.Set("custom_data", customData); err != nil {
+		log.Printf("[DEBUG] error: %v", err)
 		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
 	}
+	log.Printf("[DEBUG] customData after: %v\n", d.Get("custom_data"))
 
 	if err := d.Set("query", s.Attributes.Query); err != nil {
 		return fmt.Errorf("Unable to set query resource field: %v", err)

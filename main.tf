@@ -31,7 +31,7 @@ resource "lightstep_stream" "dant0" {
   custom_data  = [
     {
       // This name field is special and becomes the key
-      "name" : "object1"
+      "name" = "object1"
       "url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
       "key" = "value",
     },
