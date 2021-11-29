@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -197,7 +196,6 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 	//    },
 	//  ]
 	// Hack until https://lightstep.atlassian.net/browse/LS-26494 is fixed.
-	log.Printf("[DEBUG] custom_data: %v\n", s.Attributes.CustomDataGet)
 	for name, data := range s.Attributes.CustomDataGet {
 		d := make(map[string]string)
 
@@ -211,12 +209,9 @@ func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error
 		customData = append(customData, d)
 	}
 
-	log.Printf("[DEBUG] customData: %v\n", customData)
 	if err := d.Set("custom_data", customData); err != nil {
-		log.Printf("[DEBUG] error: %v", err)
 		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
 	}
-	log.Printf("[DEBUG] customData after: %v\n", d.Get("custom_data"))
 
 	if err := d.Set("query", s.Attributes.Query); err != nil {
 		return fmt.Errorf("Unable to set query resource field: %v", err)
