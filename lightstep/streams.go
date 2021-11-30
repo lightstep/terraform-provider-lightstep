@@ -3,6 +3,7 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -23,17 +24,7 @@ type StreamAttributes struct {
 	CustomDataGet map[string]map[string]string `json:"custom-data,omitempty"`
 }
 
-func (c *Client) CreateStream(
-	projectName string,
-	name string,
-	query string,
-	customData []interface{},
-) (Stream, error) {
-
-	var (
-		s    Stream
-		resp Envelope
-	)
+func CustomDataConvert(customData []interface{}) map[string]map[string]string {
 
 	// This is what Lightstep expects
 	//"custom_data": {
@@ -70,6 +61,23 @@ func (c *Client) CreateStream(
 			lsCustomData[name][key] = value.(string)
 		}
 	}
+
+	return lsCustomData
+}
+
+func (c *Client) CreateStream(
+	projectName string,
+	name string,
+	query string,
+	customData []interface{},
+) (Stream, error) {
+
+	var (
+		s    Stream
+		resp Envelope
+	)
+
+	lsCustomData := CustomDataConvert(customData)
 
 	bytes, err := json.Marshal(
 		Stream{
@@ -150,6 +158,7 @@ func (c *Client) UpdateStream(projectName string,
 	if err != nil {
 		return s, err
 	}
+	log.Printf("[DEBUG] stream: %#v", string(bytes))
 
 	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/streams/%v", projectName, streamID), Envelope{Data: bytes}, &resp)
 	if err != nil {
