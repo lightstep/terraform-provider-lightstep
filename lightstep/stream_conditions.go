@@ -17,7 +17,7 @@ type StreamConditionAttributes struct {
 	Name               string                 `json:"name,omitempty"`
 	EvaluationWindowMS int                    `json:"eval-window-ms,omitempty"`
 	Expression         string                 `json:"expression,omitempty"`
-	CustomData         map[string]interface{} `json:"custom-data,omitempty"`
+	CustomData         map[string]interface{} `json:"custom_data,omitempty"`
 }
 
 type StreamConditionRelationships struct {

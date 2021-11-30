@@ -27,6 +27,18 @@ terraform {
 ##############################################################
 ## Streams
 ##############################################################
+resource "lightstep_stream" "custom_data" {
+  project_name = var.project
+  stream_name  = "custom_data_test0"
+  query        = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
+  custom_data  = [
+    {
+      // This name field is special and becomes the key
+      "name" = "playbook"
+      "url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+    },
+  ]
+}
 resource "lightstep_stream" "non_beemo" {
   project_name = var.project
   stream_name  = "Non-BEEMO charges"

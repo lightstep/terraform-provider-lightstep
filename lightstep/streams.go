@@ -13,16 +13,21 @@ type Stream struct {
 }
 
 type StreamAttributes struct {
-	Name       string                 `json:"name"`
-	Query      string                 `json:"query"`
-	CustomData map[string]interface{} `json:"custom-data,omitempty"`
+	Name  string `json:"name"`
+	Query string `json:"query"`
+
+	// "custom_data" on set, but "custom-data" on get
+	CustomData map[string]map[string]string `json:"custom_data,omitempty"`
+
+	// Hack until https://lightstep.atlassian.net/browse/LS-26494 is fixed.
+	CustomDataGet map[string]map[string]string `json:"custom-data,omitempty"`
 }
 
 func (c *Client) CreateStream(
 	projectName string,
 	name string,
 	query string,
-	customData map[string]interface{},
+	customData []interface{},
 ) (Stream, error) {
 
 	var (
@@ -30,13 +35,49 @@ func (c *Client) CreateStream(
 		resp Envelope
 	)
 
+	// This is what Lightstep expects
+	//"custom_data": {
+	//	"object1": {
+	//		"url": "http://",
+	//		"key": "value"
+	//	},
+	//	"object2": {
+	//		"key": "value"
+	//	}
+	//},
+	lsCustomData := make(map[string]map[string]string)
+
+	// This is what we have (terraform doesn't support a map of maps natively.
+	//	custom_data = [
+	//	  {
+	//      // This name field is special and becomes the key
+	//	  	"name": "object1"
+	//  	"url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+	//      "key" = "value",
+	//    },
+	//  ]
+
+	// The "name" key is special and must exist
+	for _, value := range customData {
+		v := value.(map[string]interface{})
+		name := v["name"].(string)
+
+		lsCustomData[name] = make(map[string]string)
+		for key, value := range v {
+			if key == "name" {
+				continue
+			}
+			lsCustomData[name][key] = value.(string)
+		}
+	}
+
 	bytes, err := json.Marshal(
 		Stream{
 			Type: "stream",
 			Attributes: StreamAttributes{
 				Name:       name,
 				Query:      query,
-				CustomData: customData,
+				CustomData: lsCustomData,
 			},
 		})
 	if err != nil {
