@@ -3,7 +3,6 @@ package lightstep
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -158,7 +157,6 @@ func (c *Client) UpdateStream(projectName string,
 	if err != nil {
 		return s, err
 	}
-	log.Printf("[DEBUG] stream: %#v", string(bytes))
 
 	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/streams/%v", projectName, streamID), Envelope{Data: bytes}, &resp)
 	if err != nil {
