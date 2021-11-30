@@ -30,12 +30,12 @@ terraform {
 resource "lightstep_stream" "custom_data" {
   project_name = var.project
   stream_name  = "custom_data_test0"
-  query        = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"BEEMO\")"
+  query        = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"test0\")"
   custom_data  = [
     {
       // This name field is special and becomes the key
       "name" = "playbook"
-      "url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+      "url"  = "https://www.lightstep.com",
     },
   ]
 }
@@ -82,10 +82,12 @@ resource "lightstep_metric_dashboard" "customer_charges" {
       timeseries_operator = "rate"
       metric              = "requests"
 
-      include_filters = [{
-        key   = "service"
-        value = "iOS"
-      }]
+      include_filters = [
+        {
+          key   = "service"
+          value = "iOS"
+        }
+      ]
 
       group_by {
         aggregation_method = "max"
@@ -159,10 +161,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
     hidden              = false
     display             = "line"
 
-    include_filters = [{
-      key   = "kube_instance"
-      value = "3"
-    }]
+    include_filters = [
+      {
+        key   = "kube_instance"
+        value = "3"
+      }
+    ]
 
     group_by {
       aggregation_method = "max"
@@ -185,10 +189,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
   alerting_rule {
     id              = lightstep_webhook_destination.webhook.id
     update_interval = "1h"
-    exclude_filters = [{
-      key   = "kube_instance"
-      value = "1"
-    }]
+    exclude_filters = [
+      {
+        key   = "kube_instance"
+        value = "1"
+      }
+    ]
   }
 
 }

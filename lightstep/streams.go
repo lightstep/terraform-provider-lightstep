@@ -23,17 +23,7 @@ type StreamAttributes struct {
 	CustomDataGet map[string]map[string]string `json:"custom-data,omitempty"`
 }
 
-func (c *Client) CreateStream(
-	projectName string,
-	name string,
-	query string,
-	customData []interface{},
-) (Stream, error) {
-
-	var (
-		s    Stream
-		resp Envelope
-	)
+func CustomDataConvert(customData []interface{}) map[string]map[string]string {
 
 	// This is what Lightstep expects
 	//"custom_data": {
@@ -70,6 +60,23 @@ func (c *Client) CreateStream(
 			lsCustomData[name][key] = value.(string)
 		}
 	}
+
+	return lsCustomData
+}
+
+func (c *Client) CreateStream(
+	projectName string,
+	name string,
+	query string,
+	customData []interface{},
+) (Stream, error) {
+
+	var (
+		s    Stream
+		resp Envelope
+	)
+
+	lsCustomData := CustomDataConvert(customData)
 
 	bytes, err := json.Marshal(
 		Stream{

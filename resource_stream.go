@@ -116,9 +116,8 @@ func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 		ID:   d.Id(),
 	}
 
-	if d.HasChange("stream_name") {
-		s.Attributes.Name = d.Get("stream_name").(string)
-	}
+	s.Attributes.Name = d.Get("stream_name").(string)
+	s.Attributes.CustomData = lightstep.CustomDataConvert(d.Get("custom_data").([]interface{}))
 
 	if _, err := client.UpdateStream(d.Get("project_name").(string), d.Id(), s); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update stream: %v", err))
