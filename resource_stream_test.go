@@ -45,6 +45,13 @@ resource "lightstep_stream" "aggie_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
   stream_name = "Errors (All)"
   query = "\"error\" IN (\"true\")"
+  custom_data = [
+	  {
+		// This name field is special and becomes the key
+		"name" = "object1"
+		"url" = "https://www.lightstep.com",
+	  },
+  ]
 }
 `
 	resource.Test(t, resource.TestCase{
@@ -76,6 +83,8 @@ resource "lightstep_stream" "aggie_errors" {
 					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "stream_name", "Errors (All)"),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "query", "\"error\" IN (\"true\")"),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.name", "object1"),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.url", "https://www.lightstep.com"),
 				),
 			},
 		},
