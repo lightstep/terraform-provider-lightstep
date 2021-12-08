@@ -36,6 +36,7 @@ func resourceStreamCondition() *schema.Resource {
 			"stream_id": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"evaluation_window_ms": {
 				Type:     schema.TypeInt,
