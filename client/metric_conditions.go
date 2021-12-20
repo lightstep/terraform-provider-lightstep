@@ -1,4 +1,4 @@
-package lightstep
+package client
 
 import (
 	"encoding/json"
@@ -43,12 +43,12 @@ type Thresholds struct {
 }
 
 type MetricQueryWithAttributes struct {
-	Name    string      `json:"query-name"`
-	Type    string      `json:"query-type"`
-	Hidden  bool        `json:"hidden"`
-	Display string      `json:"display-type"`
-	Query   MetricQuery `json:"metric-query"`
-	TQLQuery string     `json:"tql-query"`
+	Name     string      `json:"query-name"`
+	Type     string      `json:"query-type"`
+	Hidden   bool        `json:"hidden"`
+	Display  string      `json:"display-type"`
+	Query    MetricQuery `json:"metric-query"`
+	TQLQuery string      `json:"tql-query"`
 }
 
 type MetricQuery struct {

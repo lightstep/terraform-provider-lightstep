@@ -1,4 +1,4 @@
-package lightstep
+package client
 
 import (
 	"bytes"

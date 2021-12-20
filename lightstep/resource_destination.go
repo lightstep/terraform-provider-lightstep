@@ -1,4 +1,4 @@
-package main
+package lightstep
 
 import (
 	"context"
@@ -8,17 +8,17 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 // these are common across all types of destinations
 func resourceDestinationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	dest, err := client.GetDestination(d.Get("project_name").(string), d.Id())
+	c := m.(*client.Client)
+	dest, err := c.GetDestination(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -32,7 +32,7 @@ func resourceDestinationRead(_ context.Context, d *schema.ResourceData, m interf
 func resourceDestinationDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	if err := client.DeleteDestination(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete destination: %v", err))
 	}

@@ -1,17 +1,17 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func TestAccStreamDashboard(t *testing.T) {
-	var dashboard lightstep.Dashboard
+	var dashboard client.Dashboard
 
 	missingStream := `
 resource "lightstep_stream_dashboard" "customer_charges" {
@@ -102,7 +102,7 @@ resource "lightstep_stream_dashboard" "ingress" {
 	})
 }
 
-func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashboard) resource.TestCheckFunc {
+func testAccCheckDashboardExists(resourceName string, dashboard *client.Dashboard) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get dashboard from TF state
 		tfStream, ok := s.RootModule().Resources[resourceName]
@@ -115,7 +115,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashb
 		}
 
 		// get dashboard from LS
-		client := testAccProvider.Meta().(*lightstep.Client)
+		client := testAccProvider.Meta().(*client.Client)
 		d, err := client.GetDashboard(test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
@@ -129,7 +129,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *lightstep.Dashb
 
 // confirms that dashboards created during test run have been destroyed
 func testAccStreamDashboardDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "dashboard" {

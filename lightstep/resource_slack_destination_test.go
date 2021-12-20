@@ -1,16 +1,16 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func TestAccSlackDestination(t *testing.T) {
-	var destination lightstep.Destination
+	var destination client.Destination
 
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -58,7 +58,7 @@ resource "lightstep_slack_destination" "imported" {
 	})
 }
 
-func testAccCheckSlackDestinationExists(resourceName string, destination *lightstep.Destination) resource.TestCheckFunc {
+func testAccCheckSlackDestinationExists(resourceName string, destination *client.Destination) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get destination from TF state
 		tfDestination, ok := s.RootModule().Resources[resourceName]
@@ -71,7 +71,7 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *lights
 		}
 
 		// get destination from LS
-		client := testAccProvider.Meta().(*lightstep.Client)
+		client := testAccProvider.Meta().(*client.Client)
 		d, err := client.GetDestination(test_project, tfDestination.Primary.ID)
 		if err != nil {
 			return err
@@ -83,7 +83,7 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *lights
 }
 
 func testAccSlackDestinationDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "lightstep_slack_destination" {
 			continue

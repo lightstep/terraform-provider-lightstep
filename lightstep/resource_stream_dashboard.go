@@ -1,14 +1,14 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStreamDashboard() *schema.Resource {
@@ -43,7 +43,7 @@ func resourceStreamDashboard() *schema.Resource {
 }
 
 func resourceStreamDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	projectName := d.Get("project_name").(string)
 	resourceId := d.Id()
@@ -56,7 +56,7 @@ func resourceStreamDashboardExists(d *schema.ResourceData, m interface{}) (b boo
 }
 
 func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	projectName := d.Get("project_name").(string)
 	dashboardName := d.Get("dashboard_name").(string)
@@ -74,14 +74,14 @@ func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
 	projectName := d.Get("project_name").(string)
 	resourceId := d.Id()
 
-	dashboard, err := client.GetDashboard(projectName, resourceId)
+	dashboard, err := c.GetDashboard(projectName, resourceId)
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -99,7 +99,7 @@ func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m in
 func resourceStreamDashboardUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	projectName := d.Get("project_name").(string)
 	dashboardName := d.Get("dashboard_name").(string)
 	resourceId := d.Id()
@@ -115,7 +115,7 @@ func resourceStreamDashboardUpdate(_ context.Context, d *schema.ResourceData, m 
 func resourceStreamDashboardDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	projectName := d.Get("project_name").(string)
 	resourceId := d.Id()
 
@@ -128,7 +128,7 @@ func resourceStreamDashboardDelete(_ context.Context, d *schema.ResourceData, m 
 }
 
 func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	resourceId := d.Id()
 	ids := strings.Split(resourceId, ".")
@@ -154,7 +154,7 @@ func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func setResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard lightstep.Dashboard) error {
+func setResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard client.Dashboard) error {
 	if err := d.Set("dashboard_name", dashboard.Attributes.Name); err != nil {
 		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
 	}
@@ -171,11 +171,11 @@ func setResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard lights
 	return nil
 }
 
-func streamIDsToStreams(ids []interface{}) []lightstep.Stream {
-	streams := []lightstep.Stream{}
+func streamIDsToStreams(ids []interface{}) []client.Stream {
+	streams := []client.Stream{}
 
 	for _, id := range ids {
-		streams = append(streams, lightstep.Stream{ID: id.(string)})
+		streams = append(streams, client.Stream{ID: id.(string)})
 	}
 	return streams
 }

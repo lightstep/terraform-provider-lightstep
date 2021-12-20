@@ -1,7 +1,8 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
 
@@ -9,20 +10,19 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 var (
 	k = "key"
 	v = "value"
 
-	includeFilter = lightstep.LabelFilter{
+	includeFilter = client.LabelFilter{
 		Key:     k,
 		Value:   v,
 		Operand: "eq",
 	}
 
-	excludeFilter = lightstep.LabelFilter{
+	excludeFilter = client.LabelFilter{
 		Key:     k,
 		Value:   v,
 		Operand: "neq",
@@ -30,7 +30,7 @@ var (
 )
 
 func TestAccMetricCondition(t *testing.T) {
-	var condition lightstep.MetricCondition
+	var condition client.MetricCondition
 
 	badCondition := `
 resource "lightstep_metric_condition" "errors" {
@@ -201,7 +201,7 @@ resource "lightstep_metric_condition" "test" {
 	})
 }
 
-func testAccCheckMetricConditionExists(resourceName string, condition *lightstep.MetricCondition) resource.TestCheckFunc {
+func testAccCheckMetricConditionExists(resourceName string, condition *client.MetricCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -212,7 +212,7 @@ func testAccCheckMetricConditionExists(resourceName string, condition *lightstep
 			return fmt.Errorf("ID is not set")
 		}
 
-		client := testAccProvider.Meta().(*lightstep.Client)
+		client := testAccProvider.Meta().(*client.Client)
 		cond, err := client.GetMetricCondition(test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
@@ -224,7 +224,7 @@ func testAccCheckMetricConditionExists(resourceName string, condition *lightstep
 }
 
 func testAccMetricConditionDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 	for _, res := range s.RootModule().Resources {
 		if res.Type != "metric_alert" {
 			continue
@@ -244,7 +244,7 @@ func TestBuildLabelFilters(t *testing.T) {
 	type filtersCase struct {
 		includes []interface{}
 		excludes []interface{}
-		expected []lightstep.LabelFilter
+		expected []client.LabelFilter
 	}
 
 	cases := []filtersCase{
@@ -257,7 +257,7 @@ func TestBuildLabelFilters(t *testing.T) {
 					"value": v,
 				},
 			},
-			expected: []lightstep.LabelFilter{
+			expected: []client.LabelFilter{
 				excludeFilter,
 			},
 		},
@@ -270,7 +270,7 @@ func TestBuildLabelFilters(t *testing.T) {
 				},
 			},
 			excludes: []interface{}{},
-			expected: []lightstep.LabelFilter{
+			expected: []client.LabelFilter{
 				includeFilter,
 			},
 		},
@@ -288,7 +288,7 @@ func TestBuildLabelFilters(t *testing.T) {
 					"value": v,
 				},
 			},
-			expected: []lightstep.LabelFilter{
+			expected: []client.LabelFilter{
 				includeFilter,
 				excludeFilter,
 			},
@@ -304,7 +304,7 @@ func TestBuildLabelFilters(t *testing.T) {
 func TestBuildAlertingRules(t *testing.T) {
 	type alertingRuleCase struct {
 		rules    []interface{}
-		expected []lightstep.AlertingRule
+		expected []client.AlertingRule
 	}
 
 	id := "abc123"
@@ -320,7 +320,7 @@ func TestBuildAlertingRules(t *testing.T) {
 					"update_interval": renotify,
 				},
 			},
-			expected: []lightstep.AlertingRule{
+			expected: []client.AlertingRule{
 				{
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
@@ -341,11 +341,11 @@ func TestBuildAlertingRules(t *testing.T) {
 					},
 				},
 			},
-			expected: []lightstep.AlertingRule{
+			expected: []client.AlertingRule{
 				{
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
-					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{includeFilter}},
+					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter}},
 				},
 			},
 		},
@@ -363,11 +363,11 @@ func TestBuildAlertingRules(t *testing.T) {
 					},
 				},
 			},
-			expected: []lightstep.AlertingRule{
+			expected: []client.AlertingRule{
 				{
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
-					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{excludeFilter}},
+					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{excludeFilter}},
 				},
 			},
 		},
@@ -391,11 +391,11 @@ func TestBuildAlertingRules(t *testing.T) {
 					},
 				},
 			},
-			expected: []lightstep.AlertingRule{
+			expected: []client.AlertingRule{
 				{
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
-					MatchOn:              lightstep.MatchOn{GroupBy: []lightstep.LabelFilter{includeFilter, excludeFilter}},
+					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter, excludeFilter}},
 				},
 			},
 		},

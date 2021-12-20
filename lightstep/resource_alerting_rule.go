@@ -1,15 +1,14 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
-	"strings"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/lightstep/terraform-provider-lightstep/client"
+	"net/http"
+	"strings"
 )
 
 func resourceAlertingRule() *schema.Resource {
@@ -49,7 +48,7 @@ func resourceAlertingRule() *schema.Resource {
 func resourceAlertingRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	updateIntervalMS := validUpdateInterval[d.Get("update_interval").(string)]
 
@@ -73,10 +72,10 @@ func resourceAlertingRuleCreate(ctx context.Context, d *schema.ResourceData, m i
 func resourceAlertingRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	rule, err := client.GetAlertingRule(d.Get("project_name").(string), d.Id())
+	c := m.(*client.Client)
+	rule, err := c.GetAlertingRule(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -94,7 +93,7 @@ func resourceAlertingRuleRead(ctx context.Context, d *schema.ResourceData, m int
 func resourceAlertingRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	if err := client.DeleteAlertingRule(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete alerting rule: %v", err))
 	}
@@ -103,7 +102,7 @@ func resourceAlertingRuleDelete(ctx context.Context, d *schema.ResourceData, m i
 }
 
 func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -129,7 +128,7 @@ func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schem
 }
 
 // update terraform state with alerting rule API call response
-func setResourceDataFromAlertingRule(d *schema.ResourceData, rule lightstep.StreamAlertingRuleResponse) error {
+func setResourceDataFromAlertingRule(d *schema.ResourceData, rule client.StreamAlertingRuleResponse) error {
 	if err := d.Set("condition_id", rule.Relationships.Condition.Data.ID); err != nil {
 		return err
 	}

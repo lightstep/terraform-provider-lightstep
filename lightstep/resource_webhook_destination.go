@@ -1,13 +1,13 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceWebhookDestination() *schema.Resource {
@@ -44,12 +44,12 @@ func resourceWebhookDestination() *schema.Resource {
 }
 
 func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
-	dest := lightstep.Destination{
+	dest := client.Destination{
 		Type: "destination",
 	}
-	attrs := lightstep.WebhookAttributes{
+	attrs := client.WebhookAttributes{
 		Name:            d.Get("destination_name").(string),
 		DestinationType: "webhook",
 		URL:             d.Get("url").(string),
@@ -61,7 +61,7 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	dest.Attributes = attrs
-	destination, err := client.CreateDestination(d.Get("project_name").(string), dest)
+	destination, err := c.CreateDestination(d.Get("project_name").(string), dest)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create webhook destination %s: %v", destination, err))
 	}
@@ -71,7 +71,7 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 }
 
 func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -79,17 +79,17 @@ func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetDestination(project, id)
+	dest, err := c.GetDestination(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get webhook destination: %v", err)
 	}
 
-	d.SetId(c.ID)
+	d.SetId(dest.ID)
 	if err := d.Set("project_name", project); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
 
-	attributes := c.Attributes.(map[string]interface{})
+	attributes := dest.Attributes.(map[string]interface{})
 	if err := d.Set("destination_name", attributes["name"]); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Unable to set destination_name resource field: %v", err)
 	}

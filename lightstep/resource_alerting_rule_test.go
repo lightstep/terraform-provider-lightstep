@@ -1,18 +1,18 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func TestAccStreamAlertingRule(t *testing.T) {
-	var rule lightstep.StreamAlertingRuleResponse
+	var rule client.StreamAlertingRuleResponse
 
 	ruleConfig := `
 resource "lightstep_stream" "beemo" {
@@ -155,7 +155,7 @@ resource "lightstep_alerting_rule" "import-cond" {
 	})
 }
 
-func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamAlertingRuleResponse) resource.TestCheckFunc {
+func testAccCheckAlertingRuleExists(resourceName string, rule *client.StreamAlertingRuleResponse) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfRule, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -166,8 +166,8 @@ func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamA
 			return fmt.Errorf("ID is not set")
 		}
 
-		client := testAccProvider.Meta().(*lightstep.Client)
-		r, err := client.GetAlertingRule(test_project, tfRule.Primary.ID)
+		c := testAccProvider.Meta().(*client.Client)
+		r, err := c.GetAlertingRule(test_project, tfRule.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -179,7 +179,7 @@ func testAccCheckAlertingRuleExists(resourceName string, rule *lightstep.StreamA
 
 // confirms alerting rules created for test have been destroyed
 func testAccAlertingRuleDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "alerting_rule" {

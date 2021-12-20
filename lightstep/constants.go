@@ -1,4 +1,4 @@
-package main
+package lightstep
 
 var (
 	validEvaluationWindow = map[string]int{

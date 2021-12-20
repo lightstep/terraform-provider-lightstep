@@ -1,15 +1,15 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceMetricDashboard() *schema.Resource {
@@ -92,18 +92,18 @@ func getChartSchema() map[string]*schema.Schema {
 }
 
 func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 	attrs, err := getMetricDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes: %v", err))
 	}
 
-	dashboard := lightstep.MetricDashboard{
+	dashboard := client.MetricDashboard{
 		Type:       "dashboard",
 		Attributes: *attrs,
 	}
 
-	created, err := client.CreateMetricDashboard(d.Get("project_name").(string), dashboard)
+	created, err := c.CreateMetricDashboard(d.Get("project_name").(string), dashboard)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create metric dashboard: %v", err))
 	}
@@ -115,11 +115,11 @@ func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceMetricDashboardRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
-	dashboard, err := client.GetMetricDashboard(d.Get("project_name").(string), d.Id())
+	dashboard, err := c.GetMetricDashboard(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -134,13 +134,13 @@ func resourceMetricDashboardRead(_ context.Context, d *schema.ResourceData, m in
 	return diags
 }
 
-func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*lightstep.MetricDashboardAttributes, error) {
+func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.MetricDashboardAttributes, error) {
 	charts, err := buildCharts(d.Get("chart").([]interface{}))
 	if err != nil {
 		return nil, err
 	}
 
-	attributes := &lightstep.MetricDashboardAttributes{
+	attributes := &client.MetricDashboardAttributes{
 		Name:   d.Get("dashboard_name").(string),
 		Charts: charts,
 	}
@@ -148,10 +148,10 @@ func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*lightste
 	return attributes, nil
 }
 
-func buildCharts(chartsIn []interface{}) ([]lightstep.MetricChart, error) {
+func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
 	var (
 		charts    []map[string]interface{}
-		newCharts []lightstep.MetricChart
+		newCharts []client.MetricChart
 	)
 
 	for _, chart := range chartsIn {
@@ -159,7 +159,7 @@ func buildCharts(chartsIn []interface{}) ([]lightstep.MetricChart, error) {
 	}
 
 	for _, chart := range charts {
-		c := lightstep.MetricChart{
+		c := client.MetricChart{
 			Title:     chart["name"].(string),
 			Rank:      chart["rank"].(int),
 			ID:        chart["id"].(string),
@@ -185,7 +185,7 @@ func buildCharts(chartsIn []interface{}) ([]lightstep.MetricChart, error) {
 	return newCharts, nil
 }
 
-func buildYAxis(yAxisIn []interface{}) (*lightstep.YAxis, error) {
+func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 	if len(yAxisIn) < 1 {
 		return nil, nil
 	}
@@ -201,7 +201,7 @@ func buildYAxis(yAxisIn []interface{}) (*lightstep.YAxis, error) {
 		return nil, fmt.Errorf("Missing required attribute 'min' for y_axis")
 	}
 
-	yAxis := &lightstep.YAxis{
+	yAxis := &client.YAxis{
 		Min: min,
 		Max: max,
 	}
@@ -209,7 +209,7 @@ func buildYAxis(yAxisIn []interface{}) (*lightstep.YAxis, error) {
 	return yAxis, nil
 }
 
-func setResourceDataFromMetricDashboard(project string, dash lightstep.MetricDashboard, d *schema.ResourceData) error {
+func setResourceDataFromMetricDashboard(project string, dash client.MetricDashboard, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
 		return fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
@@ -251,13 +251,13 @@ func setResourceDataFromMetricDashboard(project string, dash lightstep.MetricDas
 }
 
 func resourceMetricDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 	attrs, err := getMetricDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes from resource : %v", err))
 	}
 
-	if _, err := client.UpdateMetricDashboard(d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+	if _, err := c.UpdateMetricDashboard(d.Get("project_name").(string), d.Id(), *attrs); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update metric dashboard: %v", err))
 	}
 
@@ -267,8 +267,8 @@ func resourceMetricDashboardUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceMetricDashboardDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	if err := client.DeleteMetricDashboard(d.Get("project_name").(string), d.Id()); err != nil {
+	c := m.(*client.Client)
+	if err := c.DeleteMetricDashboard(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele metrics dashboard: %v", err))
 	}
 
@@ -279,7 +279,7 @@ func resourceMetricDashboardDelete(_ context.Context, d *schema.ResourceData, m 
 }
 
 func resourceMetricDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -287,7 +287,7 @@ func resourceMetricDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	dash, err := client.GetMetricDashboard(project, id)
+	dash, err := c.GetMetricDashboard(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric dashboard. err: %v", err)
 	}

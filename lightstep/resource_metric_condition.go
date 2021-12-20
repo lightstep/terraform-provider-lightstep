@@ -1,4 +1,4 @@
-package main
+package lightstep
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 func resourceMetricCondition() *schema.Resource {
@@ -207,18 +207,18 @@ func getThresholdSchema() map[string]*schema.Schema {
 }
 
 func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 	attributes, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
 	}
 
-	condition := lightstep.MetricCondition{
+	condition := client.MetricCondition{
 		Type:       "metric_alert",
 		Attributes: *attributes,
 	}
 
-	created, err := client.CreateMetricCondition(d.Get("project_name").(string), condition)
+	created, err := c.CreateMetricCondition(d.Get("project_name").(string), condition)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create metric condition: %v", err))
 	}
@@ -230,10 +230,10 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceMetricConditionRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	cond, err := client.GetMetricCondition(d.Get("project_name").(string), d.Id())
+	c := m.(*client.Client)
+	cond, err := c.GetMetricCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -249,7 +249,7 @@ func resourceMetricConditionRead(_ context.Context, d *schema.ResourceData, m in
 }
 
 func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	attrs, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
@@ -265,7 +265,7 @@ func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 	if err := client.DeleteMetricCondition(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
 	}
@@ -277,7 +277,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	client := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -298,7 +298,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	return []*schema.ResourceData{d}, nil
 }
 
-func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightstep.MetricConditionAttributes, error) {
+func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.MetricConditionAttributes, error) {
 	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
 
 	thresholds, err := buildThresholds(d)
@@ -306,11 +306,11 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 		return nil, err
 	}
 
-	attributes := &lightstep.MetricConditionAttributes{
+	attributes := &client.MetricConditionAttributes{
 		Type:        "metrics",
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
-		Expression: lightstep.Expression{
+		Expression: client.Expression{
 			EvaluationCriteria: expression["evaluation_criteria"].(string),
 			IsMulti:            expression["is_multi"].(bool),
 			IsNoData:           expression["is_no_data"].(bool),
@@ -342,8 +342,8 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*lightste
 	return attributes, nil
 }
 
-func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule, error) {
-	var newRules []lightstep.AlertingRule
+func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, error) {
+	var newRules []client.AlertingRule
 
 	var alertingRules []map[string]interface{}
 	for _, ruleIn := range alertingRulesIn {
@@ -351,7 +351,7 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule
 	}
 
 	for _, rule := range alertingRules {
-		newRule := lightstep.AlertingRule{
+		newRule := client.AlertingRule{
 			MessageDestinationID: rule["id"].(string),
 		}
 
@@ -379,15 +379,15 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]lightstep.AlertingRule
 		}
 
 		newFilters := buildLabelFilters(includes, excludes)
-		newRule.MatchOn = lightstep.MatchOn{GroupBy: newFilters}
+		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
 
 		newRules = append(newRules, newRule)
 	}
 	return newRules, nil
 }
 
-func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttributes, error) {
-	var newQueries []lightstep.MetricQueryWithAttributes
+func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, error) {
+	var newQueries []client.MetricQueryWithAttributes
 	var queries []map[string]interface{}
 	for _, queryIn := range queriesIn {
 		queries = append(queries, queryIn.(map[string]interface{}))
@@ -398,7 +398,7 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 		// If this chart uses a TQL query
 		tqlQuery := query["tql"].(string)
 		if tqlQuery != "" {
-			newQuery := lightstep.MetricQueryWithAttributes{
+			newQuery := client.MetricQueryWithAttributes{
 				Name:     query["query_name"].(string),
 				Type:     "tql",
 				Hidden:   query["hidden"].(bool),
@@ -415,12 +415,12 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 		if metric == "" {
 			queryType = "composite"
 		}
-		newQuery := lightstep.MetricQueryWithAttributes{
+		newQuery := client.MetricQueryWithAttributes{
 			Name:    query["query_name"].(string),
 			Type:    queryType,
 			Hidden:  query["hidden"].(bool),
 			Display: query["display"].(string),
-			Query: lightstep.MetricQuery{
+			Query: client.MetricQuery{
 				TimeseriesOperator: query["timeseries_operator"].(string),
 				Metric:             metric,
 			},
@@ -456,7 +456,7 @@ func buildQueries(queriesIn []interface{}) ([]lightstep.MetricQueryWithAttribute
 			g := arr[0].(map[string]interface{})
 
 			newQuery.Query.GroupBy =
-				lightstep.GroupBy{
+				client.GroupBy{
 					Aggregation: g["aggregation_method"].(string),
 					LabelKeys:   buildKeys(g["keys"].([]interface{})),
 				}
@@ -474,8 +474,8 @@ func buildKeys(keysIn []interface{}) []string {
 	return keys
 }
 
-func buildThresholds(d *schema.ResourceData) (lightstep.Thresholds, error) {
-	t := lightstep.Thresholds{}
+func buildThresholds(d *schema.ResourceData) (client.Thresholds, error) {
+	t := client.Thresholds{}
 
 	critical := d.Get("expression.0.thresholds.0.critical")
 	if critical != "" {
@@ -498,15 +498,15 @@ func buildThresholds(d *schema.ResourceData) (lightstep.Thresholds, error) {
 	return t, nil
 }
 
-func buildLabelFilters(includes []interface{}, excludes []interface{}) []lightstep.LabelFilter {
-	var filters []lightstep.LabelFilter
+func buildLabelFilters(includes []interface{}, excludes []interface{}) []client.LabelFilter {
+	var filters []client.LabelFilter
 
 	if len(includes) > 0 {
 		for _, includeFilter := range includes {
 			key := includeFilter.(map[string]interface{})["key"]
 			value := includeFilter.(map[string]interface{})["value"]
 
-			filters = append(filters, lightstep.LabelFilter{
+			filters = append(filters, client.LabelFilter{
 				Operand: "eq",
 				Key:     key.(string),
 				Value:   value.(string),
@@ -518,7 +518,7 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}) []lightst
 		for _, excludeFilter := range excludes {
 			key := excludeFilter.(map[string]interface{})["key"]
 			value := excludeFilter.(map[string]interface{})["value"]
-			filters = append(filters, lightstep.LabelFilter{
+			filters = append(filters, client.LabelFilter{
 				Operand: "neq",
 				Key:     key.(string),
 				Value:   value.(string),
@@ -577,7 +577,7 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 	return nil
 }
 
-func setResourceDataFromMetricCondition(project string, c lightstep.MetricCondition, d *schema.ResourceData) error {
+func setResourceDataFromMetricCondition(project string, c client.MetricCondition, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
 		return fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
@@ -644,7 +644,7 @@ func setResourceDataFromMetricCondition(project string, c lightstep.MetricCondit
 	return nil
 }
 
-func getIncludeExcludeFilters(filters []lightstep.LabelFilter) ([]interface{}, []interface{}) {
+func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}) {
 	var includeFilters []interface{}
 	var excludeFilters []interface{}
 	for _, f := range filters {
@@ -663,7 +663,7 @@ func getIncludeExcludeFilters(filters []lightstep.LabelFilter) ([]interface{}, [
 	return includeFilters, excludeFilters
 }
 
-func getQueriesFromResourceData(queriesIn []lightstep.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)

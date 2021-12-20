@@ -1,4 +1,4 @@
-package main
+package lightstep
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 func Provider() *schema.Provider {
@@ -51,6 +51,10 @@ func Provider() *schema.Provider {
 			"lightstep_alerting_rule":         resourceAlertingRule(),
 		},
 
+		DataSourcesMap: map[string]*schema.Resource{
+			"lightstep_stream": dataSourceStream(),
+		},
+
 		ConfigureContextFunc: configureProvider,
 		TerraformVersion:     "v1.0.3",
 	}
@@ -70,7 +74,7 @@ func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}
 		return apiKey, diags
 	}
 
-	client := lightstep.NewClient(
+	client := client.NewClient(
 		context.Background(),
 		apiKey,
 		d.Get("organization").(string),

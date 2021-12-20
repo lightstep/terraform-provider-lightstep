@@ -1,51 +1,54 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
-func TestAccPagerdutyDestination(t *testing.T) {
-	var destination lightstep.Destination
+func TestAccWebhookDestination(t *testing.T) {
+	var destination client.Destination
 
 	missingExpressionConfig := `
-resource "lightstep_pagerduty_destination" "missing_pagerduty" {
+resource "lightstep_webhook_destination" "missing_webhook" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
-  destination_name = "missing integration_key"
+  destination_name = "alert-scraper"
 }
 `
 
 	destinationConfig := `
-resource "lightstep_pagerduty_destination" "pagerduty" {
+resource "lightstep_webhook_destination" "webhook" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
-  destination_name = "Acceptance Test Destination"
-  integration_key = "abc123def456"
+  destination_name = "very important webhook"
+  url = "https://www.downforeveryoneorjustme.com"
+  custom_headers = {
+  	"header_1" = "value_1"
+    "header_2" = "value_2"
+  }
 }
 `
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccPagerdutyDestinationDestroy,
+		CheckDestroy: testAccWebhookDestinationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: missingExpressionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerdutyDestinationExists("lightstep_pagerduty_destination.missing_pagerduty", &destination),
+					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.missing_webhook", &destination),
 				),
-				ExpectError: regexp.MustCompile("The argument \"integration_key\" is required, but no definition was found."),
+				ExpectError: regexp.MustCompile("The argument \"url\" is required, but no definition was found."),
 			},
 			{
 				Config: destinationConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckPagerdutyDestinationExists("lightstep_pagerduty_destination.pagerduty", &destination),
-					resource.TestCheckResourceAttr("lightstep_pagerduty_destination.pagerduty", "destination_name", "Acceptance Test Destination"),
-					resource.TestCheckResourceAttr("lightstep_pagerduty_destination.pagerduty", "integration_key", "abc123def456"),
+					testAccCheckWebhookDestinationExists("lightstep_webhook_destination.webhook", &destination),
+					resource.TestCheckResourceAttr("lightstep_webhook_destination.webhook", "destination_name", "very important webhook"),
+					resource.TestCheckResourceAttr("lightstep_webhook_destination.webhook", "url", "https://www.downforeveryoneorjustme.com"),
 				),
 			},
 		},
@@ -53,22 +56,25 @@ resource "lightstep_pagerduty_destination" "pagerduty" {
 
 }
 
-func TestAccPagerdutyDestinationImport(t *testing.T) {
+func TestAccWebhookDestinationImport(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config: `
-resource "lightstep_pagerduty_destination" "pagerduty" {
+resource "lightstep_webhook_destination" "webhook" {
 	project_name = "terraform-provider-tests"
-	destination_name = "Terraform LS Destination Acceptance Test Service"
-	integration_key = "8e25bec5edc44d05a2acf8238d0246d5"
+	destination_name = "do-not-delete"
+	url = "https://www.this-is-for-the-integration-tests.com"
+    custom_headers = {
+	  "allow-all" = "forever"
+    }
 }
 `,
 			},
 			{
-				ResourceName:        "lightstep_pagerduty_destination.pagerduty",
+				ResourceName:        "lightstep_webhook_destination.webhook",
 				ImportState:         true,
 				ImportStateVerify:   true,
 				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
@@ -77,7 +83,7 @@ resource "lightstep_pagerduty_destination" "pagerduty" {
 	})
 }
 
-func testAccCheckPagerdutyDestinationExists(resourceName string, destination *lightstep.Destination) resource.TestCheckFunc {
+func testAccCheckWebhookDestinationExists(resourceName string, destination *client.Destination) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get destination from TF state
 		tfDestination, ok := s.RootModule().Resources[resourceName]
@@ -90,7 +96,7 @@ func testAccCheckPagerdutyDestinationExists(resourceName string, destination *li
 		}
 
 		// get destination from LS
-		client := testAccProvider.Meta().(*lightstep.Client)
+		client := testAccProvider.Meta().(*client.Client)
 		d, err := client.GetDestination(test_project, tfDestination.Primary.ID)
 		if err != nil {
 			return err
@@ -101,10 +107,10 @@ func testAccCheckPagerdutyDestinationExists(resourceName string, destination *li
 	}
 }
 
-func testAccPagerdutyDestinationDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+func testAccWebhookDestinationDestroy(s *terraform.State) error {
+	conn := testAccProvider.Meta().(*client.Client)
 	for _, resource := range s.RootModule().Resources {
-		if resource.Type != "lightstep_pagerduty_destination" {
+		if resource.Type != "lightstep_webhook_destination" {
 			continue
 		}
 

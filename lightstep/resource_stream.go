@@ -1,8 +1,9 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStream() *schema.Resource {
@@ -53,9 +53,9 @@ func resourceStream() *schema.Resource {
 func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 	if err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
-		stream, err := client.CreateStream(
+		stream, err := c.CreateStream(
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
@@ -90,10 +90,10 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceStreamRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	s, err := client.GetStream(d.Get("project_name").(string), d.Id())
+	c := m.(*client.Client)
+	s, err := c.GetStream(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -109,17 +109,17 @@ func resourceStreamRead(_ context.Context, d *schema.ResourceData, m interface{}
 }
 
 func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
-	s := lightstep.Stream{
+	s := client.Stream{
 		Type: "stream",
 		ID:   d.Id(),
 	}
 
 	s.Attributes.Name = d.Get("stream_name").(string)
-	s.Attributes.CustomData = lightstep.CustomDataConvert(d.Get("custom_data").([]interface{}))
+	s.Attributes.CustomData = client.CustomDataConvert(d.Get("custom_data").([]interface{}))
 
-	if _, err := client.UpdateStream(d.Get("project_name").(string), d.Id(), s); err != nil {
+	if _, err := c.UpdateStream(d.Get("project_name").(string), d.Id(), s); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update stream: %v", err))
 	}
 
@@ -129,8 +129,8 @@ func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	if err := client.DeleteStream(d.Get("project_name").(string), d.Id()); err != nil {
+	c := m.(*client.Client)
+	if err := c.DeleteStream(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele stream: %v", err))
 	}
 
@@ -141,7 +141,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 }
 
 func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -149,7 +149,7 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 	}
 
 	project, id := ids[0], ids[1]
-	stream, err := client.GetStream(project, id)
+	stream, err := c.GetStream(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get stream: %v", err)
 	}
@@ -166,7 +166,7 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 	return []*schema.ResourceData{d}, nil
 }
 
-func setResourceDataFromStream(d *schema.ResourceData, s lightstep.Stream) error {
+func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 	if err := d.Set("stream_name", s.Attributes.Name); err != nil {
 		return fmt.Errorf("Unable to set stream_name resource field: %v", err)
 	}

@@ -1,17 +1,17 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func TestAccStreamCondition(t *testing.T) {
-	var condition lightstep.StreamCondition
+	var condition client.StreamCondition
 
 	conditionConfig := `
 resource "lightstep_stream" "beemo" {
@@ -121,7 +121,7 @@ resource "lightstep_stream_condition" "import-cond" {
 	})
 }
 
-func testAccCheckStreamConditionExists(resourceName string, condition *lightstep.StreamCondition) resource.TestCheckFunc {
+func testAccCheckStreamConditionExists(resourceName string, condition *client.StreamCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -132,8 +132,8 @@ func testAccCheckStreamConditionExists(resourceName string, condition *lightstep
 			return fmt.Errorf("ID is not set")
 		}
 
-		client := testAccProvider.Meta().(*lightstep.Client)
-		cond, err := client.GetStreamCondition(test_project, tfCondition.Primary.ID)
+		c := testAccProvider.Meta().(*client.Client)
+		cond, err := c.GetStreamCondition(test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -145,7 +145,7 @@ func testAccCheckStreamConditionExists(resourceName string, condition *lightstep
 
 // confirms conditions created for test have been destroyed
 func testAccStreamConditionDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "condition" {

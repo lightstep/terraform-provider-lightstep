@@ -1,18 +1,17 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func TestAccMetricDashboard(t *testing.T) {
-	var dashboard lightstep.MetricDashboard
+	var dashboard client.MetricDashboard
 
 	// missing required field 'type'
 	badDashboard := `
@@ -184,7 +183,7 @@ resource "lightstep_metric_dashboard" "test" {
 }
 
 func testGetMetricDashboardDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "metric_alert" {
 			continue
@@ -200,7 +199,7 @@ func testGetMetricDashboardDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckMetricDashboardExists(resourceName string, dashboard *lightstep.MetricDashboard) resource.TestCheckFunc {
+func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.MetricDashboard) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfDashboard, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -211,8 +210,8 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *lightstep
 			return fmt.Errorf("ID is not set")
 		}
 
-		client := testAccProvider.Meta().(*lightstep.Client)
-		dash, err := client.GetMetricDashboard(test_project, tfDashboard.Primary.ID)
+		c := testAccProvider.Meta().(*client.Client)
+		dash, err := c.GetMetricDashboard(test_project, tfDashboard.Primary.ID)
 		if err != nil {
 			return err
 		}

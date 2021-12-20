@@ -1,14 +1,14 @@
-package main
+package lightstep
 
 import (
 	"context"
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 func resourceStreamCondition() *schema.Resource {
@@ -49,9 +49,9 @@ func resourceStreamCondition() *schema.Resource {
 func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
-	condition, err := client.CreateStreamCondition(
+	condition, err := c.CreateStreamCondition(
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
@@ -72,10 +72,10 @@ func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, 
 func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	condition, err := client.GetStreamCondition(d.Get("project_name").(string), d.Id())
+	c := m.(*client.Client)
+	condition, err := c.GetStreamCondition(d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(lightstep.APIResponseCarrier)
+		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
@@ -93,8 +93,8 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	if err := client.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
+	c := m.(*client.Client)
+	if err := c.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete stream condition: %v", err))
 	}
 
@@ -104,14 +104,14 @@ func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, 
 func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*lightstep.Client)
-	attrs := lightstep.StreamConditionAttributes{
+	c := m.(*client.Client)
+	attrs := client.StreamConditionAttributes{
 		Name:               d.Get("condition_name").(string),
 		EvaluationWindowMS: d.Get("evaluation_window_ms").(int),
 		Expression:         d.Get("expression").(string),
 	}
 
-	condition, err := client.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
+	condition, err := c.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update stream condition: %v", err))
 	}
@@ -124,7 +124,7 @@ func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*lightstep.Client)
+	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -132,7 +132,7 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	condition, err := client.GetStreamCondition(project, id)
+	condition, err := c.GetStreamCondition(project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
@@ -150,7 +150,7 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 }
 
 // update terraform state with stream condition API call response
-func setResourceDataFromStreamCondition(d *schema.ResourceData, sc lightstep.StreamCondition) error {
+func setResourceDataFromStreamCondition(d *schema.ResourceData, sc client.StreamCondition) error {
 	if err := d.Set("condition_name", sc.Attributes.Name); err != nil {
 		return err
 	}

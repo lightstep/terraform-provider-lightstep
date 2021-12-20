@@ -1,20 +1,20 @@
-package main
+package lightstep
 
 import (
 	"fmt"
+	"github.com/lightstep/terraform-provider-lightstep/client"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/lightstep"
 )
 
 const test_project = "terraform-provider-tests"
 
 func TestAccStream(t *testing.T) {
-	var stream lightstep.Stream
+	var stream client.Stream
 
 	badQuery := `
 resource "lightstep_stream" "aggie_errors" {
@@ -115,7 +115,7 @@ resource "lightstep_stream" "import-stream"{
 	})
 }
 
-func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) resource.TestCheckFunc {
+func testAccCheckStreamExists(resourceName string, stream *client.Stream) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get stream from TF state
 		tfStream, ok := s.RootModule().Resources[resourceName]
@@ -128,7 +128,7 @@ func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) res
 		}
 
 		// get stream from LS
-		client := testAccProvider.Meta().(*lightstep.Client)
+		client := testAccProvider.Meta().(*client.Client)
 		str, err := client.GetStream(test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
@@ -142,7 +142,7 @@ func testAccCheckStreamExists(resourceName string, stream *lightstep.Stream) res
 
 // confirms that streams created during test run have been destroyed
 func testAccStreamDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*lightstep.Client)
+	conn := testAccProvider.Meta().(*client.Client)
 
 	for _, resource := range s.RootModule().Resources {
 		if resource.Type != "stream" {
