@@ -1,6 +1,15 @@
-# terraform-provider-lightstep
+# Lightstep Terraform Provider
 
-## Getting Started
+-   Website: https://www.terraform.io
+-   [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
+-   Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
+
+## Requirements
+
+-   [Terraform](https://www.terraform.io/downloads.html) 1.x
+
+## Using the provider
+
 * Install Terraform (v1.0)
 * Build the binary & initialize
 ```
@@ -8,49 +17,22 @@ make build
 tf init
 ```
 
-* Configure a provider block (see main.tf)
+* Configure a provider block (see main.tf for an example)
 ```
 provider "lightstep" {
-  environment = (staging|meta|public)
-  api_key_env_var = (environment variable where your LS api key is stored)
+  environment = public
+  api_key_env_var = (environment variable where your LS API key is stored)
   organization = (organization name)
 }
 ```
 
-## Repo Overview
-* **.go-version** - the current version of the terraform provider
-* **provider.go** - top level set up for the provider itself, specifies what resources it can manage
-* **resource_X.go** - set up for each resource specifying how to parse the block from terraform and CRUD/import methods
-* **resource_X_test.go** - acceptance test for the resource that will exercise the full functionality creating/modifying/deleting actual resources in the lightstep-terraform-provider project in LightStep-Integration in public.
-* **lightstep/** - client to communicate to LS 
-* **main.tf** - an terraform config file with examples for every resource
-* **scripts/** - catchall dir to hold scripts, currently holds a script needed for a CI check
+## Testing the provider
 
-
-## Testing
 The integration tests create, update, and destroy real resources in a dedicated project in public:
 [terraform-provider-tests](https://app.lightstep.com/terraform-provider-tests/service-directory/android/deployments)
 
 To run the tests, first get an API key with a Member role for the public environment and run:
 ```
-LIGHTSTEP_API_KEY=(your api key here) make acc-test
+LIGHTSTEP_API_KEY_PUBLIC=(your api key here) make acc-test
 ```
-
-## CI/CD
-Pre merge PR checks are run in Codefresh [PR Checks](https://g.codefresh.io/pipelines/edit/new/builds?id=5f07aca3392ca7de5bfcf4cb&pipeline=PR_Checks&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week)
-Post merge Codefresh kicks off the [Publish](https://g.codefresh.io/pipelines/edit/new/builds?id=5f0e1166bae1587f1e174066&pipeline=Publish&projects=terraform-provider-lightstep&projectId=5f07ac8d2121dfad2724b2b7&filter=page:1;pageSize:10;timeFrameStart:week) pipeline which builds and uploads the binary to GCS where make install-tools can fetch it.
-
-## TODO 
-* Streams 
-  * Update - What does it mean to change the stream query in the TF file? Is the previous stream no longer required and should be deleted (AS-IS)?
-* Dashboards
-  * Currently required to pass in verbose stream parameters to associate
-  * Terraform 0.12 should have ability to do for loops in TF file, potentially making it easier. 
-  * API requires stream name and query to associate with dashboard. This is because the API makes new streams if they don't exist which is problematic from Terraform's perspective because that is not reflected in the state  Change this to just accept stream IDs in the SDK.
-* API
-  * Rate limiting - when resources are created in parallel, might run into rate limits
-  * 500 error for lock when streams are being created
-* SDK - Separate into a repo
-
-
 
