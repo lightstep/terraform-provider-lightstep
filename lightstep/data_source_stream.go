@@ -18,7 +18,7 @@ func dataSourceStream() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"steam_id": {
+			"stream_id": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -27,15 +27,7 @@ func dataSourceStream() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"custom_data": {
-				Description: "Metadata associated with the stream",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeMap,
-				},
-			},
-			"query": {
+			"stream_query": {
 				Description: "Stream query",
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -56,11 +48,11 @@ func dataSourceLightstepStreamRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", apiErr))
 	}
 	d.SetId(s.ID)
-	if err := d.Set("custom_data", s.Attributes.CustomData); err != nil {
+	if err := d.Set("stream_name", s.Attributes.Name); err != nil {
 		return diag.FromErr(err)
 	}
 
-	if err := d.Set("query", s.Attributes.Query); err != nil {
+	if err := d.Set("stream_query", s.Attributes.Query); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

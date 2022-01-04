@@ -20,14 +20,9 @@ Use this data source to retrieve information about an existing stream for use in
 - **project_name** (String)
 - **steam_id** (String)
 
-### Optional
-
-- **id** (String) The ID of this resource.
-
 ### Read-Only
 
-- **custom_data** (List of Map of String) Metadata associated with the stream
-- **query** (String) Stream query
+- **stream_query** (String) Stream query
 - **stream_name** (String)
 
 

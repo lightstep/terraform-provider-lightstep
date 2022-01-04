@@ -53,7 +53,6 @@ func Provider() *schema.Provider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"lightstep_stream": dataSourceStream(),
-			"lightstep_alert_destination": dataSourceAlertDestination(),
 		},
 
 		ConfigureContextFunc: configureProvider,
