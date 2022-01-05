@@ -6,7 +6,7 @@ on:
         - main
 
 jobs:
-  tests:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Install Go
@@ -28,3 +28,27 @@ jobs:
 
       - name: Run Unit Tests
         run: make test
+  acc-tests:
+    runs-on: ubuntu-latest
+    env:
+      LIGHTSTEP_API_KEY_PUBLIC: ${{ secrets.LIGHTSTEP_API_KEY_PUBLIC }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup terraform CLI
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.11
+          terraform_wrapper: false
+
+      - name: Compile
+        run: make
+
+      - name: Run Unit Tests
+        run: make acc-test

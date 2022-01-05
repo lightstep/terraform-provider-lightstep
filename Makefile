@@ -31,7 +31,7 @@ lint:
 
 .PHONY: acc-test
 acc-test:
-	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" go test -v
+	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" go test -v ./lightstep
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
