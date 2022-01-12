@@ -4,18 +4,11 @@ provider "lightstep" {
   organization    = "LightStep"
 }
 
-variable "project" {
-  type    = string
-  default = "terraform-provider-tests"
-}
-
 terraform {
   required_providers {
     lightstep = {
-      # Put the plugin into this directory manually, automatic download not yet supported.
-      # terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/1.44/darwin_amd64/terraform-provider-lightstep
-      source  = "terraform.lightstep.com/lightstep-org/lightstep"
-      version = ">= 1.51"
+      source  = "lightstep/lightstep"
+      version = "1.51.1"
       # For more information, see the provider source documentation:
       #
       # https://www.terraform.io/docs/configuration/providers.html#provider-source
@@ -31,9 +24,9 @@ resource "lightstep_stream" "custom_data" {
   project_name = var.project
   stream_name  = "custom_data_test0"
   query        = "operation IN (\"api/v1/charge\") AND \"customer_id\" NOT IN (\"test0\")"
-  custom_data  = [
+  custom_data = [
     {
-      // This name field is special and becomes the key
+      # This name field is special and becomes the key
       "name" = "playbook"
       "url"  = "https://www.lightstep.com",
     },
@@ -138,7 +131,7 @@ resource "lightstep_alerting_rule" "beemo_latency_alerting_rule" {
   destination_id  = lightstep_pagerduty_destination.pd.id
   update_interval = "1h"
 }
-resource "lightstep_metric_condition" "beemo-requests" {
+resource "lightstep_metric_condition" "beemo_requests" {
   project_name = var.project
   name         = "Beemo Low Requests"
 
