@@ -1,6 +1,6 @@
 # Lightstep Terraform Provider
 
-⚠️ **Beta**: This provider is still under active development and we're working on adding new features and functionality.
+⚠️ *Beta* This provider is still under active development and we're working on adding new features and functionality.
 
 -   Website: https://www.terraform.io
 -   [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)

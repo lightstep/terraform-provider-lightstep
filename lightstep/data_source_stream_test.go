@@ -25,7 +25,7 @@ data "lightstep_stream" "stream_ds" {
 `
 	var stream client.Stream
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
+		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
