@@ -35,6 +35,13 @@ provider "lightstep" {
 * Add some code to define dashboards, streams, alerts, and more. See documentation for examples.
 * After setting an environment variable with your API Key that matches the name in the provider configuration above, run `terraform plan` to preview changes.
 
+:warning: If you're creating many Lightstep resources at once, we recommend running the `apply` with the `parallelism` flag set to a low value to avoid API 500 errors:
+
+```
+   # Avoids 500 errors when creating many resources.
+   terraform apply -parallelism=1 
+```
+
 ## Testing the provider (development only)
 
 If you're contributing changes or code to the provider, the integration tests create, update, and destroy real resources in a Lightstep-managed integration environment.
