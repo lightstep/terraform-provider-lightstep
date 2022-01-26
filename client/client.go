@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/lightstep/terraform-provider-lightstep/version"
 	"golang.org/x/time/rate"
 	"io"
 	"io/ioutil"
@@ -17,6 +18,7 @@ import (
 const (
 	DefaultRateLimitPerSecond = 5
 	DefaultRetryMax           = 3
+	DefaultUserAgent          = "terraform-provider-lightstep"
 )
 
 type Headers map[string]string
@@ -56,11 +58,15 @@ type Client struct {
 	client      *retryablehttp.Client
 	rateLimiter *rate.Limiter
 	contentType string
-	context     context.Context
+	userAgent   string
 }
 
 // NewClient gets a client for the public API
 func NewClient(ctx context.Context, apiKey string, orgName string, env string) *Client {
+	return NewClientWithUserAgent(ctx, apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+}
+
+func NewClientWithUserAgent(_ context.Context, apiKey string, orgName string, env string, userAgent string) *Client {
 	var baseURL string
 
 	if env == "public" {
@@ -73,7 +79,7 @@ func NewClient(ctx context.Context, apiKey string, orgName string, env string) *
 		apiKey:      apiKey,
 		orgName:     orgName,
 		baseURL:     baseURL,
-		context:     ctx,
+		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(DefaultRateLimitPerSecond), 1),
 		client: &retryablehttp.Client{
 			HTTPClient:   http.DefaultClient,
@@ -87,7 +93,7 @@ func NewClient(ctx context.Context, apiKey string, orgName string, env string) *
 }
 
 // checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
-func checkHTTPRetry(ctx context.Context, resp *http.Response, err error) (bool, error) {
+func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
 	if resp.StatusCode == http.StatusInternalServerError {
 		return true, nil
 	}
@@ -97,13 +103,13 @@ func checkHTTPRetry(ctx context.Context, resp *http.Response, err error) (bool, 
 // CallAPI calls the given API and unmarshals the result to into result.
 func (c *Client) CallAPI(httpMethod string, suffix string, data interface{}, result interface{}) error {
 	return callAPI(
-		c.context,
+		context.Background(),
 		c,
 		fmt.Sprintf("%v/%v", c.baseURL, suffix),
 		httpMethod,
 		Headers{
 			"Authorization":   fmt.Sprintf("bearer %v", c.apiKey),
-			"User-Agent":      "terraform-provider-lightstep",
+			"User-Agent":      c.userAgent,
 			"X-Lightstep-Org": c.orgName,
 			"Content-Type":    c.contentType,
 			"Accept":          c.contentType,
@@ -113,8 +119,8 @@ func (c *Client) CallAPI(httpMethod string, suffix string, data interface{}, res
 	)
 }
 
-func executeAPIRequest(c *Client, req *retryablehttp.Request, result interface{}) error {
-	if err := c.rateLimiter.Wait(c.context); err != nil {
+func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {
+	if err := c.rateLimiter.Wait(ctx); err != nil {
 		return err
 	}
 
@@ -207,17 +213,17 @@ func callAPI(
 	}
 
 	// Do the request.
-	return executeAPIRequest(c, req, result)
+	return executeAPIRequest(ctx, c, req, result)
 }
 
 func httpMethodSupportsRequestBody(method string) bool {
 	return method != "GET" && method != "DELETE"
 }
 
-func (c *Client) GetStreamIDByLink(url string) (string, error) {
+func (c *Client) GetStreamIDByLink(ctx context.Context, url string) (string, error) {
 	response := Envelope{}
 	str := Stream{}
-	err := callAPI(c.context,
+	err := callAPI(ctx,
 		c,
 		url,
 		"GET",
