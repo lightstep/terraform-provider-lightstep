@@ -3,6 +3,8 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
+	"github.com/lightstep/terraform-provider-lightstep/version"
 	"os"
 	"regexp"
 
@@ -60,7 +62,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	envVar := d.Get("api_key_env_var").(string)
 
@@ -74,11 +76,11 @@ func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}
 		return apiKey, diags
 	}
 
-	client := client.NewClient(
-		context.Background(),
+	client := client.NewClientWithUserAgent(
 		apiKey,
 		d.Get("organization").(string),
 		d.Get("environment").(string),
+		fmt.Sprintf("%s/%s (terraform %s)", "terraform-provider-lightstep", version.ProviderVersion, meta.SDKVersionString()),
 	)
 
 	return client, diags

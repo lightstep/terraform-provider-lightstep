@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -31,6 +32,7 @@ type SlackAttributes struct {
 }
 
 func (c *Client) CreateDestination(
+	ctx context.Context,
 	project string,
 	destination Destination) (Destination, error) {
 
@@ -42,7 +44,7 @@ func (c *Client) CreateDestination(
 		return dest, err
 	}
 
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/destinations", project), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", fmt.Sprintf("projects/%v/destinations", project), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return dest, err
 	}
@@ -51,13 +53,13 @@ func (c *Client) CreateDestination(
 	return dest, err
 }
 
-func (c *Client) GetDestination(projectName string, destinationID string) (*Destination, error) {
+func (c *Client) GetDestination(ctx context.Context, projectName string, destinationID string) (*Destination, error) {
 	var (
 		dest *Destination
 		resp Envelope
 	)
 
-	err := c.CallAPI("GET",
+	err := c.CallAPI(ctx, "GET",
 		fmt.Sprintf("projects/%v/destinations/%v", projectName, destinationID),
 		nil,
 		&resp)
@@ -70,8 +72,8 @@ func (c *Client) GetDestination(projectName string, destinationID string) (*Dest
 	return dest, err
 }
 
-func (c *Client) DeleteDestination(project string, destinationID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/destinations/%v", project, destinationID), nil, nil)
+func (c *Client) DeleteDestination(ctx context.Context, project string, destinationID string) error {
+	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/destinations/%v", project, destinationID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

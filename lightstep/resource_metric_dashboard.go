@@ -19,7 +19,7 @@ func resourceMetricDashboard() *schema.Resource {
 		UpdateContext: resourceMetricDashboardUpdate,
 		DeleteContext: resourceMetricDashboardDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceMetricDashboardImport,
+			StateContext: resourceMetricDashboardImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -103,7 +103,7 @@ func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 		Attributes: *attrs,
 	}
 
-	created, err := c.CreateMetricDashboard(d.Get("project_name").(string), dashboard)
+	created, err := c.CreateMetricDashboard(ctx, d.Get("project_name").(string), dashboard)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create metric dashboard: %v", err))
 	}
@@ -112,12 +112,12 @@ func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceMetricDashboardRead(ctx, d, m)
 }
 
-func resourceMetricDashboardRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMetricDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
 
-	dashboard, err := c.GetMetricDashboard(d.Get("project_name").(string), d.Id())
+	dashboard, err := c.GetMetricDashboard(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -257,18 +257,18 @@ func resourceMetricDashboardUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes from resource : %v", err))
 	}
 
-	if _, err := c.UpdateMetricDashboard(d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+	if _, err := c.UpdateMetricDashboard(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update metric dashboard: %v", err))
 	}
 
 	return resourceMetricDashboardRead(ctx, d, m)
 }
 
-func resourceMetricDashboardDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMetricDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	if err := c.DeleteMetricDashboard(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := c.DeleteMetricDashboard(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele metrics dashboard: %v", err))
 	}
 
@@ -278,7 +278,7 @@ func resourceMetricDashboardDelete(_ context.Context, d *schema.ResourceData, m 
 	return diags
 }
 
-func resourceMetricDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceMetricDashboardImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -287,7 +287,7 @@ func resourceMetricDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	dash, err := c.GetMetricDashboard(project, id)
+	dash, err := c.GetMetricDashboard(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric dashboard. err: %v", err)
 	}

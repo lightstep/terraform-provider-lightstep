@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,6 +19,7 @@ type DashboardAttributes struct {
 }
 
 func (c *Client) CreateDashboard(
+	ctx context.Context,
 	projectName string,
 	dashboardName string,
 	streams []Stream,
@@ -41,7 +43,7 @@ func (c *Client) CreateDashboard(
 		return d, err
 	}
 
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/dashboards", projectName), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", fmt.Sprintf("projects/%v/dashboards", projectName), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
 	}
@@ -55,6 +57,7 @@ func (c *Client) CreateDashboard(
 }
 
 func (c *Client) UpdateDashboard(
+	ctx context.Context,
 	projectName string,
 	dashboardName string,
 	streams []Stream,
@@ -78,7 +81,7 @@ func (c *Client) UpdateDashboard(
 		return d, err
 	}
 
-	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "PATCH", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
 	}
@@ -90,13 +93,13 @@ func (c *Client) UpdateDashboard(
 	return d, err
 }
 
-func (c *Client) GetDashboard(projectName string, dashboardID string) (*Dashboard, error) {
+func (c *Client) GetDashboard(ctx context.Context, projectName string, dashboardID string) (*Dashboard, error) {
 	var (
 		d    *Dashboard
 		resp Envelope
 	)
 
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
+	err := c.CallAPI(ctx, "GET", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -108,8 +111,8 @@ func (c *Client) GetDashboard(projectName string, dashboardID string) (*Dashboar
 	return d, err
 }
 
-func (c *Client) DeleteDashboard(projectName string, dashboardID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, nil)
+func (c *Client) DeleteDashboard(ctx context.Context, projectName string, dashboardID string) error {
+	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

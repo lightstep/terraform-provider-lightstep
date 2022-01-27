@@ -5,10 +5,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/lightstep/terraform-provider-lightstep/version"
+	"golang.org/x/time/rate"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
+)
+
+const (
+	DefaultRateLimitPerSecond = 1
+	DefaultRetryMax           = 3
+	DefaultUserAgent          = "terraform-provider-lightstep"
 )
 
 type Headers map[string]string
@@ -30,7 +40,7 @@ func (a APIClientError) GetHTTPResponse() *http.Response {
 	return a.Response
 }
 
-// represents a generic response from the API
+// Envelope represents a generic response from the API
 type Envelope struct {
 	Data json.RawMessage `json:"data"`
 }
@@ -44,12 +54,19 @@ type Body struct {
 type Client struct {
 	apiKey      string
 	baseURL     string
-	client      *http.Client
+	orgName     string
+	client      *retryablehttp.Client
+	rateLimiter *rate.Limiter
 	contentType string
+	userAgent   string
 }
 
 // NewClient gets a client for the public API
-func NewClient(ctx context.Context, apiKey string, orgName string, env string) *Client {
+func NewClient(apiKey string, orgName string, env string) *Client {
+	return NewClientWithUserAgent(apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+}
+
+func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
 	var baseURL string
 
 	if env == "public" {
@@ -60,31 +77,54 @@ func NewClient(ctx context.Context, apiKey string, orgName string, env string) *
 
 	return &Client{
 		apiKey:      apiKey,
+		orgName:     orgName,
 		baseURL:     baseURL,
-		client:      http.DefaultClient,
+		userAgent:   userAgent,
+		rateLimiter: rate.NewLimiter(rate.Limit(DefaultRateLimitPerSecond), 1),
+		client: &retryablehttp.Client{
+			HTTPClient:   http.DefaultClient,
+			CheckRetry:   checkHTTPRetry,
+			RetryWaitMin: 1 * time.Second,
+			Backoff:      retryablehttp.DefaultBackoff,
+			RetryMax:     DefaultRetryMax,
+		},
 		contentType: "application/vnd.api+json",
 	}
 }
 
+// checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
+func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
+	if resp.StatusCode == http.StatusInternalServerError {
+		return true, nil
+	}
+	return false, nil
+}
+
 // CallAPI calls the given API and unmarshals the result to into result.
-func (c *Client) CallAPI(httpMethod string, suffix string, data interface{}, result interface{}) error {
+func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
 	return callAPI(
-		context.TODO(),
-		c.client,
+		ctx,
+		c,
 		fmt.Sprintf("%v/%v", c.baseURL, suffix),
 		httpMethod,
 		Headers{
-			"Authorization": fmt.Sprintf("bearer %v", c.apiKey),
-			"Content-Type":  c.contentType,
-			"Accept":        c.contentType,
+			"Authorization":   fmt.Sprintf("bearer %v", c.apiKey),
+			"User-Agent":      c.userAgent,
+			"X-Lightstep-Org": c.orgName,
+			"Content-Type":    c.contentType,
+			"Accept":          c.contentType,
 		},
 		data,
 		result,
 	)
 }
 
-func executeAPIRequest(client *http.Client, req *http.Request, result interface{}) error {
-	resp, err := client.Do(req)
+func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {
+	if err := c.rateLimiter.Wait(ctx); err != nil {
+		return err
+	}
+
+	resp, err := c.client.Do(req)
 	if err != nil {
 		return APIClientError{
 			Response: resp,
@@ -123,7 +163,7 @@ func createJSONRequest(
 	url string,
 	data interface{},
 	headers map[string]string,
-) (*http.Request, error) {
+) (*retryablehttp.Request, error) {
 	var body io.Reader
 
 	if data != nil {
@@ -137,7 +177,7 @@ func createJSONRequest(
 		body = bytes.NewReader(jsonData)
 	}
 
-	req, err := http.NewRequest(httpMethod, url, body)
+	req, err := retryablehttp.NewRequest(httpMethod, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +194,7 @@ func createJSONRequest(
 // callAPI is a helper function that enables flexibly issuing an API Request
 func callAPI(
 	ctx context.Context,
-	client *http.Client,
+	c *Client,
 	url string,
 	httpMethod string,
 	headers Headers,
@@ -173,18 +213,18 @@ func callAPI(
 	}
 
 	// Do the request.
-	return executeAPIRequest(client, req, result)
+	return executeAPIRequest(ctx, c, req, result)
 }
 
 func httpMethodSupportsRequestBody(method string) bool {
 	return method != "GET" && method != "DELETE"
 }
 
-func (c *Client) GetStreamIDByLink(url string) (string, error) {
+func (c *Client) GetStreamIDByLink(ctx context.Context, url string) (string, error) {
 	response := Envelope{}
 	str := Stream{}
-	err := callAPI(context.TODO(),
-		c.client,
+	err := callAPI(ctx,
+		c,
 		url,
 		"GET",
 		Headers{

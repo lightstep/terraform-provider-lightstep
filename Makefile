@@ -2,6 +2,8 @@
 build:
 	@go build -o terraform-provider-lightstep_v$(shell cat .go-version)
 	@rm -f .terraform.lock.hcl
+	@mkdir -p .terraform/providers/registry.terraform.io/lightstep/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_amd64/
+	@cp terraform-provider-lightstep_v$(shell cat .go-version) .terraform/providers/registry.terraform.io/lightstep/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_amd64/terraform-provider-lightstep_v$(shell cat .go-version)
 	@mkdir -p terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_amd64/
 	@cp terraform-provider-lightstep_v$(shell cat .go-version) terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_amd64/terraform-provider-lightstep
 

@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -65,6 +66,7 @@ func CustomDataConvert(customData []interface{}) map[string]map[string]string {
 }
 
 func (c *Client) CreateStream(
+	ctx context.Context,
 	projectName string,
 	name string,
 	query string,
@@ -92,6 +94,7 @@ func (c *Client) CreateStream(
 	}
 
 	err = c.CallAPI(
+		ctx,
 		"POST",
 		fmt.Sprintf("projects/%v/streams", projectName),
 		Envelope{Data: bytes},
@@ -108,13 +111,13 @@ func (c *Client) CreateStream(
 	return s, err
 }
 
-func (c *Client) ListStreams(projectName string) ([]Stream, error) {
+func (c *Client) ListStreams(ctx context.Context, projectName string) ([]Stream, error) {
 	var (
 		s    []Stream
 		resp Envelope
 	)
 
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams", projectName), nil, &resp)
+	err := c.CallAPI(ctx, "GET", fmt.Sprintf("projects/%v/streams", projectName), nil, &resp)
 	if err != nil {
 		return s, err
 	}
@@ -125,13 +128,13 @@ func (c *Client) ListStreams(projectName string) ([]Stream, error) {
 	return s, err
 }
 
-func (c *Client) GetStream(projectName string, StreamID string) (*Stream, error) {
+func (c *Client) GetStream(ctx context.Context, projectName string, StreamID string) (*Stream, error) {
 	var (
 		s    *Stream
 		resp Envelope
 	)
 
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
+	err := c.CallAPI(ctx, "GET", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +146,7 @@ func (c *Client) GetStream(projectName string, StreamID string) (*Stream, error)
 	return s, err
 }
 
-func (c *Client) UpdateStream(projectName string,
+func (c *Client) UpdateStream(ctx context.Context, projectName string,
 	streamID string,
 	stream Stream,
 ) (Stream, error) {
@@ -158,7 +161,7 @@ func (c *Client) UpdateStream(projectName string,
 		return s, err
 	}
 
-	err = c.CallAPI("PATCH", fmt.Sprintf("projects/%v/streams/%v", projectName, streamID), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "PATCH", fmt.Sprintf("projects/%v/streams/%v", projectName, streamID), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return s, err
 	}
@@ -167,8 +170,8 @@ func (c *Client) UpdateStream(projectName string,
 	return s, err
 }
 
-func (c *Client) DeleteStream(projectName string, StreamID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, nil)
+func (c *Client) DeleteStream(ctx context.Context, projectName string, StreamID string) error {
+	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

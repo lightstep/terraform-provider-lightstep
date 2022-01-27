@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -82,6 +83,7 @@ func getURL(project string, id string) string {
 }
 
 func (c *Client) CreateMetricCondition(
+	ctx context.Context,
 	projectName string,
 	condition MetricCondition) (MetricCondition, error) {
 
@@ -107,7 +109,7 @@ func (c *Client) CreateMetricCondition(
 
 	url := getURL(projectName, "")
 
-	err = c.CallAPI("POST", url, Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return cond, err
 	}
@@ -120,6 +122,7 @@ func (c *Client) CreateMetricCondition(
 }
 
 func (c *Client) UpdateMetricCondition(
+	ctx context.Context,
 	projectName string,
 	conditionID string,
 	attributes MetricConditionAttributes,
@@ -140,7 +143,7 @@ func (c *Client) UpdateMetricCondition(
 
 	url := getURL(projectName, conditionID)
 
-	err = c.CallAPI("PUT", url, Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "PUT", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return cond, err
 	}
@@ -153,14 +156,14 @@ func (c *Client) UpdateMetricCondition(
 	return cond, err
 }
 
-func (c *Client) GetMetricCondition(projectName string, conditionID string) (*MetricCondition, error) {
+func (c *Client) GetMetricCondition(ctx context.Context, projectName string, conditionID string) (*MetricCondition, error) {
 	var (
 		cond MetricCondition
 		resp Envelope
 	)
 
 	url := getURL(projectName, conditionID)
-	err := c.CallAPI("GET", url, nil, &resp)
+	err := c.CallAPI(ctx, "GET", url, nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -172,10 +175,10 @@ func (c *Client) GetMetricCondition(projectName string, conditionID string) (*Me
 	return &cond, err
 }
 
-func (c *Client) DeleteMetricCondition(projectName string, conditionID string) error {
+func (c *Client) DeleteMetricCondition(ctx context.Context, projectName string, conditionID string) error {
 	url := getURL(projectName, conditionID)
 
-	err := c.CallAPI("DELETE", url, nil, nil)
+	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
