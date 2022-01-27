@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	DefaultRateLimitPerSecond = 5
+	DefaultRateLimitPerSecond = 1
 	DefaultRetryMax           = 3
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
@@ -84,7 +84,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 		client: &retryablehttp.Client{
 			HTTPClient:   http.DefaultClient,
 			CheckRetry:   checkHTTPRetry,
-			RetryWaitMin: 3 * time.Second,
+			RetryWaitMin: 1 * time.Second,
 			Backoff:      retryablehttp.DefaultBackoff,
 			RetryMax:     DefaultRetryMax,
 		},
