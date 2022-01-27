@@ -20,7 +20,7 @@ terraform {
   required_providers {
     lightstep = {
       source = "lightstep/lightstep"
-      version = "1.51.1"
+      version = "1.51.2"
     }
   }
 }
@@ -32,7 +32,7 @@ provider "lightstep" {
 }
 ```
 * Run `terraform init`
-* Add some code to define dashboards, streams, alerts, and more. See documentation for examples.
+* Add some code to define dashboards, streams, alerts, and more. [See documentation](https://registry.terraform.io/providers/lightstep/lightstep/latest/docs) for examples.
 * After setting an environment variable with your API Key that matches the name in the provider configuration above, run `terraform plan` to preview changes.
 
 :warning: If you're creating many Lightstep resources at once, we recommend running the `apply` with the `parallelism` flag set to a low value to avoid API 500 errors:
@@ -41,12 +41,6 @@ provider "lightstep" {
    # Avoids 500 errors when creating many resources.
    terraform apply -parallelism=1 
 ```
+## Development
 
-## Testing the provider (development only)
-
-If you're contributing changes or code to the provider, the integration tests create, update, and destroy real resources in a Lightstep-managed integration environment.
-
-To run the tests, first get an API key with a Member role for the public environment and run:
-```
-LIGHTSTEP_API_KEY_PUBLIC=(your api key here) make acc-test
-```
+See `DEVELOPMENT.md`

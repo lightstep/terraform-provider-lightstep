@@ -8,7 +8,7 @@ terraform {
   required_providers {
     lightstep = {
       source  = "lightstep/lightstep"
-      version = "1.51.1"
+      version = "1.51.2"
       # For more information, see the provider source documentation:
       #
       # https://www.terraform.io/docs/configuration/providers.html#provider-source
