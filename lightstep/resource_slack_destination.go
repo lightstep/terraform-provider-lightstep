@@ -16,7 +16,7 @@ func resourceSlackDestination() *schema.Resource {
 		ReadContext:   resourceSlackDestinationRead,
 		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceSlackDestinationImport,
+			StateContext: resourceSlackDestinationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -35,11 +35,11 @@ func resourceSlackDestination() *schema.Resource {
 	}
 }
 
-func resourceSlackDestinationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	dest, err := c.GetDestination(d.Get("project_name").(string), d.Id())
+	dest, err := c.GetDestination(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -67,7 +67,7 @@ func resourceSlackDestinationCreate(ctx context.Context, d *schema.ResourceData,
 		Attributes: attrs,
 	}
 
-	destination, err := c.CreateDestination(d.Get("project_name").(string), dest)
+	destination, err := c.CreateDestination(ctx, d.Get("project_name").(string), dest)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create slack destination %v: %v", attrs.Channel, err))
 	}
@@ -76,7 +76,7 @@ func resourceSlackDestinationCreate(ctx context.Context, d *schema.ResourceData,
 	return resourceDestinationRead(ctx, d, m)
 }
 
-func resourceSlackDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceSlackDestinationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids, err := splitID(d.Id())
@@ -85,7 +85,7 @@ func resourceSlackDestinationImport(d *schema.ResourceData, m interface{}) ([]*s
 	}
 
 	project, id := ids[0], ids[1]
-	dest, err := c.GetDestination(project, id)
+	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get slack destination: %v", err)
 	}

@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -133,7 +134,7 @@ func testAccCheckStreamConditionExists(resourceName string, condition *client.St
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
-		cond, err := c.GetStreamCondition(test_project, tfCondition.Primary.ID)
+		cond, err := c.GetStreamCondition(context.Background(), test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -152,7 +153,7 @@ func testAccStreamConditionDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetStreamCondition(test_project, resource.Primary.ID)
+		s, err := conn.GetStreamCondition(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Condition with ID (%v) still exists.", resource.Primary.ID)

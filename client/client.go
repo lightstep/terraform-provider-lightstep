@@ -62,11 +62,11 @@ type Client struct {
 }
 
 // NewClient gets a client for the public API
-func NewClient(ctx context.Context, apiKey string, orgName string, env string) *Client {
-	return NewClientWithUserAgent(ctx, apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+func NewClient(apiKey string, orgName string, env string) *Client {
+	return NewClientWithUserAgent(apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
 }
 
-func NewClientWithUserAgent(_ context.Context, apiKey string, orgName string, env string, userAgent string) *Client {
+func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
 	var baseURL string
 
 	if env == "public" {
@@ -101,9 +101,9 @@ func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, er
 }
 
 // CallAPI calls the given API and unmarshals the result to into result.
-func (c *Client) CallAPI(httpMethod string, suffix string, data interface{}, result interface{}) error {
+func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
 	return callAPI(
-		context.Background(),
+		ctx,
 		c,
 		fmt.Sprintf("%v/%v", c.baseURL, suffix),
 		httpMethod,

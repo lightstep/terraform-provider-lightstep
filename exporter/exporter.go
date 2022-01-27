@@ -65,8 +65,8 @@ func Run(args ...string) error {
 		log.Fatalf("error: only dashboard resources are supported at this time")
 	}
 
-	c := client.NewClient(context.Background(), os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), os.Getenv("LIGHTSTEP_ENV"))
-	d, err := c.GetMetricDashboard(args[3], args[4])
+	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), os.Getenv("LIGHTSTEP_ENV"))
+	d, err := c.GetMetricDashboard(context.Background(), args[3], args[4])
 
 	if err != nil {
 		log.Fatalf("error: could not get dashboard: %v", err)

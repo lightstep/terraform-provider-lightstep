@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -189,7 +190,7 @@ func testGetMetricDashboardDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetMetricDashboard(test_project, r.Primary.ID)
+		s, err := conn.GetMetricDashboard(context.Background(), test_project, r.Primary.ID)
 		if err == nil {
 			if s.ID == r.Primary.ID {
 				return fmt.Errorf("Metric dashboard with ID (%v) still exists.", r.Primary.ID)
@@ -211,7 +212,7 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Me
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
-		dash, err := c.GetMetricDashboard(test_project, tfDashboard.Primary.ID)
+		dash, err := c.GetMetricDashboard(context.Background(), test_project, tfDashboard.Primary.ID)
 		if err != nil {
 			return err
 		}

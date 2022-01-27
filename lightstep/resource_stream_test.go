@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"os"
@@ -129,7 +130,7 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 
 		// get stream from LS
 		client := testAccProvider.Meta().(*client.Client)
-		str, err := client.GetStream(test_project, tfStream.Primary.ID)
+		str, err := client.GetStream(context.Background(), test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -149,7 +150,7 @@ func testAccStreamDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetStream(test_project, resource.Primary.ID)
+		s, err := conn.GetStream(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Stream with ID (%v) still exists.", resource.Primary.ID)

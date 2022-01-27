@@ -20,7 +20,7 @@ func resourceMetricCondition() *schema.Resource {
 		UpdateContext: resourceMetricConditionUpdate,
 		DeleteContext: resourceMetricConditionDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceMetricConditionImport,
+			StateContext: resourceMetricConditionImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -218,7 +218,7 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 		Attributes: *attributes,
 	}
 
-	created, err := c.CreateMetricCondition(d.Get("project_name").(string), condition)
+	created, err := c.CreateMetricCondition(ctx, d.Get("project_name").(string), condition)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create metric condition: %v", err))
 	}
@@ -227,11 +227,11 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceMetricConditionRead(ctx, d, m)
 }
 
-func resourceMetricConditionRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	cond, err := c.GetMetricCondition(d.Get("project_name").(string), d.Id())
+	cond, err := c.GetMetricCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -255,7 +255,7 @@ func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
 	}
 
-	if _, err := client.UpdateMetricCondition(d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+	if _, err := client.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update metric condition: %v", err))
 	}
 
@@ -266,7 +266,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 	var diags diag.Diagnostics
 
 	client := m.(*client.Client)
-	if err := client.DeleteMetricCondition(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := client.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
 	}
 
@@ -276,7 +276,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -285,7 +285,7 @@ func resourceMetricConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetMetricCondition(project, id)
+	c, err := client.GetMetricCondition(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition. err: %v", err)
 	}

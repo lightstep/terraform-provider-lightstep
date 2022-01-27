@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -116,7 +117,7 @@ func testAccCheckDashboardExists(resourceName string, dashboard *client.Dashboar
 
 		// get dashboard from LS
 		client := testAccProvider.Meta().(*client.Client)
-		d, err := client.GetDashboard(test_project, tfStream.Primary.ID)
+		d, err := client.GetDashboard(context.Background(), test_project, tfStream.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -136,7 +137,7 @@ func testAccStreamDashboardDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDashboard(test_project, resource.Primary.ID)
+		s, err := conn.GetDashboard(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Dashboard with ID (%v) still exists.", resource.Primary.ID)

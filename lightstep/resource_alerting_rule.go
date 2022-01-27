@@ -17,7 +17,7 @@ func resourceAlertingRule() *schema.Resource {
 		ReadContext:   resourceAlertingRuleRead,
 		DeleteContext: resourceAlertingRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceAlertingRuleImport,
+			StateContext: resourceAlertingRuleImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -53,6 +53,7 @@ func resourceAlertingRuleCreate(ctx context.Context, d *schema.ResourceData, m i
 	updateIntervalMS := validUpdateInterval[d.Get("update_interval").(string)]
 
 	rule, err := client.CreateAlertingRule(
+		ctx,
 		d.Get("project_name").(string),
 		updateIntervalMS,
 		d.Get("destination_id").(string),
@@ -73,7 +74,7 @@ func resourceAlertingRuleRead(ctx context.Context, d *schema.ResourceData, m int
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	rule, err := c.GetAlertingRule(d.Get("project_name").(string), d.Id())
+	rule, err := c.GetAlertingRule(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -94,14 +95,14 @@ func resourceAlertingRuleDelete(ctx context.Context, d *schema.ResourceData, m i
 	var diags diag.Diagnostics
 
 	client := m.(*client.Client)
-	if err := client.DeleteAlertingRule(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := client.DeleteAlertingRule(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete alerting rule: %v", err))
 	}
 
 	return diags
 }
 
-func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceAlertingRuleImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -110,7 +111,7 @@ func resourceAlertingRuleImport(d *schema.ResourceData, m interface{}) ([]*schem
 	}
 
 	project, id := ids[0], ids[1]
-	rule, err := client.GetAlertingRule(project, id)
+	rule, err := client.GetAlertingRule(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

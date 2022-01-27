@@ -16,11 +16,9 @@ func resourceStreamDashboard() *schema.Resource {
 		CreateContext: resourceStreamDashboardCreate,
 		ReadContext:   resourceStreamDashboardRead,
 		DeleteContext: resourceStreamDashboardDelete,
-		// TODO Exists is deprecated
-		Exists:        resourceStreamDashboardExists,
 		UpdateContext: resourceStreamDashboardUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceStreamDashboardImport,
+			StateContext: resourceStreamDashboardImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"dashboard_name": {
@@ -42,19 +40,6 @@ func resourceStreamDashboard() *schema.Resource {
 	}
 }
 
-func resourceStreamDashboardExists(d *schema.ResourceData, m interface{}) (b bool, e error) {
-	client := m.(*client.Client)
-
-	projectName := d.Get("project_name").(string)
-	resourceId := d.Id()
-
-	if _, err := client.GetDashboard(projectName, resourceId); err != nil {
-		return false, fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, err)
-	}
-
-	return true, nil
-}
-
 func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	client := m.(*client.Client)
 
@@ -62,7 +47,7 @@ func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 	dashboardName := d.Get("dashboard_name").(string)
 	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
 
-	dashboard, err := client.CreateDashboard(projectName, dashboardName, streams)
+	dashboard, err := client.CreateDashboard(ctx, projectName, dashboardName, streams)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create stream dashboard for [project: %v; dashboard: %v]: %v", projectName, dashboardName, err))
 	}
@@ -71,7 +56,7 @@ func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceStreamDashboardRead(ctx, d, m)
 }
 
-func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
@@ -79,7 +64,7 @@ func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m in
 	projectName := d.Get("project_name").(string)
 	resourceId := d.Id()
 
-	dashboard, err := c.GetDashboard(projectName, resourceId)
+	dashboard, err := c.GetDashboard(ctx, projectName, resourceId)
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -96,7 +81,7 @@ func resourceStreamDashboardRead(_ context.Context, d *schema.ResourceData, m in
 	return diags
 }
 
-func resourceStreamDashboardUpdate(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceStreamDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*client.Client)
@@ -105,21 +90,21 @@ func resourceStreamDashboardUpdate(_ context.Context, d *schema.ResourceData, m 
 	resourceId := d.Id()
 	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
 
-	if _, err := client.UpdateDashboard(projectName, dashboardName, streams, resourceId); err != nil {
+	if _, err := client.UpdateDashboard(ctx, projectName, dashboardName, streams, resourceId); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to update stream condition for [project: %v; dashboard_name: %v, resource_id: %v]: %v", projectName, dashboardName, resourceId, err))
 	}
 
 	return diags
 }
 
-func resourceStreamDashboardDelete(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceStreamDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	client := m.(*client.Client)
 	projectName := d.Get("project_name").(string)
 	resourceId := d.Id()
 
-	if err := client.DeleteDashboard(projectName, resourceId); err != nil {
+	if err := client.DeleteDashboard(ctx, projectName, resourceId); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to delete stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
 	}
 
@@ -127,7 +112,7 @@ func resourceStreamDashboardDelete(_ context.Context, d *schema.ResourceData, m 
 	return diags
 }
 
-func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceStreamDashboardImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	client := m.(*client.Client)
 
 	resourceId := d.Id()
@@ -137,7 +122,7 @@ func resourceStreamDashboardImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 	project, id := ids[0], ids[1]
 
-	dashboard, err := client.GetDashboard(project, id)
+	dashboard, err := client.GetDashboard(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

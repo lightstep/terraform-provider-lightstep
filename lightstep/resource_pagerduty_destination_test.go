@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -90,7 +91,7 @@ func testAccCheckPagerdutyDestinationExists(resourceName string, destination *cl
 
 		// get destination from LS
 		c := testAccProvider.Meta().(*client.Client)
-		d, err := c.GetDestination(test_project, tfDestination.Primary.ID)
+		d, err := c.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -107,7 +108,7 @@ func testAccPagerdutyDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDestination(test_project, resource.Primary.ID)
+		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Destination with ID (%v) still exists.", resource.Primary.ID)

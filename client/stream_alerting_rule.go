@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -55,6 +56,7 @@ type StreamAlertingRuleResponseRelationships struct {
 }
 
 func (c *Client) CreateAlertingRule(
+	ctx context.Context,
 	projectName string,
 	updateInterval int,
 	destinationID string,
@@ -87,7 +89,7 @@ func (c *Client) CreateAlertingRule(
 		return rule, err
 	}
 
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/alerting_rules", projectName), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", fmt.Sprintf("projects/%v/alerting_rules", projectName), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return rule, err
 	}
@@ -99,12 +101,12 @@ func (c *Client) CreateAlertingRule(
 	return rule, err
 }
 
-func (c *Client) GetAlertingRule(projectName string, alertingRuleID string) (*StreamAlertingRuleResponse, error) {
+func (c *Client) GetAlertingRule(ctx context.Context, projectName string, alertingRuleID string) (*StreamAlertingRuleResponse, error) {
 	var (
 		rule StreamAlertingRuleResponse
 		resp Envelope
 	)
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, &resp)
+	err := c.CallAPI(ctx, "GET", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -116,8 +118,8 @@ func (c *Client) GetAlertingRule(projectName string, alertingRuleID string) (*St
 	return &rule, err
 }
 
-func (c *Client) DeleteAlertingRule(projectName string, alertingRuleID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, nil)
+func (c *Client) DeleteAlertingRule(ctx context.Context, projectName string, alertingRuleID string) error {
+	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

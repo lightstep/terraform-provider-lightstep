@@ -12,11 +12,11 @@ import (
 )
 
 // these are common across all types of destinations
-func resourceDestinationRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceDestinationRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	dest, err := c.GetDestination(d.Get("project_name").(string), d.Id())
+	dest, err := c.GetDestination(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -33,7 +33,7 @@ func resourceDestinationDelete(ctx context.Context, d *schema.ResourceData, m in
 	var diags diag.Diagnostics
 
 	client := m.(*client.Client)
-	if err := client.DeleteDestination(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := client.DeleteDestination(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete destination: %v", err))
 	}
 

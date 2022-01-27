@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -46,6 +47,7 @@ func getMetricDashboardURL(project string, id string) string {
 }
 
 func (c *Client) CreateMetricDashboard(
+	ctx context.Context,
 	projectName string,
 	dashboard MetricDashboard) (MetricDashboard, error) {
 
@@ -68,7 +70,7 @@ func (c *Client) CreateMetricDashboard(
 
 	url := getMetricDashboardURL(projectName, "")
 
-	err = c.CallAPI("POST", url, Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return cond, err
 	}
@@ -80,14 +82,14 @@ func (c *Client) CreateMetricDashboard(
 	return cond, err
 }
 
-func (c *Client) GetMetricDashboard(projectName string, id string) (*MetricDashboard, error) {
+func (c *Client) GetMetricDashboard(ctx context.Context, projectName string, id string) (*MetricDashboard, error) {
 	var (
 		d    *MetricDashboard
 		resp Envelope
 	)
 
 	url := getMetricDashboardURL(projectName, id)
-	err := c.CallAPI("GET", url, nil, &resp)
+	err := c.CallAPI(ctx, "GET", url, nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +99,7 @@ func (c *Client) GetMetricDashboard(projectName string, id string) (*MetricDashb
 }
 
 func (c *Client) UpdateMetricDashboard(
+	ctx context.Context,
 	projectName string,
 	dashboardID string,
 	attributes MetricDashboardAttributes,
@@ -116,7 +119,7 @@ func (c *Client) UpdateMetricDashboard(
 	}
 
 	url := getMetricDashboardURL(projectName, dashboardID)
-	err = c.CallAPI("PUT", url, Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "PUT", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
 	}
@@ -125,10 +128,10 @@ func (c *Client) UpdateMetricDashboard(
 	return d, err
 }
 
-func (c *Client) DeleteMetricDashboard(projectName string, dashboardID string) error {
+func (c *Client) DeleteMetricDashboard(ctx context.Context, projectName string, dashboardID string) error {
 	url := getMetricDashboardURL(projectName, dashboardID)
 
-	err := c.CallAPI("DELETE", url, nil, nil)
+	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

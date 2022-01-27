@@ -16,7 +16,7 @@ func resourceWebhookDestination() *schema.Resource {
 		ReadContext:   resourceDestinationRead,
 		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceWebhookDestinationImport,
+			StateContext: resourceWebhookDestinationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -61,7 +61,7 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 	}
 
 	dest.Attributes = attrs
-	destination, err := c.CreateDestination(d.Get("project_name").(string), dest)
+	destination, err := c.CreateDestination(ctx, d.Get("project_name").(string), dest)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create webhook destination %s: %v", destination, err))
 	}
@@ -70,7 +70,7 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 	return resourceDestinationRead(ctx, d, m)
 }
 
-func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceWebhookDestinationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -79,7 +79,7 @@ func resourceWebhookDestinationImport(d *schema.ResourceData, m interface{}) ([]
 	}
 
 	project, id := ids[0], ids[1]
-	dest, err := c.GetDestination(project, id)
+	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get webhook destination: %v", err)
 	}

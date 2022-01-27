@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -97,7 +98,7 @@ func testAccCheckWebhookDestinationExists(resourceName string, destination *clie
 
 		// get destination from LS
 		client := testAccProvider.Meta().(*client.Client)
-		d, err := client.GetDestination(test_project, tfDestination.Primary.ID)
+		d, err := client.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -114,7 +115,7 @@ func testAccWebhookDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDestination(test_project, resource.Primary.ID)
+		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("Destination with ID (%v) still exists.", resource.Primary.ID)

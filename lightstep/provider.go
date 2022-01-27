@@ -62,7 +62,7 @@ func Provider() *schema.Provider {
 	}
 }
 
-func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	envVar := d.Get("api_key_env_var").(string)
 
@@ -77,7 +77,6 @@ func configureProvider(ctx context.Context, d *schema.ResourceData) (interface{}
 	}
 
 	client := client.NewClientWithUserAgent(
-		context.Background(),
 		apiKey,
 		d.Get("organization").(string),
 		d.Get("environment").(string),

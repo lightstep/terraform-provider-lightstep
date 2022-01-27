@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -36,6 +37,7 @@ type Links struct {
 }
 
 func (c *Client) CreateStreamCondition(
+	ctx context.Context,
 	projectName string,
 	conditionName string,
 	expression string,
@@ -66,7 +68,7 @@ func (c *Client) CreateStreamCondition(
 		return cond, err
 	}
 
-	err = c.CallAPI("POST", fmt.Sprintf("projects/%v/conditions", projectName), Envelope{Data: bytes}, &resp)
+	err = c.CallAPI(ctx, "POST", fmt.Sprintf("projects/%v/conditions", projectName), Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return cond, err
 	}
@@ -80,6 +82,7 @@ func (c *Client) CreateStreamCondition(
 }
 
 func (c *Client) UpdateStreamCondition(
+	ctx context.Context,
 	projectName string,
 	conditionID string,
 	attributes StreamConditionAttributes,
@@ -98,6 +101,7 @@ func (c *Client) UpdateStreamCondition(
 	}
 
 	err = c.CallAPI(
+		ctx,
 		"PATCH",
 		fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID),
 		Envelope{Data: bytes},
@@ -114,12 +118,12 @@ func (c *Client) UpdateStreamCondition(
 	return cond, err
 }
 
-func (c *Client) GetStreamCondition(projectName string, conditionID string) (*StreamCondition, error) {
+func (c *Client) GetStreamCondition(ctx context.Context, projectName string, conditionID string) (*StreamCondition, error) {
 	var (
 		cond StreamCondition
 		resp Envelope
 	)
-	err := c.CallAPI("GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
+	err := c.CallAPI(ctx, "GET", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, &resp)
 	if err != nil {
 		return nil, err
 	}
@@ -131,8 +135,8 @@ func (c *Client) GetStreamCondition(projectName string, conditionID string) (*St
 	return &cond, err
 }
 
-func (c *Client) DeleteStreamCondition(projectName string, conditionID string) error {
-	err := c.CallAPI("DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
+func (c *Client) DeleteStreamCondition(ctx context.Context, projectName string, conditionID string) error {
+	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
 	if err != nil {
 		apiClientError := err.(APIResponseCarrier)
 		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {

@@ -18,7 +18,7 @@ func resourceStreamCondition() *schema.Resource {
 		DeleteContext: resourceStreamConditionDelete,
 		UpdateContext: resourceStreamConditionUpdate,
 		Importer: &schema.ResourceImporter{
-			State: resourceStreamConditionImport,
+			StateContext: resourceStreamConditionImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -52,6 +52,7 @@ func resourceStreamConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 
 	condition, err := c.CreateStreamCondition(
+		ctx,
 		d.Get("project_name").(string),
 		d.Get("condition_name").(string),
 		d.Get("expression").(string),
@@ -73,7 +74,7 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	condition, err := c.GetStreamCondition(d.Get("project_name").(string), d.Id())
+	condition, err := c.GetStreamCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -94,7 +95,7 @@ func resourceStreamConditionDelete(ctx context.Context, d *schema.ResourceData, 
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	if err := c.DeleteStreamCondition(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := c.DeleteStreamCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to delete stream condition: %v", err))
 	}
 
@@ -111,7 +112,7 @@ func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 		Expression:         d.Get("expression").(string),
 	}
 
-	condition, err := c.UpdateStreamCondition(d.Get("project_name").(string), d.Id(), attrs)
+	condition, err := c.UpdateStreamCondition(ctx, d.Get("project_name").(string), d.Id(), attrs)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update stream condition: %v", err))
 	}
@@ -123,7 +124,7 @@ func resourceStreamConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceStreamConditionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -132,7 +133,7 @@ func resourceStreamConditionImport(d *schema.ResourceData, m interface{}) ([]*sc
 	}
 
 	project, id := ids[0], ids[1]
-	condition, err := c.GetStreamCondition(project, id)
+	condition, err := c.GetStreamCondition(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}

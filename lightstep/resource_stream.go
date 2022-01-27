@@ -20,7 +20,7 @@ func resourceStream() *schema.Resource {
 		UpdateContext: resourceStreamUpdate,
 		DeleteContext: resourceStreamDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceStreamImport,
+			StateContext: resourceStreamImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -56,6 +56,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*client.Client)
 	if err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		stream, err := c.CreateStream(
+			ctx,
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
@@ -87,11 +88,11 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	return diags
 }
 
-func resourceStreamRead(_ context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	s, err := c.GetStream(d.Get("project_name").(string), d.Id())
+	s, err := c.GetStream(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -119,7 +120,7 @@ func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	s.Attributes.Name = d.Get("stream_name").(string)
 	s.Attributes.CustomData = client.CustomDataConvert(d.Get("custom_data").([]interface{}))
 
-	if _, err := c.UpdateStream(d.Get("project_name").(string), d.Id(), s); err != nil {
+	if _, err := c.UpdateStream(ctx, d.Get("project_name").(string), d.Id(), s); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update stream: %v", err))
 	}
 
@@ -130,7 +131,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	if err := c.DeleteStream(d.Get("project_name").(string), d.Id()); err != nil {
+	if err := c.DeleteStream(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele stream: %v", err))
 	}
 
@@ -140,7 +141,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 	return diags
 }
 
-func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourceStreamImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
@@ -149,7 +150,7 @@ func resourceStreamImport(d *schema.ResourceData, m interface{}) ([]*schema.Reso
 	}
 
 	project, id := ids[0], ids[1]
-	stream, err := c.GetStream(project, id)
+	stream, err := c.GetStream(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get stream: %v", err)
 	}

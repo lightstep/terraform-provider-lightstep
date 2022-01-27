@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
@@ -213,7 +214,7 @@ func testAccCheckMetricConditionExists(resourceName string, condition *client.Me
 		}
 
 		client := testAccProvider.Meta().(*client.Client)
-		cond, err := client.GetMetricCondition(test_project, tfCondition.Primary.ID)
+		cond, err := client.GetMetricCondition(context.Background(), test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -230,7 +231,7 @@ func testAccMetricConditionDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetMetricCondition(test_project, res.Primary.ID)
+		s, err := conn.GetMetricCondition(context.Background(), test_project, res.Primary.ID)
 		if err == nil {
 			if s.ID == res.Primary.ID {
 				return fmt.Errorf("Metric condition with ID (%v) still exists.", res.Primary.ID)

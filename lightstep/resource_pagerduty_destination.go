@@ -15,7 +15,7 @@ func resourcePagerdutyDestination() *schema.Resource {
 		ReadContext:   resourceDestinationRead,
 		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourcePagerdutyDestinationImport,
+			StateContext: resourcePagerdutyDestinationImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -42,7 +42,7 @@ func resourcePagerdutyDestination() *schema.Resource {
 
 func resourcePagerdutyDestinationCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	destination, err := c.CreateDestination(d.Get("project_name").(string),
+	destination, err := c.CreateDestination(ctx, d.Get("project_name").(string),
 		client.Destination{
 			Type: "destination",
 			Attributes: client.PagerdutyAttributes{
@@ -59,7 +59,7 @@ func resourcePagerdutyDestinationCreate(ctx context.Context, d *schema.ResourceD
 	return resourceDestinationRead(ctx, d, m)
 }
 
-func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func resourcePagerdutyDestinationImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
 
 	ids, err := splitID(d.Id())
@@ -68,7 +68,7 @@ func resourcePagerdutyDestinationImport(d *schema.ResourceData, m interface{}) (
 	}
 
 	project, id := ids[0], ids[1]
-	dest, err := c.GetDestination(project, id)
+	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get pagerduty destination: %v", err)
 	}
