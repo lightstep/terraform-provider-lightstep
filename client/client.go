@@ -5,18 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/lightstep/terraform-provider-lightstep/version"
-	"golang.org/x/time/rate"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/lightstep/terraform-provider-lightstep/version"
+	"golang.org/x/time/rate"
 )
 
 const (
-	DefaultRateLimitPerSecond = 1
+	DefaultRateLimitPerSecond = 3
 	DefaultRetryMax           = 3
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
@@ -94,7 +95,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 
 // checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
 func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
-	if resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusServiceUnavailable {
 		return true, nil
 	}
 	return false, nil
