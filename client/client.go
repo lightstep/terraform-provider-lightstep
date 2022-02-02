@@ -5,18 +5,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/lightstep/terraform-provider-lightstep/version"
-	"golang.org/x/time/rate"
 	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/lightstep/terraform-provider-lightstep/version"
+	"golang.org/x/time/rate"
 )
 
 const (
-	DefaultRateLimitPerSecond = 1
+	DefaultRateLimitPerSecond = 2
 	DefaultRetryMax           = 3
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
@@ -94,7 +96,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 
 // checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
 func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
-	if resp.StatusCode == http.StatusInternalServerError {
+	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusServiceUnavailable {
 		return true, nil
 	}
 	return false, nil
@@ -120,8 +122,10 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 }
 
 func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {
-	if err := c.rateLimiter.Wait(ctx); err != nil {
-		return err
+	if len(os.Getenv("LS_DISABLE_RATE_LIMIT")) == 0 {
+		if err := c.rateLimiter.Wait(ctx); err != nil {
+			return err
+		}
 	}
 
 	resp, err := c.client.Do(req)
