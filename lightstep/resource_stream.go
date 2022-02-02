@@ -3,10 +3,11 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -94,12 +95,12 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 	c := m.(*client.Client)
 	s, err := c.GetStream(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, isApiErr := err.(client.APIResponseCarrier)
+		if isApiErr && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", err))
 	}
 
 	if err := setResourceDataFromStream(d, *s); err != nil {
