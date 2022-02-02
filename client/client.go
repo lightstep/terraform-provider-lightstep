@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -17,7 +18,7 @@ import (
 )
 
 const (
-	DefaultRateLimitPerSecond = 3
+	DefaultRateLimitPerSecond = 2
 	DefaultRetryMax           = 3
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
@@ -121,8 +122,10 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 }
 
 func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {
-	if err := c.rateLimiter.Wait(ctx); err != nil {
-		return err
+	if len(os.Getenv("LS_DISABLE_RATE_LIMIT")) == 0 {
+		if err := c.rateLimiter.Wait(ctx); err != nil {
+			return err
+		}
 	}
 
 	resp, err := c.client.Do(req)
