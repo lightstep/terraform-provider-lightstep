@@ -96,8 +96,12 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 
 // checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
 func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
+	if resp == nil {
+		// If response is nil we can't make retry choices.
+		return false, err
+	}
 	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusServiceUnavailable {
-		return true, nil
+		return true, err
 	}
 	return false, nil
 }
