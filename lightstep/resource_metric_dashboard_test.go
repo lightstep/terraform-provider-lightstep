@@ -70,6 +70,29 @@ resource "lightstep_metric_dashboard" "test" {
   }
 }
 `
+	spansQueryDashboardConfig := `
+resource "lightstep_metric_dashboard" "test_spans" {
+  project_name = "terraform-provider-tests"
+  dashboard_name = "Acceptance Test Dashboard"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+
+      spans_query {
+        query = "service IN (\"frontend\")"
+        operator = "error_ratio"
+      }
+    }
+  }
+}
+`
 
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
@@ -145,6 +168,8 @@ resource "lightstep_metric_dashboard" "test" {
 `
 
 	resourceName := "lightstep_metric_dashboard.test"
+	resourceNameSpans := "lightstep_metric_dashboard.test_spans"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -161,7 +186,13 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					// TODO: verify more fields here, I don't understand how to do nested fields
+					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "Chart Number One"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "pagerduty.task.success"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator", "rate"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "bar"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
 				),
 			},
 			{
@@ -169,7 +200,18 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					// TODO: verify more fields here, I don't understand how to do nested fields
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric m | rate"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+				),
+			},
+			{
+				Config: spansQueryDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
+					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
 				),
 			},
 			{

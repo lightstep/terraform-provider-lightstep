@@ -44,12 +44,13 @@ type Thresholds struct {
 }
 
 type MetricQueryWithAttributes struct {
-	Name     string      `json:"query-name"`
-	Type     string      `json:"query-type"`
-	Hidden   bool        `json:"hidden"`
-	Display  string      `json:"display-type"`
-	Query    MetricQuery `json:"metric-query"`
-	TQLQuery string      `json:"tql-query"`
+	Name       string      `json:"query-name"`
+	Type       string      `json:"query-type"`
+	Hidden     bool        `json:"hidden"`
+	Display    string      `json:"display-type"`
+	Query      MetricQuery `json:"metric-query"`
+	SpansQuery SpansQuery  `json:"spans-query,omitempty"`
+	TQLQuery   string      `json:"tql-query"`
 }
 
 type MetricQuery struct {
@@ -57,6 +58,13 @@ type MetricQuery struct {
 	Filters            []LabelFilter `json:"filters,omitempty"`
 	TimeseriesOperator string        `json:"timeseries-operator"`
 	GroupBy            GroupBy       `json:"group-by,omitempty"`
+}
+
+type SpansQuery struct {
+	Query              string    `json:"query"`
+	Operator           string    `json:"operator"`
+	LatencyPercentiles []float64 `json:"latency-percentiles,omitempty"`
+	GroupByKeys        []string  `json:"group-by,omitempty"`
 }
 
 type LabelFilter struct {
