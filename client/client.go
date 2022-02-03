@@ -20,6 +20,7 @@ import (
 const (
 	DefaultRateLimitPerSecond = 2
 	DefaultRetryMax           = 3
+	DefaultTimeoutSeconds     = 3
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
 
@@ -76,6 +77,14 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 	} else {
 		baseURL = fmt.Sprintf("https://api-%v.lightstep.com/public/v0.2/%v", env, orgName)
 	}
+	newClient := &retryablehttp.Client{
+		HTTPClient:   http.DefaultClient,
+		CheckRetry:   checkHTTPRetry,
+		RetryWaitMin: 1 * time.Second,
+		Backoff:      retryablehttp.DefaultBackoff,
+		RetryMax:     DefaultRetryMax,
+	}
+	newClient.HTTPClient.Timeout = DefaultTimeoutSeconds * time.Second
 
 	return &Client{
 		apiKey:      apiKey,
@@ -83,13 +92,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 		baseURL:     baseURL,
 		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(DefaultRateLimitPerSecond), 1),
-		client: &retryablehttp.Client{
-			HTTPClient:   http.DefaultClient,
-			CheckRetry:   checkHTTPRetry,
-			RetryWaitMin: 1 * time.Second,
-			Backoff:      retryablehttp.DefaultBackoff,
-			RetryMax:     DefaultRetryMax,
-		},
+		client:      newClient,
 		contentType: "application/vnd.api+json",
 	}
 }
