@@ -64,23 +64,6 @@ func getChartSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
-		"y_axis": {
-			Type:     schema.TypeList,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"min": {
-						Type:     schema.TypeFloat,
-						Required: true,
-					},
-					"max": {
-						Type:     schema.TypeFloat,
-						Required: true,
-					},
-				},
-			},
-			Optional: true,
-		},
 		"query": {
 			Type:     schema.TypeList,
 			Required: true,
@@ -172,41 +155,9 @@ func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
 		}
 		c.MetricQueries = queries
 
-		yaxis, err := buildYAxis(chart["y_axis"].([]interface{}))
-		if err != nil {
-			return nil, err
-		}
-		if yaxis != nil {
-			c.YAxis = yaxis
-		}
-
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
-}
-
-func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
-	if len(yAxisIn) < 1 {
-		return nil, nil
-	}
-	y := yAxisIn[0].(map[string]interface{})
-
-	max, ok := y["max"].(float64)
-	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'max' for y_axis")
-	}
-
-	min, ok := y["min"].(float64)
-	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'min' for y_axis")
-	}
-
-	yAxis := &client.YAxis{
-		Min: min,
-		Max: max,
-	}
-
-	return yAxis, nil
 }
 
 func setResourceDataFromMetricDashboard(project string, dash client.MetricDashboard, d *schema.ResourceData) error {
@@ -225,14 +176,6 @@ func setResourceDataFromMetricDashboard(project string, dash client.MetricDashbo
 	var charts []interface{}
 	for _, c := range dash.Attributes.Charts {
 		chart := map[string]interface{}{}
-
-		yMap := map[string]interface{}{}
-
-		if c.YAxis != nil {
-			yMap["max"] = c.YAxis.Max
-			yMap["min"] = c.YAxis.Min
-			chart["y_axis"] = []map[string]interface{}{yMap}
-		}
 
 		chart["query"] = getQueriesFromResourceData(c.MetricQueries)
 		chart["name"] = c.Title

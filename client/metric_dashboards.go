@@ -23,13 +23,7 @@ type MetricChart struct {
 	ID            string                      `json:"id"`
 	Title         string                      `json:"title"`
 	ChartType     string                      `json:"chart-type"`
-	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
-}
-
-type YAxis struct {
-	Min float64 `json:"min"`
-	Max float64 `json:"max"`
 }
 
 type MetricGroupBy struct {
