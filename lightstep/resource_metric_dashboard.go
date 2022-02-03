@@ -64,6 +64,25 @@ func getChartSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Computed: true,
 		},
+		// The y_axis is included here for backwards compatibility, but it's not used anywhere
+		// because it has been removed from Lightstep's public API.
+		"y_axis": {
+			Type:     schema.TypeList,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"min": {
+						Type:     schema.TypeFloat,
+						Required: true,
+					},
+					"max": {
+						Type:     schema.TypeFloat,
+						Required: true,
+					},
+				},
+			},
+			Optional: true,
+		},
 		"query": {
 			Type:     schema.TypeList,
 			Required: true,
