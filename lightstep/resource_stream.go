@@ -46,7 +46,7 @@ func resourceStream() *schema.Resource {
 			},
 		},
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(5 * time.Second),
+			Create: schema.DefaultTimeout(15 * time.Second),
 		},
 	}
 }
@@ -96,10 +96,19 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 	s, err := c.GetStream(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr, isApiErr := err.(client.APIResponseCarrier)
-		if isApiErr && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
-			d.SetId("")
-			return diags
+
+		if isApiErr {
+			resp := apiErr.GetHTTPResponse()
+			if resp == nil {
+				return diag.FromErr(fmt.Errorf("Failed to get stream response: %v\n", err))
+			}
+
+			if resp.StatusCode == http.StatusNotFound {
+				d.SetId("")
+				return diags
+			}
 		}
+
 		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", err))
 	}
 
