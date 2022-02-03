@@ -20,7 +20,7 @@ import (
 const (
 	DefaultRateLimitPerSecond = 2
 	DefaultRetryMax           = 3
-	DefaultTimeoutSeconds     = 3
+	DefaultTimeoutSeconds     = 30
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
 
