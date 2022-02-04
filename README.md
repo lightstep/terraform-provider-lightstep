@@ -20,15 +20,14 @@ terraform {
   required_providers {
     lightstep = {
       source = "lightstep/lightstep"
-      version = "1.51.2"
+      version = "1.51.6"
     }
   }
 }
 
 provider "lightstep" {
-  environment     = "public"
   api_key_env_var = "LIGHTSTEP_API_KEY_PUBLIC"
-  organization    = "LightStep"
+  organization    = "your-lightstep-organization"
 }
 ```
 * Run `terraform init`
@@ -43,4 +42,4 @@ provider "lightstep" {
 ```
 ## Development
 
-See `DEVELOPMENT.md`
+See `DEVELOPMENT.md`.
