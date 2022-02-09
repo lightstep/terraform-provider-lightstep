@@ -45,17 +45,6 @@ jobs:
       with:
         tflint_version: v0.26.0
 
-    - name: Lint root module
-      run: |
-        tflint --config ${{ github.workspace }}/.tflint.hcl ${{ github.workspace }}
-    - name: Lint modules directory in a loop
-      run: |
-        for m in $(ls -1d modules/*/)
-        do
-          tflint \
-            --config ${{ github.workspace }}/.tflint.hcl \
-            ${{ github.workspace }}/${m}
-        done
     - name: Lint examples directory in a loop
       run: |
         for m in $(ls -1d examples/*/)
