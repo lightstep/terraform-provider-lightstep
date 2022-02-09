@@ -85,7 +85,7 @@ resource "lightstep_metric_dashboard" "test_spans" {
       query_name          = "a"
       display             = "line"
 
-      spans_query {
+      spans {
         query = "service IN (\"frontend\")"
         operator = "error_ratio"
       }
@@ -212,6 +212,8 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
 				),
 			},
 			{

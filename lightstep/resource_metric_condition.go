@@ -132,8 +132,9 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 
 func getSpansQuerySchema() *schema.Schema {
 	sma := schema.Schema{
-		Type:     schema.TypeList,
-		MaxItems: 1,
+		Type:       schema.TypeList,
+		MaxItems:   1,
+		Deprecated: "Spans charts are not supported by the Lightstep API.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"query": {
@@ -148,7 +149,6 @@ func getSpansQuerySchema() *schema.Schema {
 				"group_by_keys": {
 					Type:     schema.TypeList,
 					Optional: true,
-					Computed: true,
 					Elem: &schema.Schema{
 						Type: schema.TypeString,
 					},
@@ -247,7 +247,7 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		},
 	}
 	if includeSpansQuery {
-		sma["spans_query"] = getSpansQuerySchema()
+		sma["spans"] = getSpansQuerySchema()
 	}
 	return sma
 }
@@ -481,7 +481,10 @@ func buildSpansQuery(spansQuery interface{}) client.SpansQuery {
 	if sq.Operator == "latency" {
 		sq.LatencyPercentiles = buildLatencyPercentiles(s["latency_percentiles"].([]interface{}))
 	}
-	sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
+	if groupByKeys, ok := s["group_by_keys"].([]interface{}); ok && len(groupByKeys) > 0 {
+		sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
+	}
+
 	return sq
 }
 
@@ -510,7 +513,7 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 
 		// alerts currently do not support spans query, so they may not exist
 		if includeSpansQuery {
-			spansQuery := query["spans_query"]
+			spansQuery := query["spans"]
 			if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
 				err := validateSpansQuery(spansQuery)
 				if err != nil {
@@ -651,12 +654,12 @@ func validateSpansQuery(spansQuery interface{}) error {
 	s := spansQuery.([]interface{})[0].(map[string]interface{})
 	query, hasQuery := s["query"]
 	if !hasQuery {
-		return fmt.Errorf("missing required field query on spans_query")
+		return fmt.Errorf("missing required field query om spans")
 	}
 
 	operator, hasOperator := s["operator"]
 	if !hasOperator {
-		return fmt.Errorf("missing required field operator on spans_query")
+		return fmt.Errorf("missing required field operator on spans")
 	}
 
 	switch query.(type) {
@@ -836,16 +839,17 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 		}
 		if includeSpansQuery && q.SpansQuery.Query != "" {
 			sqi := map[string]interface{}{
-				"query":         q.SpansQuery.Query,
-				"operator":      q.SpansQuery.Operator,
-				"group_by_keys": q.SpansQuery.GroupByKeys,
+				"query":    q.SpansQuery.Query,
+				"operator": q.SpansQuery.Operator,
 			}
-
-			if len(q.SpansQuery.LatencyPercentiles) > 0 {
+			if len(q.SpansQuery.GroupByKeys) > 0 {
+				sqi["group_by_keys"] = q.SpansQuery.GroupByKeys
+			}
+			if q.SpansQuery.Operator == "latency" {
 				sqi["latency_percentiles"] = q.SpansQuery.LatencyPercentiles
 			}
 
-			qs["spans_query"] = []interface{}{
+			qs["spans"] = []interface{}{
 				sqi,
 			}
 		}
