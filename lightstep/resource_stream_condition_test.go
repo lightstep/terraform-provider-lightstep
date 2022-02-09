@@ -103,12 +103,18 @@ func TestAccStreamConditionImport(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+resource "lightstep_stream" "import_stream_condition_stream" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  stream_name = "Stream Condition Import charges"
+  query = "operation IN (\"api/v1/stream\")"
+}
+
 resource "lightstep_stream_condition" "import-cond" {
-	project_name = "terraform-provider-tests"
-	condition_name = "High Ops"
- 	expression = "ops > 10000"
- 	evaluation_window_ms = 1200000
- 	stream_id = "CrwM5g63"
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  condition_name = "High Ops"
+  expression = "ops > 10000"
+  evaluation_window_ms = 1200000
+  stream_id = lightstep_stream.import_stream_condition_stream.id
 }
 `,
 			},

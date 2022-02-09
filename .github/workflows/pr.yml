@@ -90,6 +90,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIGHTSTEP_API_KEY_PUBLIC: ${{ secrets.LIGHTSTEP_API_KEY_PUBLIC }}
+      LIGHTSTEP_API_KEY_STAGING: ${{ secrets.LIGHTSTEP_API_KEY_STAGING }}
+
     steps:
       - name: Install Go
         uses: actions/setup-go@v2
