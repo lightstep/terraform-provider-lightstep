@@ -86,10 +86,16 @@ func TestAccStreamDashboardImport(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+resource "lightstep_stream" "stream_dashboard_source" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  stream_name = "Errors (All)"
+  query = "\"error\" IN (\"true\")"
+}
+
 resource "lightstep_stream_dashboard" "ingress" {
-	project_name = "terraform-provider-tests"
- 	dashboard_name = "to import"
- 	stream_ids = ["CrwM5g63"]
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  dashboard_name = "to import"
+  stream_ids = [lightstep_stream.stream_dashboard_source.id]
 }
 `,
 			},

@@ -26,7 +26,7 @@ func Provider() *schema.Provider {
 			"environment": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "public",
+				DefaultFunc:  schema.EnvDefaultFunc("LIGHTSTEP_ENV", "public"),
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^(staging|meta|public)$`), "Must be one of: staging, meta, public"),
 				Description:  "The name of the Lightstep environment, must be one of: staging, meta, public.",
 			},

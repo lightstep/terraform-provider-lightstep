@@ -52,8 +52,9 @@ func getChartSchema() map[string]*schema.Schema {
 			Required: true,
 		},
 		"rank": {
-			Type:     schema.TypeInt,
-			Required: true,
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Required:     true,
 		},
 		"type": {
 			Type:         schema.TypeString,
@@ -65,8 +66,9 @@ func getChartSchema() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"y_axis": {
-			Type:     schema.TypeList,
-			MaxItems: 1,
+			Type:       schema.TypeList,
+			MaxItems:   1,
+			Deprecated: "The y_axis field is no longer used",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"min": {
@@ -85,7 +87,7 @@ func getChartSchema() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getQuerySchema(),
+				Schema: getQuerySchema(true),
 			},
 		},
 	}
@@ -166,7 +168,7 @@ func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
 			ChartType: chart["type"].(string),
 		}
 
-		queries, err := buildQueries(chart["query"].([]interface{}))
+		queries, err := buildQueries(chart["query"].([]interface{}), true)
 		if err != nil {
 			return nil, err
 		}
@@ -234,7 +236,7 @@ func setResourceDataFromMetricDashboard(project string, dash client.MetricDashbo
 			chart["y_axis"] = []map[string]interface{}{yMap}
 		}
 
-		chart["query"] = getQueriesFromResourceData(c.MetricQueries)
+		chart["query"] = getQueriesFromResourceData(c.MetricQueries, true)
 		chart["name"] = c.Title
 		chart["rank"] = c.Rank
 		chart["type"] = c.ChartType

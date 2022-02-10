@@ -3,6 +3,7 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/go-cty/cty"
 	"net/http"
 	"strconv"
 	"strings"
@@ -91,7 +92,7 @@ func resourceMetricCondition() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
-					Schema: getQuerySchema(),
+					Schema: getQuerySchema(false),
 				},
 			},
 			"alerting_rule": {
@@ -129,11 +130,63 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 	}
 }
 
-func getQuerySchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
+func getSpansQuerySchema() *schema.Schema {
+	sma := schema.Schema{
+		Type:       schema.TypeList,
+		MaxItems:   1,
+		Deprecated: "Spans charts are not supported by the Lightstep API.",
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"query": {
+					Type:     schema.TypeString,
+					Required: true,
+				},
+				"operator": {
+					Type:         schema.TypeString,
+					ValidateFunc: validation.StringInSlice([]string{"latency", "rate", "error_ratio"}, false),
+					Required:     true,
+				},
+				"group_by_keys": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Elem: &schema.Schema{
+						Type: schema.TypeString,
+					},
+				},
+				"latency_percentiles": {
+					Type:     schema.TypeList,
+					Optional: true,
+					Computed: true,
+					Elem: &schema.Schema{
+						ValidateDiagFunc: func(l interface{}, p cty.Path) diag.Diagnostics {
+							latency, ok := l.(float64)
+							var diags diag.Diagnostics
+							if ok && (latency < 0 || latency > 100) {
+								diag := diag.Diagnostic{
+									Severity: diag.Error,
+									Summary:  "wrong value",
+									Detail:   "latency_percentiles must be between 0 and 100",
+								}
+								diags = append(diags, diag)
+							}
+							return diags
+						},
+						Type: schema.TypeFloat,
+					},
+				},
+			},
+		},
+		Optional: true,
+	}
+	return &sma
+}
+
+func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
+	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
 			Optional: true, // optional for composite formula
+			Computed: true,
 		},
 		"hidden": {
 			Type:     schema.TypeBool,
@@ -151,17 +204,20 @@ func getQuerySchema() map[string]*schema.Schema {
 		"timeseries_operator": {
 			Type:         schema.TypeString,
 			Optional:     true,
+			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "mean", "last"}, false),
 		},
 		"include_filters": {
 			Type:     schema.TypeList,
 			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
+			Computed: true,
 		},
 		"exclude_filters": {
 			Type:     schema.TypeList,
 			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
+			Computed: true,
 		},
 		"group_by": {
 			Type:     schema.TypeList,
@@ -187,8 +243,13 @@ func getQuerySchema() map[string]*schema.Schema {
 		"tql": {
 			Type:     schema.TypeString,
 			Optional: true,
+			Computed: true,
 		},
 	}
+	if includeSpansQuery {
+		sma["spans"] = getSpansQuerySchema()
+	}
+	return sma
 }
 
 func getThresholdSchema() map[string]*schema.Schema {
@@ -249,13 +310,13 @@ func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	client := m.(*client.Client)
+	c := m.(*client.Client)
 	attrs, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
 	}
 
-	if _, err := client.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+	if _, err := c.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to update metric condition: %v", err))
 	}
 
@@ -265,8 +326,8 @@ func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	client := m.(*client.Client)
-	if err := client.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
+	c := m.(*client.Client)
+	if err := c.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
 	}
 
@@ -277,7 +338,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	client := m.(*client.Client)
+	clnt := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -285,7 +346,7 @@ func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := client.GetMetricCondition(ctx, project, id)
+	c, err := clnt.GetMetricCondition(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition. err: %v", err)
 	}
@@ -326,7 +387,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 		attributes.Expression.NumSecPerPoint = &i
 	}
 
-	queries, err := buildQueries(d.Get("metric_query").([]interface{}))
+	queries, err := buildQueries(d.Get("metric_query").([]interface{}), false)
 	if err != nil {
 		return nil, err
 	}
@@ -386,7 +447,48 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, e
 	return newRules, nil
 }
 
-func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, error) {
+func buildSpansGroupByKeys(keysIn []interface{}) []string {
+	var keys []string
+	for _, k := range keysIn {
+		keys = append(keys, k.(string))
+	}
+	return keys
+}
+
+func buildLatencyPercentiles(lats []interface{}) []float64 {
+	var latencies []float64
+
+	// default
+	if len(lats) == 0 {
+		return []float64{50, 95, 99, 99.9}
+	}
+
+	for _, l := range lats {
+		latencies = append(latencies, l.(float64))
+	}
+	return latencies
+}
+
+func buildSpansQuery(spansQuery interface{}) client.SpansQuery {
+	var sq client.SpansQuery
+	if spansQuery == nil || len(spansQuery.([]interface{})) == 0 {
+		return sq
+	}
+	s := spansQuery.([]interface{})[0].(map[string]interface{})
+	sq.Query = s["query"].(string)
+	sq.Operator = s["operator"].(string)
+
+	if sq.Operator == "latency" {
+		sq.LatencyPercentiles = buildLatencyPercentiles(s["latency_percentiles"].([]interface{}))
+	}
+	if groupByKeys, ok := s["group_by_keys"].([]interface{}); ok && len(groupByKeys) > 0 {
+		sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
+	}
+
+	return sq
+}
+
+func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.MetricQueryWithAttributes, error) {
 	var newQueries []client.MetricQueryWithAttributes
 	var queries []map[string]interface{}
 	for _, queryIn := range queriesIn {
@@ -407,6 +509,26 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 			}
 			newQueries = append(newQueries, newQuery)
 			continue
+		}
+
+		// alerts currently do not support spans query, so they may not exist
+		if includeSpansQuery {
+			spansQuery := query["spans"]
+			if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
+				err := validateSpansQuery(spansQuery)
+				if err != nil {
+					return nil, err
+				}
+				newQuery := client.MetricQueryWithAttributes{
+					Name:       query["query_name"].(string),
+					Type:       "spans_single",
+					Hidden:     query["hidden"].(bool),
+					Display:    query["display"].(string),
+					SpansQuery: buildSpansQuery(spansQuery),
+				}
+				newQueries = append(newQueries, newQuery)
+				continue
+			}
 		}
 
 		// If this chart uses a regular query
@@ -528,6 +650,32 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}) []client.
 	return filters
 }
 
+func validateSpansQuery(spansQuery interface{}) error {
+	s := spansQuery.([]interface{})[0].(map[string]interface{})
+	query, hasQuery := s["query"]
+	if !hasQuery {
+		return fmt.Errorf("missing required field query om spans")
+	}
+
+	operator, hasOperator := s["operator"]
+	if !hasOperator {
+		return fmt.Errorf("missing required field operator on spans")
+	}
+
+	switch query.(type) {
+	case string:
+	default:
+		return fmt.Errorf("value must be a string. got: %v", query)
+	}
+
+	switch operator.(type) {
+	case string:
+	default:
+		return fmt.Errorf("value must be a string. got: %T", operator)
+	}
+	return nil
+}
+
 func validateFilters(filters []interface{}) error {
 	for _, filter := range filters {
 		key, ok := filter.(map[string]interface{})["key"]
@@ -620,7 +768,7 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		return fmt.Errorf("Unable to set expression resource field: %v", err)
 	}
 
-	queries := getQueriesFromResourceData(c.Attributes.Queries)
+	queries := getQueriesFromResourceData(c.Attributes.Queries, false)
 	if err := d.Set("metric_query", queries); err != nil {
 		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
 	}
@@ -663,7 +811,7 @@ func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []in
 	return includeFilters, excludeFilters
 }
 
-func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, includeSpansQuery bool) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
@@ -678,7 +826,7 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []
 			}
 		}
 
-		queries = append(queries, map[string]interface{}{
+		qs := map[string]interface{}{
 			"metric":              q.Query.Metric,
 			"hidden":              q.Hidden,
 			"display":             q.Display,
@@ -688,7 +836,24 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []
 			"exclude_filters":     excludeFilters,
 			"group_by":            groupBy,
 			"tql":                 q.TQLQuery,
-		})
+		}
+		if includeSpansQuery && q.SpansQuery.Query != "" {
+			sqi := map[string]interface{}{
+				"query":    q.SpansQuery.Query,
+				"operator": q.SpansQuery.Operator,
+			}
+			if len(q.SpansQuery.GroupByKeys) > 0 {
+				sqi["group_by_keys"] = q.SpansQuery.GroupByKeys
+			}
+			if q.SpansQuery.Operator == "latency" {
+				sqi["latency_percentiles"] = q.SpansQuery.LatencyPercentiles
+			}
+
+			qs["spans"] = []interface{}{
+				sqi,
+			}
+		}
+		queries = append(queries, qs)
 	}
 	return queries
 }

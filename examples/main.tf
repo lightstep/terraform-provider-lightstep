@@ -1,22 +1,3 @@
-provider "lightstep" {
-  environment     = "public"
-  api_key_env_var = "LIGHTSTEP_API_KEY_PUBLIC"
-  organization    = "LightStep"
-}
-
-terraform {
-  required_providers {
-    lightstep = {
-      source  = "lightstep/lightstep"
-      version = "1.51.2"
-      # For more information, see the provider source documentation:
-      #
-      # https://www.terraform.io/docs/configuration/providers.html#provider-source
-    }
-  }
-  required_version = "~> 1.0.0"
-}
-
 ##############################################################
 ## Streams
 ##############################################################

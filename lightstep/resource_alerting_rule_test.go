@@ -138,11 +138,30 @@ func TestAccAlertingRuleImport(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: `
+resource "lightstep_stream" "stream_import_alerting_rule_import" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  stream_name = "Alerting rule import"
+  query = "operation IN (\"api/v1/import_rule\")"
+}
+
+resource "lightstep_stream_condition" "stream_condition_alerting_rule_import" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  condition_name = "Importing rule errors for BEEMO"
+  expression = "err > 0.4"
+  evaluation_window_ms = 300000
+  stream_id = lightstep_stream.stream_import_alerting_rule_import.id
+}
+
 resource "lightstep_alerting_rule" "import-cond" {
-	project_name = "terraform-provider-tests"
-    destination_id = "tvydr9gV"
-    condition_id = "KN6SX47x"
+	project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+    destination_id = lightstep_slack_destination.ari_slack.id
+    condition_id = lightstep_stream_condition.stream_condition_alerting_rule_import.id
 	update_interval = "1h"
+}
+
+resource "lightstep_slack_destination" "ari_slack" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  channel      = "#urgent-care"
 }
 `,
 			},
