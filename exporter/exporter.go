@@ -5,6 +5,7 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/client"
 	"log"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -22,7 +23,14 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
       query_name          = "{{.Name}}"
       display             = "{{.Display}}"
       hidden              = {{.Hidden}}
-{{if .TQLQuery}}
+{{if (and .SpansQuery .SpansQuery.Query) }}
+      spans {
+         query         = "{{escapeSpanQuery .SpansQuery.Query}}"
+         operator      = "{{.SpansQuery.Operator}}"
+         group_by_keys = [{{range .SpansQuery.GroupByKeys}}"{{.}}",{{end}}]{{if eq .SpansQuery.Operator "latency"}}
+         latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
+      }
+{{end}}{{if .TQLQuery}}
       tql                 = "{{.TQLQuery}}"
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
@@ -48,6 +56,10 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
 }
 `
 
+func escapeSpanQuery(input string) string {
+	return strings.Replace(input, "\"", "\\\"", -1)
+}
+
 func Run(args ...string) error {
 	if len(os.Getenv("LIGHTSTEP_API_KEY")) == 0 {
 		log.Fatalf("error: LIGHTSTEP_API_KEY env variable must be set")
@@ -72,7 +84,11 @@ func Run(args ...string) error {
 		log.Fatalf("error: could not get dashboard: %v", err)
 	}
 
-	t := template.New("HCL Dashboard template")
+	t := template.New("").Funcs(template.FuncMap{
+		"escapeSpanQuery": escapeSpanQuery,
+	})
+
+	//t := template.New("HCL Dashboard template")
 	t, err = t.Parse(dashboardTemplate)
 	if err != nil {
 		log.Fatal("Dashboard parsing error: ", err)
