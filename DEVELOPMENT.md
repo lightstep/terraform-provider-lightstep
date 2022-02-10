@@ -37,5 +37,5 @@ It's possible to export an existing dashboard to conformant HCL code using the p
 $ export LIGHTSTEP_API_KEY=....
 $ export LIGHTSTEP_ORG=your-org
 # exports to console dashboard id = rZbPJ33q from project terraform-shop
-$ .terraform/providers/registry.terraform.io/lightstep/lightstep/1.51.5/darwin_amd64/terraform-provider-lightstep_v1.51.5 exporter dashboard terraform-shop rZbPJ33q
+$ go run github.com/lightstep/terraform-provider-lightstep exporter dashboard terraform-shop rZbPJ33q
 ```
