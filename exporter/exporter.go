@@ -2,11 +2,12 @@ package exporter
 
 import (
 	"context"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"log"
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 const dashboardTemplate = `
@@ -88,7 +89,6 @@ func Run(args ...string) error {
 		"escapeSpanQuery": escapeSpanQuery,
 	})
 
-	//t := template.New("HCL Dashboard template")
 	t, err = t.Parse(dashboardTemplate)
 	if err != nil {
 		log.Fatal("Dashboard parsing error: ", err)
