@@ -27,15 +27,3 @@ provider_installation {
 ```
 
 3) Import the module in another project pinned to the version that matches `.version`. Delete any terraform lock files and run `terraform init`. 
-
-
-## Exporter (experimental)
-
-It's possible to export an existing dashboard to conformant HCL code using the provider. The `exporter` utility is built-in to the provider binary and requires certain environment variables to be set:
-
-```
-$ export LIGHTSTEP_API_KEY=....
-$ export LIGHTSTEP_ORG=your-org
-# exports to console dashboard id = rZbPJ33q from project terraform-shop
-$ go run github.com/lightstep/terraform-provider-lightstep exporter dashboard terraform-shop rZbPJ33q
-```

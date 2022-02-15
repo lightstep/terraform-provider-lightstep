@@ -20,18 +20,27 @@ terraform {
   required_providers {
     lightstep = {
       source = "lightstep/lightstep"
-      version = "1.51.6"
+      version = "1.60.0"
     }
   }
 }
 
 provider "lightstep" {
-  api_key_env_var = "LIGHTSTEP_API_KEY_PUBLIC"
+  # Name of the *environment variable* where the API key is set
+  api_key_env_var = "LIGHTSTEP_API_KEY"
   organization    = "your-lightstep-organization"
+}
+
+# Example: Create AWS EC2 Dashboard
+module "aws-dashboards" {
+  source  = "lightstep/aws-dashboards/lightstep//modules/ec2-dashboard"
+  version = "1.60.0"
+  lightstep_project = "your-lightstep-project"
+  lightstep_oranization = "your-lightstep-organization"
 }
 ```
 * Run `terraform init`
-* Add some code to define dashboards, streams, alerts, and more. [See documentation](https://registry.terraform.io/providers/lightstep/lightstep/latest/docs) for examples.
+* Add some code to define dashboards, streams, alerts, and more. [See documentation](https://registry.terraform.io/providers/lightstep/lightstep/latest/docs) for examples or use [pre-built Lightstep Terraform modules](https://registry.terraform.io/namespaces/lightstep).
 * After setting an environment variable with your API Key that matches the name in the provider configuration above, run `terraform plan` to preview changes.
 
 :warning: If you're creating many Lightstep resources at once, we recommend running the `apply` with the `parallelism` flag set to a low value to avoid API 500 errors:
@@ -43,3 +52,15 @@ provider "lightstep" {
 ## Development
 
 See `DEVELOPMENT.md`.
+
+## Exporter
+
+It's possible to export an existing Lightstep dashboard to conformant HCL code using the provider. The `exporter` utility is built-in to the provider binary and requires certain environment variables to be set:
+
+```
+$ export LIGHTSTEP_API_KEY=....
+$ export LIGHTSTEP_ORG=your-org
+
+# exports to console dashboard id = rZbPJ33q from project terraform-shop
+$ go run github.com/lightstep/terraform-provider-lightstep exporter dashboard terraform-shop rZbPJ33q
+```
