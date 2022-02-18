@@ -3,17 +3,18 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
-	"github.com/lightstep/terraform-provider-lightstep/version"
 	"os"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 	"github.com/lightstep/terraform-provider-lightstep/client"
+	"github.com/lightstep/terraform-provider-lightstep/version"
 )
 
+// Provider returns the build lightstep provider object
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
@@ -36,8 +37,14 @@ func Provider() *schema.Provider {
 			"api_key_env_var": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Environment variable for Lightstep api key.",
+				Description: "Environment variable for Lightstep api key. Will only be used if `api_key` is not set",
 				Default:     "LIGHTSTEP_API_KEY",
+			},
+			"api_key": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Lightstep API key. Will override `api_key_env_var` if set.",
+				Default:     "",
 			},
 		},
 
@@ -64,16 +71,21 @@ func Provider() *schema.Provider {
 
 func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	envVar := d.Get("api_key_env_var").(string)
+	apiKey := d.Get("api_key_env_var").(string)
 
-	apiKey, ok := os.LookupEnv(envVar)
-	if !ok {
-		diags = append(diags, diag.Diagnostic{
-			Severity: diag.Error,
-			Summary:  "No api key found",
-			Detail:   fmt.Sprintf("'api_key_env_var' is set to %v - but no api key found.", envVar),
-		})
-		return apiKey, diags
+	if len(apiKey) == 0 {
+		envVar := d.Get("api_key_env_var").(string)
+
+		var ok bool
+		apiKey, ok = os.LookupEnv(envVar)
+		if !ok {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  "No api key found",
+				Detail:   fmt.Sprintf("'api_key_env_var' is set to %v - but no api key found.", envVar),
+			})
+			return apiKey, diags
+		}
 	}
 
 	client := client.NewClientWithUserAgent(
