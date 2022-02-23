@@ -1,6 +1,6 @@
 # Lightstep Terraform Provider
 
-⚠️ *Beta* This provider is still under active development and we're working on adding new features and functionality.
+⚠️ This provider is still under active development and we're working on adding new features and functionality.
 
 -   Website: https://www.terraform.io
 -   [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
@@ -9,7 +9,7 @@
 
 ## Requirements
 
--   [Terraform](https://www.terraform.io/downloads.html) v1.1.x
+-   [Terraform](https://www.terraform.io/downloads.html) v1.x+
 
 ## Using the provider
 
@@ -20,7 +20,7 @@ terraform {
   required_providers {
     lightstep = {
       source = "lightstep/lightstep"
-      version = "1.60.0"
+      version = "1.60.1"
     }
   }
 }
