@@ -35,7 +35,7 @@ func resourceMetricDashboard() *schema.Resource {
 				Computed: true,
 			},
 			"chart": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: getChartSchema(),
@@ -137,7 +137,8 @@ func resourceMetricDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 }
 
 func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.MetricDashboardAttributes, error) {
-	charts, err := buildCharts(d.Get("chart").([]interface{}))
+	chartSet := d.Get("chart").(*schema.Set)
+	charts, err := buildCharts(chartSet.List())
 	if err != nil {
 		return nil, err
 	}
