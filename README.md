@@ -20,21 +20,20 @@ terraform {
   required_providers {
     lightstep = {
       source = "lightstep/lightstep"
-      version = "1.60.1"
+      version = "1.60.2"
     }
   }
 }
 
 provider "lightstep" {
-  # Name of the *environment variable* where the API key is set
-  api_key_env_var = "LIGHTSTEP_API_KEY"
+  api_key         = "your-lightstep-org-api-key"
   organization    = "your-lightstep-organization"
 }
 
 # Example: Create AWS EC2 Dashboard
 module "aws-dashboards" {
   source  = "lightstep/aws-dashboards/lightstep//modules/ec2-dashboard"
-  version = "1.60.0"
+  version = "1.60.2"
   lightstep_project = "your-lightstep-project"
   lightstep_oranization = "your-lightstep-organization"
 }

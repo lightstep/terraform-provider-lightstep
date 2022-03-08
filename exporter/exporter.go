@@ -70,6 +70,12 @@ func Run(args ...string) error {
 		log.Fatalf("error: LIGHTSTEP_ORG env variable must be set")
 	}
 
+	// default to public API environment
+	lightstepEnv := "public"
+	if len(os.Getenv("LIGHTSTEP_ENV")) > 0 {
+		lightstepEnv = os.Getenv("LIGHTSTEP_ENV")
+	}
+
 	if len(args) < 4 {
 		log.Fatalf("usage: %s export [resource-type] [project-name] [resource-id]", args[0])
 	}
@@ -78,7 +84,7 @@ func Run(args ...string) error {
 		log.Fatalf("error: only dashboard resources are supported at this time")
 	}
 
-	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), os.Getenv("LIGHTSTEP_ENV"))
+	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepEnv)
 	d, err := c.GetMetricDashboard(context.Background(), args[3], args[4])
 
 	if err != nil {
