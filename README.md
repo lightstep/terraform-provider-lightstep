@@ -32,10 +32,8 @@ provider "lightstep" {
 
 # Example: Create AWS EC2 Dashboard
 module "aws-dashboards" {
-  source  = "lightstep/aws-dashboards/lightstep//modules/ec2-dashboard"
-  version = "1.60.2"
+  source            = "lightstep/aws-dashboards/lightstep//modules/ec2-dashboard"
   lightstep_project = "your-lightstep-project"
-  lightstep_oranization = "your-lightstep-organization"
 }
 ```
 * Run `terraform init`
