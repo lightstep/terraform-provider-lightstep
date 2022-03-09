@@ -3,10 +3,11 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/go-cty/cty"
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/go-cty/cty"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -132,9 +133,8 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 
 func getSpansQuerySchema() *schema.Schema {
 	sma := schema.Schema{
-		Type:       schema.TypeList,
-		MaxItems:   1,
-		Deprecated: "Spans charts are not supported by the Lightstep API.",
+		Type:     schema.TypeList,
+		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"query": {

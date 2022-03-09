@@ -23,11 +23,6 @@ resource "lightstep_metric_dashboard" "customer_charges" {
     rank = 1
     type = "timeseries"
 
-    y_axis {
-      min = 0.4
-      max = 5.0
-    }
-
     query {
       hidden              = false
       query_name          = "a"
@@ -45,6 +40,25 @@ resource "lightstep_metric_dashboard" "customer_charges" {
       group_by {
         aggregation_method = "max"
         keys               = ["project_name"]
+      }
+    }
+  }
+
+  chart {
+    name = "Public API Latency"
+    rank = "2"
+    type = "timeseries"
+
+    query {
+      query_name          = "a"
+      display             = "line"
+      hidden              = false
+
+      spans {
+        query         = "service IN (\"public_api\")"
+        operator      = "latency"
+        group_by_keys = []
+        latency_percentiles = [50,95,99,99.9,]
       }
     }
   }

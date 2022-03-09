@@ -14,8 +14,8 @@ The [Lightstep](https://lightstep.com) Provider is for Terraform to manage Light
 
 ```
 provider "lightstep" {
-  api_key_env_var = (environment variable where your LS API key is stored)
-  organization = (organization name)
+  api_key      = "Lightstep organization API key"
+  organization = "Lightstep organization name"
 }
 ```
 
@@ -28,5 +28,6 @@ provider "lightstep" {
 
 ### Optional
 
-- **api_key_env_var** (String) Environment variable for Lightstep api key.
+- **api_key** (String) Lightstep organization api key. If not set, the provider will use the environment variable set in `api_key_env_var`. 
+- **api_key_env_var** (String) Environment variable to use when looking up the API Key.
 - **environment** (String) The name of the Lightstep environment, must be one of: staging, meta, public.

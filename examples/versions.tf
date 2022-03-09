@@ -1,13 +1,13 @@
 provider "lightstep" {
-  api_key_env_var = "LIGHTSTEP_API_KEY"
-  organization    = var.lightstep_organization
+  api_key      = var.lightstep_api_key
+  organization = var.lightstep_organization
 }
 
 terraform {
   required_providers {
     lightstep = {
       source  = "lightstep/lightstep"
-      version = "1.51.6"
+      version = "1.60.2"
     }
   }
   required_version = "~> 1.1.0"
