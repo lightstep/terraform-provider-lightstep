@@ -36,6 +36,7 @@ resource "lightstep_webhook_destination" "webhook" {
 ### Optional
 
 - **custom_headers** (Map of String)
+- **template** (String)
 - **id** (String) The ID of this resource.
 
 

@@ -3,11 +3,13 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"strings"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceWebhookDestination() *schema.Resource {
@@ -25,19 +27,29 @@ func resourceWebhookDestination() *schema.Resource {
 				ForceNew: true,
 			},
 			"destination_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Name of the webhook destination",
 			},
 			"url": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				Description:  "Webhook URL",
+				ValidateFunc: validation.IsURLWithScheme([]string{"http", "https"}),
+			},
+			"template": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Webhook payload body text template. Used for customing webhook messages",
+				ForceNew:    true,
 			},
 			"custom_headers": {
-				Type:     schema.TypeMap,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeMap,
+				Description: "Custom HTTP headers for the webhook request",
+				Optional:    true,
+				ForceNew:    true,
 			},
 		},
 	}
@@ -58,6 +70,11 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 	headers, ok := d.GetOk("custom_headers")
 	if ok {
 		attrs.CustomHeaders = headers.(map[string]interface{})
+	}
+
+	template, ok := d.GetOk("template")
+	if ok {
+		attrs.Template = template.(string)
 	}
 
 	dest.Attributes = attrs
@@ -96,6 +113,12 @@ func resourceWebhookDestinationImport(ctx context.Context, d *schema.ResourceDat
 
 	if err := d.Set("url", attributes["url"]); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Unable to set url resource field: %v", err)
+	}
+
+	if attributes["template"] != nil && len(attributes["template"].(string)) > 0 {
+		if err := d.Set("template", attributes["template"]); err != nil {
+			return []*schema.ResourceData{}, fmt.Errorf("Unable to set template resource field: %v", err)
+		}
 	}
 
 	if len(attributes["custom_headers"].(map[string]interface{})) > 0 {
