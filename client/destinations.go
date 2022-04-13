@@ -17,6 +17,7 @@ type WebhookAttributes struct {
 	Name            string                 `json:"name"`
 	DestinationType string                 `json:"destination_type"`
 	URL             string                 `json:"url"`
+	Template        string                 `json:"template"`
 	CustomHeaders   map[string]interface{} `json:"custom_headers,omitempty"`
 }
 
