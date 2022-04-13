@@ -115,8 +115,10 @@ func resourceWebhookDestinationImport(ctx context.Context, d *schema.ResourceDat
 		return []*schema.ResourceData{}, fmt.Errorf("Unable to set url resource field: %v", err)
 	}
 
-	if err := d.Set("template", attributes["template"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set template resource field: %v", err)
+	if attributes["template"] != nil && len(attributes["template"].(string)) > 0 {
+		if err := d.Set("template", attributes["template"]); err != nil {
+			return []*schema.ResourceData{}, fmt.Errorf("Unable to set template resource field: %v", err)
+		}
 	}
 
 	if len(attributes["custom_headers"].(map[string]interface{})) > 0 {
