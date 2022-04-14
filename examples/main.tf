@@ -29,12 +29,6 @@ resource "lightstep_stream" "beemo" {
 ## Dashboards
 ##############################################################
 
-resource "lightstep_stream_dashboard" "customer_charges" {
-  project_name   = var.project
-  dashboard_name = "Customer Charges (Stream)"
-  stream_ids     = [lightstep_stream.beemo.id, lightstep_stream.non_beemo.id]
-}
-
 resource "lightstep_metric_dashboard" "customer_charges" {
   project_name   = var.project
   dashboard_name = "Customer Charges (Metrics)"

@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,6 +21,7 @@ func resourceStreamDashboard() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceStreamDashboardImport,
 		},
+		DeprecationMessage: "resource_stream_dashboard is no longer supported. Please migrate to resource_metric_dashboard with span queries.",
 		Schema: map[string]*schema.Schema{
 			"dashboard_name": {
 				Type:     schema.TypeString,
