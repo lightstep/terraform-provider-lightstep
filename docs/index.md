@@ -30,4 +30,3 @@ provider "lightstep" {
 
 - **api_key** (String) Lightstep organization api key. If not set, the provider will use the environment variable set in `api_key_env_var`. 
 - **api_key_env_var** (String) Environment variable to use when looking up the API Key.
-- **environment** (String) The name of the Lightstep environment, must be one of: staging, meta, public.
