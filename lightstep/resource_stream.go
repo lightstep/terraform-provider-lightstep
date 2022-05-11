@@ -56,6 +56,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 	c := m.(*client.Client)
 	if err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
+		origQuery := d.Get("query").(string)
 		stream, err := c.CreateStream(
 			ctx,
 			d.Get("project_name").(string),
@@ -80,7 +81,8 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 
 			return resource.NonRetryableError(fmt.Errorf(err[0].Summary))
 		}
-
+		// workaround: if read succeeds, persist the *client-side* query expression to avoid backend normalization issue
+		d.Set("query", origQuery)
 		return nil
 	}); err != nil {
 		return diag.FromErr(fmt.Errorf("Failed to create stream: %v", err))
@@ -173,6 +175,7 @@ func resourceStreamImport(ctx context.Context, d *schema.ResourceData, m interfa
 	if err := setResourceDataFromStream(d, *stream); err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream from API response to terraform state: %v", err)
 	}
+	d.Set("query", stream.Attributes.Query)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -223,9 +226,7 @@ func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
 	}
 
-	if err := d.Set("query", s.Attributes.Query); err != nil {
-		return fmt.Errorf("Unable to set query resource field: %v", err)
-	}
+	// don't set query here to avoid backend normalization issue
 
 	return nil
 }
