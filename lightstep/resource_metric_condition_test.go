@@ -113,6 +113,14 @@ resource "lightstep_metric_condition" "test" {
         value = "catlab"
       }
     ]
+
+	filters = [
+		{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+		}
+	  ]
   }
 }
 `
@@ -194,7 +202,11 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
-					// TODO: verify more fields here, I don't understand how to do nested fields
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.key", "project_name"),
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.value", "catlab"),
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.key", "service_name"),
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.operand", "contains"),
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.value", "frontend"),
 				),
 			},
 			{

@@ -128,6 +128,13 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
 		},
+		"filters": {
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Description: "Non-equality filters (operand: contains, regexp, etc)",
+			Optional:    true,
+			Computed:    true,
+		},
 	}
 }
 
@@ -210,7 +217,7 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		"filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Description: "Non-equality filters (operand: contains, regex)",
+			Description: "Non-equality filters (operand: contains, regexp)",
 			Optional:    true,
 			Computed:    true,
 		},
@@ -429,6 +436,7 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, e
 
 		var includes []interface{}
 		var excludes []interface{}
+		var all []interface{}
 
 		filters := rule["include_filters"]
 		if filters != nil {
@@ -448,10 +456,16 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, e
 			excludes = filters.([]interface{})
 		}
 
-		// generic filter not supported on alerting rules
-		allFilters := make([]interface{}, 0)
+		filters = rule["filters"]
+		if filters != nil {
+			err := validateFilters(filters.([]interface{}), true)
+			if err != nil {
+				return nil, err
+			}
+			all = filters.([]interface{})
+		}
 
-		newFilters := buildLabelFilters(includes, excludes, allFilters)
+		newFilters := buildLabelFilters(includes, excludes, all)
 		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
 
 		newRules = append(newRules, newRule)
@@ -823,13 +837,14 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 
 	var alertingRules []interface{}
 	for _, r := range c.Attributes.AlertingRules {
-		includeFilters, excludeFilters, _ := getIncludeExcludeFilters(r.MatchOn.GroupBy)
+		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
 
 		alertingRules = append(alertingRules, map[string]interface{}{
 			"id":              r.MessageDestinationID,
 			"update_interval": GetUpdateIntervalValue(r.UpdateInterval),
 			"include_filters": includeFilters,
 			"exclude_filters": excludeFilters,
+			"filters":         allFilters,
 		})
 	}
 
