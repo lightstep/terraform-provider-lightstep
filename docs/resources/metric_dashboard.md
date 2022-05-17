@@ -37,6 +37,15 @@ resource "lightstep_metric_dashboard" "customer_charges" {
         }
       ]
 
+      # filters is used for advanced operands like contains and regexp
+      filters = [
+        {
+          key     = "aws_region"
+          operand = "contains"
+          value   = "us-east"
+        }
+      ]
+
       group_by {
         aggregation_method = "max"
         keys               = ["project_name"]
