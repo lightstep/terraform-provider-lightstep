@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -122,6 +123,12 @@ resource "lightstep_metric_dashboard" "test" {
         value = "pagerduty"
       }]
 
+      filters = [{
+        key   = "kube_app"
+        operand = "contains"
+        value = "frontend"
+      }]
+
       group_by {
         aggregation_method = "max"
         keys               = ["cluster-name"]
@@ -193,6 +200,11 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator", "rate"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "bar"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.key", "kube_app"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.value", "pagerduty"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.key", "kube_app"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.operand", "contains"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.value", "frontend"),
 				),
 			},
 			{

@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +28,12 @@ var (
 		Key:     k,
 		Value:   v,
 		Operand: "neq",
+	}
+
+	allFilter = client.LabelFilter{
+		Key:     k,
+		Value:   v,
+		Operand: "contains",
 	}
 )
 
@@ -245,6 +252,7 @@ func TestBuildLabelFilters(t *testing.T) {
 	type filtersCase struct {
 		includes []interface{}
 		excludes []interface{}
+		all      []interface{}
 		expected []client.LabelFilter
 	}
 
@@ -294,10 +302,24 @@ func TestBuildLabelFilters(t *testing.T) {
 				excludeFilter,
 			},
 		},
+		{
+			all: []interface{}{
+				map[string]interface{}{
+					"key":     k,
+					"operand": "contains",
+					"value":   v,
+				},
+			},
+			includes: []interface{}{},
+			excludes: []interface{}{},
+			expected: []client.LabelFilter{
+				allFilter,
+			},
+		},
 	}
 
 	for _, c := range cases {
-		result := buildLabelFilters(c.includes, c.excludes)
+		result := buildLabelFilters(c.includes, c.excludes, c.all)
 		require.Equal(t, c.expected, result)
 	}
 }
@@ -412,8 +434,9 @@ func TestBuildAlertingRules(t *testing.T) {
 
 func TestValidateFilters(t *testing.T) {
 	type filterCase struct {
-		filters   []interface{}
-		expectErr bool
+		filters    []interface{}
+		expectErr  bool
+		hasOperand bool
 	}
 
 	cases := []filterCase{
@@ -425,7 +448,20 @@ func TestValidateFilters(t *testing.T) {
 					"value": "value1",
 				},
 			},
-			expectErr: false,
+			expectErr:  false,
+			hasOperand: false,
+		},
+		// has valid key and valid value and valid operand
+		{
+			filters: []interface{}{
+				map[string]interface{}{
+					"key":     "key1",
+					"value":   "value1",
+					"operand": "contains",
+				},
+			},
+			expectErr:  false,
+			hasOperand: true,
 		},
 		// missing value
 		{
@@ -434,7 +470,8 @@ func TestValidateFilters(t *testing.T) {
 					"key": "key1",
 				},
 			},
-			expectErr: true,
+			expectErr:  true,
+			hasOperand: false,
 		},
 		// missing key
 		{
@@ -443,7 +480,8 @@ func TestValidateFilters(t *testing.T) {
 					"value": "value1",
 				},
 			},
-			expectErr: true,
+			expectErr:  true,
+			hasOperand: false,
 		},
 		// key is not a string
 		{
@@ -453,7 +491,8 @@ func TestValidateFilters(t *testing.T) {
 					"value": "some-value",
 				},
 			},
-			expectErr: true,
+			expectErr:  true,
+			hasOperand: false,
 		},
 		// value is not a string
 		{
@@ -463,12 +502,49 @@ func TestValidateFilters(t *testing.T) {
 					"value": 1,
 				},
 			},
-			expectErr: true,
+			expectErr:  true,
+			hasOperand: false,
+		},
+		// operand value is not a string
+		{
+			filters: []interface{}{
+				map[string]interface{}{
+					"key":     "some-key",
+					"value":   "some-val",
+					"operand": 1,
+				},
+			},
+			expectErr:  true,
+			hasOperand: true,
+		},
+		// operand value is eq
+		{
+			filters: []interface{}{
+				map[string]interface{}{
+					"key":     "some-key",
+					"value":   "some-val",
+					"operand": "eq",
+				},
+			},
+			expectErr:  true,
+			hasOperand: true,
+		},
+		// operand value is eq
+		{
+			filters: []interface{}{
+				map[string]interface{}{
+					"key":     "some-key",
+					"value":   "some-val",
+					"operand": "neq",
+				},
+			},
+			expectErr:  true,
+			hasOperand: true,
 		},
 	}
 
 	for _, c := range cases {
-		err := validateFilters(c.filters)
+		err := validateFilters(c.filters, c.hasOperand)
 		if c.expectErr {
 			require.Error(t, err)
 		} else {
