@@ -128,6 +128,13 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
 		},
+		"filters": {
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Description: "Non-equality filters (operand: contains, regexp, etc)",
+			Optional:    true,
+			Computed:    true,
+		},
 	}
 }
 
@@ -207,17 +214,26 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "avg", "last"}, false),
 		},
+		"filters": {
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Description: "Non-equality filters (operand: contains, regexp)",
+			Optional:    true,
+			Computed:    true,
+		},
 		"include_filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Description: "Equality filters (operand: eq)",
+			Optional:    true,
+			Computed:    true,
 		},
 		"exclude_filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Description: "Not-equals filters (operand: neq)",
+			Optional:    true,
+			Computed:    true,
 		},
 		"group_by": {
 			Type:     schema.TypeList,
@@ -420,10 +436,11 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, e
 
 		var includes []interface{}
 		var excludes []interface{}
+		var all []interface{}
 
 		filters := rule["include_filters"]
 		if filters != nil {
-			err := validateFilters(filters.([]interface{}))
+			err := validateFilters(filters.([]interface{}), false)
 			if err != nil {
 				return nil, err
 			}
@@ -432,14 +449,23 @@ func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, e
 
 		filters = rule["exclude_filters"]
 		if filters != nil {
-			err := validateFilters(filters.([]interface{}))
+			err := validateFilters(filters.([]interface{}), false)
 			if err != nil {
 				return nil, err
 			}
 			excludes = filters.([]interface{})
 		}
 
-		newFilters := buildLabelFilters(includes, excludes)
+		filters = rule["filters"]
+		if filters != nil {
+			err := validateFilters(filters.([]interface{}), true)
+			if err != nil {
+				return nil, err
+			}
+			all = filters.([]interface{})
+		}
+
+		newFilters := buildLabelFilters(includes, excludes, all)
 		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
 
 		newRules = append(newRules, newRule)
@@ -550,7 +576,7 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 
 		includes := query["include_filters"]
 		if includes != nil {
-			err := validateFilters(includes.([]interface{}))
+			err := validateFilters(includes.([]interface{}), false)
 			if err != nil {
 				return nil, err
 			}
@@ -558,13 +584,20 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 
 		excludes := query["exclude_filters"]
 		if excludes != nil {
-			err := validateFilters(excludes.([]interface{}))
+			err := validateFilters(excludes.([]interface{}), false)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		filters := buildLabelFilters(includes.([]interface{}), excludes.([]interface{}))
+		allFilters := query["filters"]
+		if allFilters != nil {
+			err := validateFilters(allFilters.([]interface{}), true)
+			if err != nil {
+				return nil, err
+			}
+		}
+		filters := buildLabelFilters(includes.([]interface{}), excludes.([]interface{}), allFilters.([]interface{}))
 		newQuery.Query.Filters = filters
 
 		groupBy := query["group_by"]
@@ -620,7 +653,7 @@ func buildThresholds(d *schema.ResourceData) (client.Thresholds, error) {
 	return t, nil
 }
 
-func buildLabelFilters(includes []interface{}, excludes []interface{}) []client.LabelFilter {
+func buildLabelFilters(includes []interface{}, excludes []interface{}, all []interface{}) []client.LabelFilter {
 	var filters []client.LabelFilter
 
 	if len(includes) > 0 {
@@ -642,6 +675,19 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}) []client.
 			value := excludeFilter.(map[string]interface{})["value"]
 			filters = append(filters, client.LabelFilter{
 				Operand: "neq",
+				Key:     key.(string),
+				Value:   value.(string),
+			})
+		}
+	}
+
+	if len(all) > 0 {
+		for _, allFilter := range all {
+			key := allFilter.(map[string]interface{})["key"]
+			value := allFilter.(map[string]interface{})["value"]
+			operand := allFilter.(map[string]interface{})["operand"]
+			filters = append(filters, client.LabelFilter{
+				Operand: operand.(string),
 				Key:     key.(string),
 				Value:   value.(string),
 			})
@@ -676,7 +722,7 @@ func validateSpansQuery(spansQuery interface{}) error {
 	return nil
 }
 
-func validateFilters(filters []interface{}) error {
+func validateFilters(filters []interface{}, hasOperand bool) error {
 	for _, filter := range filters {
 		key, ok := filter.(map[string]interface{})["key"]
 		if !ok {
@@ -686,6 +732,22 @@ func validateFilters(filters []interface{}) error {
 		value, ok := filter.(map[string]interface{})["value"]
 		if !ok {
 			return fmt.Errorf("'value' is a required field")
+		}
+
+		if hasOperand {
+			op, ok := filter.(map[string]interface{})["operand"]
+			if !ok {
+				return fmt.Errorf("'operand' is a required field")
+			}
+			switch op.(type) {
+			case string:
+			default:
+				return fmt.Errorf("operand must be a string. got: %v", key)
+			}
+
+			if op.(string) == "eq" || op.(string) == "neq" {
+				return fmt.Errorf("filters object does not support operand %s: use include_filters or exclude_filters instead", op)
+			}
 		}
 
 		switch key.(type) {
@@ -775,13 +837,14 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 
 	var alertingRules []interface{}
 	for _, r := range c.Attributes.AlertingRules {
-		includeFilters, excludeFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
+		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
 
 		alertingRules = append(alertingRules, map[string]interface{}{
 			"id":              r.MessageDestinationID,
 			"update_interval": GetUpdateIntervalValue(r.UpdateInterval),
 			"include_filters": includeFilters,
 			"exclude_filters": excludeFilters,
+			"filters":         allFilters,
 		})
 	}
 
@@ -792,29 +855,39 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 	return nil
 }
 
-func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}) {
+func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}, []interface{}) {
 	var includeFilters []interface{}
 	var excludeFilters []interface{}
+	var allFilters []interface{}
+
 	for _, f := range filters {
+
+		// for backwards compatibility for v1.60.4 and below
 		if f.Operand == "eq" {
 			includeFilters = append(includeFilters, map[string]interface{}{
 				"key":   f.Key,
 				"value": f.Value,
 			})
-		} else {
+		} else if f.Operand == "neq" {
 			excludeFilters = append(excludeFilters, map[string]interface{}{
 				"key":   f.Key,
 				"value": f.Value,
 			})
+		} else {
+			allFilters = append(allFilters, map[string]interface{}{
+				"key":     f.Key,
+				"value":   f.Value,
+				"operand": f.Operand,
+			})
 		}
 	}
-	return includeFilters, excludeFilters
+	return includeFilters, excludeFilters, allFilters
 }
 
 func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, includeSpansQuery bool) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
-		includeFilters, excludeFilters := getIncludeExcludeFilters(q.Query.Filters)
+		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(q.Query.Filters)
 
 		var groupBy []interface{}
 		if q.Query.GroupBy.Aggregation != "" || len(q.Query.GroupBy.LabelKeys) > 0 {
@@ -834,6 +907,7 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 			"timeseries_operator": q.Query.TimeseriesOperator,
 			"include_filters":     includeFilters,
 			"exclude_filters":     excludeFilters,
+			"filters":             allFilters,
 			"group_by":            groupBy,
 			"tql":                 q.TQLQuery,
 		}

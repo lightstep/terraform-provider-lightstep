@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"net/http"
 	"strings"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -122,7 +123,7 @@ func resourceMetricDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 	dashboard, err := c.GetMetricDashboard(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		if apiErr.GetHTTPResponse() != nil && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}

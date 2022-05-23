@@ -50,10 +50,20 @@ resource "lightstep_metric_dashboard" "customer_charges" {
       timeseries_operator = "rate"
       metric              = "requests"
 
+      # use include/exlude filters for equality
       include_filters = [
         {
           key   = "service"
           value = "iOS"
+        }
+      ]
+
+      # use filters for operands like contains or regexp
+      filters = [
+        {
+          key     = "aws.region"
+          operand = "contains"
+          value   = "us-east"
         }
       ]
 

@@ -110,6 +110,7 @@ Optional:
 - **exclude_filters** (List of Map of String)
 - **group_by** (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--group_by))
 - **include_filters** (List of Map of String)
+- **filters** (List of Map of String) Non-equality filters (i.e. `contains`, `regexp`)
 - **metric** (String)
 - **timeseries_operator** (String)
 - **tql** (String)
