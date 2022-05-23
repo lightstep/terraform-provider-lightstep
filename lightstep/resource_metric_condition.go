@@ -212,7 +212,7 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
-			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "mean", "last"}, false),
+			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "avg", "last"}, false),
 		},
 		"filters": {
 			Type:        schema.TypeList,
