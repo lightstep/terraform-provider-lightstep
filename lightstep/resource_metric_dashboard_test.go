@@ -198,6 +198,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "pagerduty.task.success"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator", "rate"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator_input_window_ms", "0"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "bar"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.key", "kube_app"),

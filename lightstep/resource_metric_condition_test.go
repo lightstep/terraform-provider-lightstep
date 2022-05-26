@@ -70,8 +70,6 @@ resource "lightstep_metric_condition" "test" {
   name = "Too many requests"
 
   expression {
-	  evaluation_window   = "2m"
-	  evaluation_criteria = "on_average"
 	  is_multi   = true
 	  is_no_data = true
       operand  = "above"
@@ -85,6 +83,7 @@ resource "lightstep_metric_condition" "test" {
     metric         = "requests"
     query_name          = "a"
     timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
     hidden              = false
     display = "line"
     include_filters = [{
@@ -100,6 +99,11 @@ resource "lightstep_metric_condition" "test" {
     group_by  {
       aggregation_method = "avg"
       keys = ["method"]
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
     }
   }
 
@@ -136,8 +140,6 @@ resource "lightstep_metric_condition" "test" {
   name = "updated"
 
   expression {
-	  evaluation_window   = "1h" 
-	  evaluation_criteria = "at_least_once"
 	  is_multi   = true
 	  is_no_data = false
       operand  = "above"
@@ -151,6 +153,7 @@ resource "lightstep_metric_condition" "test" {
     metric         = "requests"
     query_name          = "a"
     timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
     hidden              = false
 	display             = "line"
 
@@ -167,6 +170,11 @@ resource "lightstep_metric_condition" "test" {
     group_by  {
       aggregation_method = "avg"
       keys = ["method"]
+    }
+    
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
     }
   }
 
@@ -202,11 +210,13 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.key", "project_name"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.value", "catlab"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.key", "service_name"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.operand", "contains"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.value", "frontend"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
 			{
@@ -214,7 +224,128 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
-					// TODO: verify more fields here, I don't understand how to do nested fields
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccMetricConditionWithFormula(t *testing.T) {
+	var condition client.MetricCondition
+
+	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Too many requests"
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    metric                              = "requests"
+    query_name                          = "a"
+    timeseries_operator                 = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden                              = false
+    display                             = "line"
+
+	filters = [{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+	}]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+  }
+
+  metric_query {
+    metric                              = "requests"
+    query_name                          = "b"
+    timeseries_operator                 = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden                              = false
+    display                             = "line"
+
+	filters = [{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+	}]
+
+	include_filters = [{
+		  key   = "error"
+		  value = "true"
+	}]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+  }
+
+  metric_query {
+    query_name          = "(a/b)*100"
+    hidden              = false
+    display             = "line"
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+	filters = [{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+	}]
+  }
+}
+`
+	resourceName := "lightstep_metric_condition.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.filters.0.key", "service_name"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.filters.0.value", "frontend"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.filters.0.key", "service_name"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.filters.0.value", "frontend"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.include_filters.0.key", "error"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.include_filters.0.value", "true"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.2.final_window_operation.0.operator", "min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.2.final_window_operation.0.input_window_ms", "30000"),
 				),
 			},
 		},

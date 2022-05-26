@@ -29,13 +29,10 @@ type AlertingRule struct {
 }
 
 type Expression struct {
-	Thresholds         Thresholds `json:"thresholds"`
-	Operand            string     `json:"operand"`
-	EvaluationWindow   int        `json:"evaluation-window-ms"`
-	EvaluationCriteria string     `json:"evaluation-criteria"`
-	IsMulti            bool       `json:"is-multi-alert,omitempty"`
-	IsNoData           bool       `json:"enable-no-data-alert,omitempty"`
-	NumSecPerPoint     *int       `json:"num-sec-per-point,omitempty"`
+	Thresholds Thresholds `json:"thresholds"`
+	Operand    string     `json:"operand"`
+	IsMulti    bool       `json:"is-multi-alert,omitempty"`
+	IsNoData   bool       `json:"enable-no-data-alert,omitempty"`
 }
 
 type Thresholds struct {
@@ -44,20 +41,28 @@ type Thresholds struct {
 }
 
 type MetricQueryWithAttributes struct {
-	Name       string      `json:"query-name"`
-	Type       string      `json:"query-type"`
-	Hidden     bool        `json:"hidden"`
-	Display    string      `json:"display-type"`
-	Query      MetricQuery `json:"metric-query"`
-	SpansQuery SpansQuery  `json:"spans-query,omitempty"`
-	TQLQuery   string      `json:"tql-query"`
+	Name           string         `json:"query-name"`
+	Type           string         `json:"query-type"`
+	Hidden         bool           `json:"hidden"`
+	Display        string         `json:"display-type"`
+	Query          MetricQuery    `json:"metric-query"`
+	SpansQuery     SpansQuery     `json:"spans-query,omitempty"`
+	CompositeQuery CompositeQuery `json:"composite-query,omitempty"`
+	TQLQuery       string         `json:"tql-query"`
 }
 
 type MetricQuery struct {
-	Metric             string        `json:"metric"`
-	Filters            []LabelFilter `json:"filters,omitempty"`
-	TimeseriesOperator string        `json:"timeseries-operator"`
-	GroupBy            GroupBy       `json:"group-by,omitempty"`
+	Metric                          string                `json:"metric"`
+	Filters                         []LabelFilter         `json:"filters,omitempty"`
+	TimeseriesOperator              string                `json:"timeseries-operator"`
+	TimeseriesOperatorInputWindowMs *int                  `json:"timeseries-operator-input-window-ms,omitempty"`
+	GroupBy                         GroupBy               `json:"group-by,omitempty"`
+	FinalWindowOperation            *FinalWindowOperation `json:"final-window-operation,omitempty"`
+}
+
+type FinalWindowOperation struct {
+	Operator      string `json:"operator"`
+	InputWindowMs int    `json:"input-window-ms"`
 }
 
 type SpansQuery struct {
@@ -65,6 +70,10 @@ type SpansQuery struct {
 	Operator           string    `json:"operator"`
 	LatencyPercentiles []float64 `json:"latency-percentiles,omitempty"`
 	GroupByKeys        []string  `json:"group-by,omitempty"`
+}
+
+type CompositeQuery struct {
+	FinalWindowOperation *FinalWindowOperation `json:"final-window-operation"`
 }
 
 type LabelFilter struct {
