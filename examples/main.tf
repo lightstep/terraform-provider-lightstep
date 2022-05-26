@@ -133,12 +133,12 @@ resource "lightstep_metric_condition" "beemo_requests" {
   }
 
   metric_query {
-    metric              = "requests"
-    query_name          = "a"
-    timeseries_operator = "delta"
+    metric                              = "requests"
+    query_name                          = "a"
+    timeseries_operator                 = "delta"
     timeseries_operator_input_window_ms = 3600000
-    hidden              = false
-    display             = "line"
+    hidden                              = false
+    display                             = "line"
 
     include_filters = [
       {
@@ -153,7 +153,7 @@ resource "lightstep_metric_condition" "beemo_requests" {
     }
 
     final_window_operation {
-      operator = "min"
+      operator     = "min"
       input_window = 30000
     }
   }
