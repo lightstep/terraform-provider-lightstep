@@ -139,6 +139,12 @@ func getSpansQuerySchema() *schema.Schema {
 					ValidateFunc: validation.StringInSlice([]string{"latency", "rate", "error_ratio"}, false),
 					Required:     true,
 				},
+				"operator_input_window_ms": {
+					Type:     schema.TypeInt,
+					Optional: true,
+					// Duration micros must be at least 30s and an even number of seconds
+					ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
+				},
 				"group_by_keys": {
 					Type:     schema.TypeList,
 					Optional: true,
@@ -514,12 +520,19 @@ func buildSpansQuery(spansQuery interface{}, display string) client.SpansQuery {
 	sq.Query = s["query"].(string)
 	sq.Operator = s["operator"].(string)
 
+	operatorInputWindowMs := s["operator_input_window_ms"]
+	if operatorInputWindowMs != 0 { // 0 here indicates that the value was not set in terraform file
+		value := operatorInputWindowMs.(int)
+		sq.OperatorInputWindowMs = &value
+	}
+
 	if sq.Operator == "latency" {
 		sq.LatencyPercentiles = buildLatencyPercentiles(s["latency_percentiles"].([]interface{}), display)
 	}
 	if groupByKeys, ok := s["group_by_keys"].([]interface{}); ok && len(groupByKeys) > 0 {
 		sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
 	}
+	sq.FinalWindowOperation = buildFinalWindowOperation(s["final_window_operation"])
 
 	return sq
 }
@@ -956,14 +969,21 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 
 		if includeSpansQuery && q.SpansQuery.Query != "" {
 			sqi := map[string]interface{}{
-				"query":    q.SpansQuery.Query,
-				"operator": q.SpansQuery.Operator,
+				"query":                    q.SpansQuery.Query,
+				"operator":                 q.SpansQuery.Operator,
+				"operator_input_window_ms": q.SpansQuery.OperatorInputWindowMs,
+			}
+			if q.SpansQuery.OperatorInputWindowMs != nil {
+				sqi["operator_input_window_ms"] = *q.SpansQuery.OperatorInputWindowMs
 			}
 			if len(q.SpansQuery.GroupByKeys) > 0 {
 				sqi["group_by_keys"] = q.SpansQuery.GroupByKeys
 			}
 			if q.SpansQuery.Operator == "latency" {
 				sqi["latency_percentiles"] = q.SpansQuery.LatencyPercentiles
+			}
+			if q.SpansQuery.FinalWindowOperation != nil {
+				sqi["final_window_operation"] = getFinalWindowOperationFromResourceData(q.SpansQuery.FinalWindowOperation)
 			}
 
 			qs["spans"] = []interface{}{
