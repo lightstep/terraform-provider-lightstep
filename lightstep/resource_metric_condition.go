@@ -272,7 +272,7 @@ func getFinalWindowOperationSchema() *schema.Schema {
 				"operator": {
 					Type:         schema.TypeString,
 					Optional:     true,
-					ValidateFunc: validation.StringInSlice([]string{"min", "max"}, false),
+					ValidateFunc: validation.StringInSlice([]string{"min", "max", "avg"}, false),
 				},
 				"input_window_ms": {
 					Type:     schema.TypeInt,
