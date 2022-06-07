@@ -7,7 +7,7 @@ terraform {
   required_providers {
     lightstep = {
       source  = "lightstep/lightstep"
-      version = "~> 1.60.6"
+      version = "~> 1.60.7"
     }
   }
   required_version = "~> 1.1.0"
