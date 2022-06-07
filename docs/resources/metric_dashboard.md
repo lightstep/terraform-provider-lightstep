@@ -3,7 +3,7 @@
 page_title: "lightstep_metric_dashboard Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # lightstep_metric_dashboard (Resource)
@@ -172,5 +172,3 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
-
-

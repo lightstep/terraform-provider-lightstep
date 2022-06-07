@@ -3,7 +3,7 @@
 page_title: "lightstep_metric_condition Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # lightstep_metric_condition (Resource)
@@ -18,11 +18,9 @@ resource "lightstep_metric_condition" "beemo-requests" {
   name         = "Beemo Low Requests"
 
   expression {
-    evaluation_window   = "2m"
-    evaluation_criteria = "on_average"
-    is_multi            = true
-    is_no_data          = true
-    operand             = "below"
+    is_multi   = true
+    is_no_data = true
+    operand    = "below"
     thresholds {
       warning  = 10.0
       critical = 5.0
@@ -30,12 +28,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
   }
 
   metric_query {
-    metric              = "requests"
-    query_name          = "a"
-    timeseries_operator = "delta"
+    metric                              = "requests"
+    query_name                          = "a"
+    timeseries_operator                 = "delta"
     timeseries_operator_input_window_ms = 30000
-    hidden              = false
-    display             = "line"
+    hidden                              = false
+    display                             = "line"
 
     include_filters = [
       {
@@ -150,5 +148,3 @@ Optional:
 Read-Only:
 
 - `id` (String) The ID of this resource.
-
-
