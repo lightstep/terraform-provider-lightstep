@@ -48,8 +48,9 @@ jobs:
 
       - name: Compare generated files with checked in files
         run: |
+          rm -r docs
           /tmp/tfplugindocs
-          git diff --exit-code
+          git diff --stat --exit-code
   terraform_lint:
 
     name: Run terraform-lint
