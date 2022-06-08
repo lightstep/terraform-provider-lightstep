@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_pagerduty_destination (Resource)
 
-Provides a (Lightstep PagerDuty Alert Destination)[https://api-docs.lightstep.com/reference/postdestinationid]. This can be used to create and manage Lightstep PagerDuty Alert Destinations.
+Provides a [Lightstep PagerDuty Alert Destination](https://api-docs.lightstep.com/reference/postdestinationid). This can be used to create and manage Lightstep PagerDuty Alert Destinations.
 
 ## Example Usage
 

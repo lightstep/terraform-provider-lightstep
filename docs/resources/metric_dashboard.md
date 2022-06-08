@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_metric_dashboard (Resource)
 
-Provides a (Lightstep Metric Dashboard)[https://api-docs.lightstep.com/reference/listmetricdashboardid]. This can be used to create and manage Lightstep Metric Dashboards.
+Provides a [Lightstep Metric Dashboard](https://api-docs.lightstep.com/reference/listmetricdashboardid). This can be used to create and manage Lightstep Metric Dashboards.
 
 
 ## Example Usage

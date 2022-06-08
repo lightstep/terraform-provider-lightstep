@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_webhook_destination (Resource)
 
-Provides a (Lightstep Webhook Alert Destination)[https://api-docs.lightstep.com/reference/postdestinationid]. This can be used to create and manage Lightstep Webhook Alert Destinations.
+Provides a [Lightstep Webhook Alert Destination](https://api-docs.lightstep.com/reference/postdestinationid). This can be used to create and manage Lightstep Webhook Alert Destinations.
 
 ```hcl
 resource "lightstep_webhook_destination" "webhook" {

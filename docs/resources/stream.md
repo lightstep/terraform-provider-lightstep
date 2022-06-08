@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_stream (Resource)
 
-Provides a (Lightstep Stream)[https://api-docs.lightstep.com/reference/streams]. This can be used to create and manage Lightstep Streams.
+Provides a [Lightstep Stream](https://api-docs.lightstep.com/reference/streams). This can be used to create and manage Lightstep Streams.
 
 ## Example Usage
 

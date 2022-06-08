@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_alerting_rule (Resource)
 
-Provides a (Lightstep Alerting Rule)[https://api-docs.lightstep.com/reference/listalertingrules]. This can be used to create and manage Lightstep alerting rules.
+Provides a [Lightstep Alerting Rule](https://api-docs.lightstep.com/reference/listalertingrules). This can be used to create and manage Lightstep alerting rules.
 
 ## Example Usage
 
