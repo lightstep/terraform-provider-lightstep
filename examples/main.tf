@@ -133,11 +133,12 @@ resource "lightstep_metric_condition" "beemo_requests" {
   }
 
   metric_query {
-    metric              = "requests"
-    query_name          = "a"
-    timeseries_operator = "delta"
-    hidden              = false
-    display             = "line"
+    metric                              = "requests"
+    query_name                          = "a"
+    timeseries_operator                 = "delta"
+    timeseries_operator_input_window_ms = 3600000
+    hidden                              = false
+    display                             = "line"
 
     include_filters = [
       {
@@ -149,6 +150,11 @@ resource "lightstep_metric_condition" "beemo_requests" {
     group_by {
       aggregation_method = "max"
       keys               = ["key1", "key2"]
+    }
+
+    final_window_operation {
+      operator     = "min"
+      input_window = 30000
     }
   }
 

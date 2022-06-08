@@ -17,12 +17,13 @@ Use this data source to retrieve information about an existing stream for use in
 
 ### Required
 
-- **project_name** (String)
-- **steam_id** (String)
+- `project_name` (String)
+- `stream_id` (String)
 
 ### Read-Only
 
-- **stream_query** (String) Stream query
-- **stream_name** (String)
+- `id` (String) The ID of this resource.
+- `stream_name` (String)
+- `stream_query` (String) Stream query
 
 

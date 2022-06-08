@@ -3,7 +3,7 @@
 page_title: "lightstep_metric_condition Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # lightstep_metric_condition (Resource)
@@ -18,11 +18,9 @@ resource "lightstep_metric_condition" "beemo-requests" {
   name         = "Beemo Low Requests"
 
   expression {
-    evaluation_window   = "2m"
-    evaluation_criteria = "on_average"
-    is_multi            = true
-    is_no_data          = true
-    operand             = "below"
+    is_multi   = true
+    is_no_data = true
+    operand    = "below"
     thresholds {
       warning  = 10.0
       critical = 5.0
@@ -30,11 +28,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
   }
 
   metric_query {
-    metric              = "requests"
-    query_name          = "a"
-    timeseries_operator = "delta"
-    hidden              = false
-    display             = "line"
+    metric                              = "requests"
+    query_name                          = "a"
+    timeseries_operator                 = "delta"
+    timeseries_operator_input_window_ms = 30000
+    hidden                              = false
+    display                             = "line"
 
     include_filters = [
       {
@@ -55,44 +54,41 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 ### Required
 
-- **expression** (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression))
-- **metric_query** (Block List, Min: 1) (see [below for nested schema](#nestedblock--metric_query))
-- **name** (String)
-- **project_name** (String)
+- `expression` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression))
+- `metric_query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--metric_query))
+- `name` (String)
+- `project_name` (String)
 
 ### Optional
 
-- **alerting_rule** (Block List) (see [below for nested schema](#nestedblock--alerting_rule))
-- **description** (String)
-- **id** (String) The ID of this resource.
+- `alerting_rule` (Block List) (see [below for nested schema](#nestedblock--alerting_rule))
+- `description` (String)
 
 ### Read-Only
 
-- **type** (String)
+- `id` (String) The ID of this resource.
+- `type` (String)
 
 <a id="nestedblock--expression"></a>
 ### Nested Schema for `expression`
 
 Required:
 
-- **evaluation_criteria** (String)
-- **evaluation_window** (String)
-- **operand** (String)
-- **thresholds** (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression--thresholds))
+- `operand` (String)
+- `thresholds` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression--thresholds))
 
 Optional:
 
-- **is_multi** (Boolean)
-- **is_no_data** (Boolean)
-- **num_sec_per_point** (Number)
+- `is_multi` (Boolean)
+- `is_no_data` (Boolean)
 
 <a id="nestedblock--expression--thresholds"></a>
 ### Nested Schema for `expression.thresholds`
 
 Optional:
 
-- **critical** (String)
-- **warning** (String)
+- `critical` (String)
+- `warning` (String)
 
 
 
@@ -101,27 +97,38 @@ Optional:
 
 Required:
 
-- **hidden** (Boolean)
-- **query_name** (String)
+- `hidden` (Boolean)
+- `query_name` (String)
 
 Optional:
 
-- **display** (String)
-- **exclude_filters** (List of Map of String)
-- **group_by** (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--group_by))
-- **include_filters** (List of Map of String)
-- **filters** (List of Map of String) Non-equality filters (i.e. `contains`, `regexp`)
-- **metric** (String)
-- **timeseries_operator** (String)
-- **tql** (String)
+- `display` (String)
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
+- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--final_window_operation))
+- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--group_by))
+- `include_filters` (List of Map of String) Equality filters (operand: eq)
+- `metric` (String)
+- `timeseries_operator` (String)
+- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `tql` (String)
+
+<a id="nestedblock--metric_query--final_window_operation"></a>
+### Nested Schema for `metric_query.final_window_operation`
+
+Optional:
+
+- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `operator` (String)
+
 
 <a id="nestedblock--metric_query--group_by"></a>
 ### Nested Schema for `metric_query.group_by`
 
 Optional:
 
-- **aggregation_method** (String)
-- **keys** (List of String)
+- `aggregation_method` (String)
+- `keys` (List of String)
 
 
 
@@ -130,12 +137,14 @@ Optional:
 
 Required:
 
-- **id** (String) The ID of this resource.
-- **update_interval** (String)
+- `update_interval` (String)
 
 Optional:
 
-- **exclude_filters** (List of Map of String)
-- **include_filters** (List of Map of String)
+- `exclude_filters` (List of Map of String)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
+- `include_filters` (List of Map of String)
 
+Read-Only:
 
+- `id` (String) The ID of this resource.

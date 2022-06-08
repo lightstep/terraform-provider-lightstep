@@ -3,7 +3,7 @@
 page_title: "lightstep_metric_dashboard Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  
+
 ---
 
 # lightstep_metric_dashboard (Resource)
@@ -24,11 +24,12 @@ resource "lightstep_metric_dashboard" "customer_charges" {
     type = "timeseries"
 
     query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-      timeseries_operator = "rate"
-      metric              = "requests"
+      hidden                              = false
+      query_name                          = "a"
+      display                             = "line"
+      timeseries_operator                 = "rate"
+      timeseries_operator_input_window_ms = 3600000
+      metric                              = "requests"
 
       include_filters = [
         {
@@ -79,61 +80,88 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 ### Required
 
-- **dashboard_name** (String)
-- **project_name** (String)
+- `dashboard_name` (String)
+- `project_name` (String)
 
 ### Optional
 
-- **chart** (Block List) (see [below for nested schema](#nestedblock--chart))
-- **id** (String) The ID of this resource.
+- `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 
 ### Read-Only
 
-- **type** (String)
+- `id` (String) The ID of this resource.
+- `type` (String)
 
 <a id="nestedblock--chart"></a>
 ### Nested Schema for `chart`
 
 Required:
 
-- **name** (String)
-- **query** (Block List, Min: 1) (see [below for nested schema](#nestedblock--chart--query))
-- **rank** (Number)
-- **type** (String)
+- `name` (String)
+- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--chart--query))
+- `rank` (Number)
+- `type` (String)
 
 Optional:
 
-- **y_axis** (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--y_axis))
+- `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
 
 Read-Only:
 
-- **id** (String) The ID of this resource.
+- `id` (String) The ID of this resource.
 
 <a id="nestedblock--chart--query"></a>
 ### Nested Schema for `chart.query`
 
 Required:
 
-- **hidden** (Boolean)
-- **query_name** (String)
+- `hidden` (Boolean)
+- `query_name` (String)
 
 Optional:
 
-- **display** (String)
-- **exclude_filters** (List of Map of String)
-- **group_by** (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--group_by))
-- **include_filters** (List of Map of String)
-- **metric** (String)
-- **timeseries_operator** (String)
-- **tql** (String)
+- `display` (String)
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
+- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--final_window_operation))
+- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--group_by))
+- `include_filters` (List of Map of String) Equality filters (operand: eq)
+- `metric` (String)
+- `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--spans))
+- `timeseries_operator` (String)
+- `timeseries_operator_input_window_ms` (Number)
+- `tql` (String)
+
+<a id="nestedblock--chart--query--final_window_operation"></a>
+### Nested Schema for `chart.query.final_window_operation`
+
+Optional:
+
+- `input_window_ms` (Number)
+- `operator` (String)
+
 
 <a id="nestedblock--chart--query--group_by"></a>
 ### Nested Schema for `chart.query.group_by`
 
 Optional:
 
-- **aggregation_method** (String)
-- **keys** (List of String)
+- `aggregation_method` (String)
+- `keys` (List of String)
+
+
+<a id="nestedblock--chart--query--spans"></a>
+### Nested Schema for `chart.query.spans`
+
+Required:
+
+- `operator` (String)
+- `query` (String)
+
+Optional:
+
+- `group_by_keys` (List of String)
+- `latency_percentiles` (List of Number)
 
 
 
@@ -142,7 +170,5 @@ Optional:
 
 Required:
 
-- **max** (Number)
-- **min** (Number)
-
-
+- `max` (Number)
+- `min` (Number)

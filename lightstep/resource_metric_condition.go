@@ -48,16 +48,6 @@ func resourceMetricCondition() *schema.Resource {
 				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"evaluation_window": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice(GetValidEvaluationWindows(), false),
-						},
-						"evaluation_criteria": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"on_average", "at_least_once", "always", "in_total"}, false),
-						},
 						"is_multi": {
 							Type:     schema.TypeBool,
 							Optional: true,
@@ -72,10 +62,6 @@ func resourceMetricCondition() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
-						},
-						"num_sec_per_point": {
-							Type:     schema.TypeInt,
-							Optional: true,
 						},
 						"thresholds": {
 							Type:     schema.TypeList,
@@ -212,8 +198,15 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			Computed:     true,
-			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "avg", "last"}, false),
+			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "last", "min", "max", "avg"}, false),
 		},
+		"timeseries_operator_input_window_ms": {
+			Type:         schema.TypeInt,
+			Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+			Optional:     true,
+			ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
+		},
+		"final_window_operation": getFinalWindowOperationSchema(),
 		"filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
@@ -266,6 +259,30 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		sma["spans"] = getSpansQuerySchema()
 	}
 	return sma
+}
+
+func getFinalWindowOperationSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Optional: true,
+		MaxItems: 1,
+		MinItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"operator": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ValidateFunc: validation.StringInSlice([]string{"min", "max", "avg"}, false),
+				},
+				"input_window_ms": {
+					Type:         schema.TypeInt,
+					Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+					Optional:     true,
+					ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
+				},
+			},
+		},
+	}
 }
 
 func getThresholdSchema() map[string]*schema.Schema {
@@ -388,19 +405,11 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Expression: client.Expression{
-			EvaluationCriteria: expression["evaluation_criteria"].(string),
-			IsMulti:            expression["is_multi"].(bool),
-			IsNoData:           expression["is_no_data"].(bool),
-			Operand:            expression["operand"].(string),
-			EvaluationWindow:   validEvaluationWindow[expression["evaluation_window"].(string)],
-			Thresholds:         thresholds,
+			IsMulti:    expression["is_multi"].(bool),
+			IsNoData:   expression["is_no_data"].(bool),
+			Operand:    expression["operand"].(string),
+			Thresholds: thresholds,
 		},
-	}
-
-	numSecPerPoint, ok := d.GetOk("expression.0.num_sec_per_point")
-	if ok {
-		i := numSecPerPoint.(int)
-		attributes.Expression.NumSecPerPoint = &i
 	}
 
 	queries, err := buildQueries(d.Get("metric_query").([]interface{}), false)
@@ -574,6 +583,18 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 			},
 		}
 
+		timeseriesOperatorInputWindowMs := query["timeseries_operator_input_window_ms"]
+		if timeseriesOperatorInputWindowMs != 0 { // 0 here indicates that the value was not set in terraform file
+			value := timeseriesOperatorInputWindowMs.(int)
+			newQuery.Query.TimeseriesOperatorInputWindowMs = &value
+		}
+
+		if newQuery.Type == "single" {
+			newQuery.Query.FinalWindowOperation = buildFinalWindowOperation(query["final_window_operation"])
+		} else {
+			newQuery.CompositeQuery.FinalWindowOperation = buildFinalWindowOperation(query["final_window_operation"])
+		}
+
 		includes := query["include_filters"]
 		if includes != nil {
 			err := validateFilters(includes.([]interface{}), false)
@@ -619,6 +640,20 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 		newQueries = append(newQueries, newQuery)
 	}
 	return newQueries, nil
+}
+
+func buildFinalWindowOperation(in interface{}) *client.FinalWindowOperation {
+	if in == nil || len(in.([]interface{})) == 0 {
+		return nil
+	}
+
+	finalWindowOperator := in.([]interface{})[0].(map[string]interface{})
+	operator := finalWindowOperator["operator"].(string)
+	inputWindowMs := finalWindowOperator["input_window_ms"].(int)
+	return &client.FinalWindowOperation{
+		Operator:      operator,
+		InputWindowMs: inputWindowMs,
+	}
 }
 
 func buildKeys(keysIn []interface{}) []string {
@@ -816,12 +851,9 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 
 	if err := d.Set("expression", []map[string]interface{}{
 		{
-			"evaluation_window":   GetEvaluationWindowValue(c.Attributes.Expression.EvaluationWindow),
-			"evaluation_criteria": c.Attributes.Expression.EvaluationCriteria,
-			"is_multi":            c.Attributes.Expression.IsMulti,
-			"is_no_data":          c.Attributes.Expression.IsNoData,
-			"operand":             c.Attributes.Expression.Operand,
-			"num_sec_per_point":   c.Attributes.Expression.NumSecPerPoint,
+			"is_multi":   c.Attributes.Expression.IsMulti,
+			"is_no_data": c.Attributes.Expression.IsNoData,
+			"operand":    c.Attributes.Expression.Operand,
 			"thresholds": []interface{}{
 				thresholdEntries,
 			},
@@ -911,6 +943,15 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 			"group_by":            groupBy,
 			"tql":                 q.TQLQuery,
 		}
+		if q.Query.TimeseriesOperatorInputWindowMs != nil {
+			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs
+		}
+		if q.Query.FinalWindowOperation != nil {
+			qs["final_window_operation"] = getFinalWindowOperationFromResourceData(q.Query.FinalWindowOperation)
+		} else if q.CompositeQuery.FinalWindowOperation != nil {
+			qs["final_window_operation"] = getFinalWindowOperationFromResourceData(q.CompositeQuery.FinalWindowOperation)
+		}
+
 		if includeSpansQuery && q.SpansQuery.Query != "" {
 			sqi := map[string]interface{}{
 				"query":    q.SpansQuery.Query,
@@ -930,4 +971,17 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 		queries = append(queries, qs)
 	}
 	return queries
+}
+
+func getFinalWindowOperationFromResourceData(finalWindowOperation *client.FinalWindowOperation) []interface{} {
+	if finalWindowOperation == nil {
+		return nil
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"operator":        finalWindowOperation.Operator,
+			"input_window_ms": finalWindowOperation.InputWindowMs,
+		},
+	}
 }
