@@ -50,7 +50,7 @@ jobs:
         run: |
           rm -r docs
           /tmp/tfplugindocs
-          git diff --stat --exit-code
+          git diff --stat --exit-code ./docs
   terraform_lint:
 
     name: Run terraform-lint
