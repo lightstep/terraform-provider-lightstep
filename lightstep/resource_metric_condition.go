@@ -201,9 +201,9 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "last", "min", "max", "avg"}, false),
 		},
 		"timeseries_operator_input_window_ms": {
-			Type:     schema.TypeInt,
-			Optional: true,
-			// Duration micros must be at least 30s and an even number of seconds
+			Type:         schema.TypeInt,
+			Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+			Optional:     true,
 			ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
 		},
 		"final_window_operation": getFinalWindowOperationSchema(),
@@ -275,9 +275,9 @@ func getFinalWindowOperationSchema() *schema.Schema {
 					ValidateFunc: validation.StringInSlice([]string{"min", "max", "avg"}, false),
 				},
 				"input_window_ms": {
-					Type:     schema.TypeInt,
-					Optional: true,
-					// Duration micros must be at least 30s and an even number of seconds
+					Type:         schema.TypeInt,
+					Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+					Optional:     true,
 					ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
 				},
 			},
