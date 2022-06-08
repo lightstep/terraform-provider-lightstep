@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_metric_dashboard (Resource)
 
-Provides a (Lightstep Metric Dashboard)[https://api-docs.lightstep.com/reference/listmetricdashboardid]. This can be used to create and manage Lightstep Metric Dashboards.
+Provides a [Lightstep Metric Dashboard](https://api-docs.lightstep.com/reference/listmetricdashboardid). This can be used to create and manage Lightstep Metric Dashboards.
 
 
 ## Example Usage
@@ -129,7 +129,7 @@ Optional:
 - `metric` (String)
 - `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--spans))
 - `timeseries_operator` (String)
-- `timeseries_operator_input_window_ms` (Number)
+- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
 - `tql` (String)
 
 <a id="nestedblock--chart--query--final_window_operation"></a>
@@ -137,7 +137,7 @@ Optional:
 
 Optional:
 
-- `input_window_ms` (Number)
+- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
 - `operator` (String)
 
 

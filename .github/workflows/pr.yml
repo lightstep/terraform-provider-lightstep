@@ -27,6 +27,30 @@ jobs:
     - name: Format all .tf files recursively
       run: |
         terraform fmt -check -diff -recursive ${{ github.workspace }}
+  terraform_docs:
+    name: Run tfplugindocs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Setup tfplugindocs
+        run: |
+          cd /tmp
+          curl -L -o tfplugindocs.zip https://github.com/hashicorp/terraform-plugin-docs/releases/download/v0.9.0/tfplugindocs_0.9.0_linux_amd64.zip
+          unzip tfplugindocs.zip
+          chmod +x tfplugindocs
+
+      - name: Compare generated files with checked in files
+        run: |
+          rm -r docs
+          /tmp/tfplugindocs
+          git diff --stat --exit-code ./docs
   terraform_lint:
 
     name: Run terraform-lint
