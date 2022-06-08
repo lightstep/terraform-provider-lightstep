@@ -169,12 +169,12 @@ func getSpansQuerySchema() *schema.Schema {
 							latency, ok := l.(float64)
 							var diags diag.Diagnostics
 							if ok && (latency < 0 || latency > 100) {
-								diag := diag.Diagnostic{
+								oneDiag := diag.Diagnostic{
 									Severity: diag.Error,
 									Summary:  "wrong value",
 									Detail:   "latency_percentiles must be between 0 and 100",
 								}
-								diags = append(diags, diag)
+								diags = append(diags, oneDiag)
 							}
 							return diags
 						},
@@ -202,7 +202,7 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		"display": {
 			Type:         schema.TypeString,
 			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number"}, false),
+			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap"}, false),
 		},
 		"query_name": {
 			Type:     schema.TypeString,
