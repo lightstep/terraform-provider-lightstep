@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_slack_destination (Resource)
 
-Provides a (Lightstep Slack Alert Destination)[https://api-docs.lightstep.com/reference/postdestinationid]. This can be used to create and manage Lightstep Slack Alert Destinations.
+Provides a [Lightstep Slack Alert Destination](https://api-docs.lightstep.com/reference/postdestinationid). This can be used to create and manage Lightstep Slack Alert Destinations.
 
 ## Example Usage
 

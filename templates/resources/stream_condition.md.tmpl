@@ -8,7 +8,7 @@ description: |-
 
 # lightstep_stream_condition (Resource)
 
-Provides a (Lightstep Stream Condition)[https://api-docs.lightstep.com/reference/conditions]. This can be used to create and manage Lightstep Stream Conditions.
+Provides a [Lightstep Stream Condition](https://api-docs.lightstep.com/reference/conditions). This can be used to create and manage Lightstep Stream Conditions.
 
 ## Example Usage
 
