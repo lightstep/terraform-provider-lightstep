@@ -805,14 +805,6 @@ func Test_buildLatencyPercentiles(t *testing.T) {
 			want: []float64{50, 95, 99, 99.9},
 		},
 		{
-			name: "No List Provided; Expect Full List",
-			args: args{
-				lats:    []interface{}{},
-				display: "line",
-			},
-			want: []float64{50, 95, 99, 99.9},
-		},
-		{
 			name: "Partial List Provided; Expect Partial List",
 			args: args{
 				lats:    []interface{}{float64(50), float64(95)},
@@ -821,20 +813,36 @@ func Test_buildLatencyPercentiles(t *testing.T) {
 			want: []float64{50, 95},
 		},
 		{
+			name: "No List Provided; Expect Full List",
+			args: args{
+				lats:    []interface{}{},
+				display: "line",
+			},
+			want: []float64{50, 95, 99, 99.9},
+		},
+		{
+			name: "Heatmap: Full List Provided; Expect No List",
+			args: args{
+				lats:    []interface{}{float64(50), float64(95), float64(99), 99.9},
+				display: "heatmap",
+			},
+			want: []float64{},
+		},
+		{
+			name: "Heatmap: Partial List Provided; Expect No List",
+			args: args{
+				lats:    []interface{}{float64(50), float64(95)},
+				display: "heatmap",
+			},
+			want: []float64{},
+		},
+		{
 			name: "Heatmap: No List Provided; Expect No List",
 			args: args{
 				lats:    []interface{}{},
 				display: "heatmap",
 			},
 			want: []float64{},
-		},
-		{
-			name: "Heatmap: Partial List Provided; Expect Partial List",
-			args: args{
-				lats:    []interface{}{float64(50), float64(95)},
-				display: "heatmap",
-			},
-			want: []float64{50, 95},
 		},
 	}
 	for _, tt := range tests {
