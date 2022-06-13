@@ -3,6 +3,7 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -363,8 +364,8 @@ func testAccCheckMetricConditionExists(resourceName string, condition *client.Me
 			return fmt.Errorf("ID is not set")
 		}
 
-		client := testAccProvider.Meta().(*client.Client)
-		cond, err := client.GetMetricCondition(context.Background(), test_project, tfCondition.Primary.ID)
+		providerClient := testAccProvider.Meta().(*client.Client)
+		cond, err := providerClient.GetMetricCondition(context.Background(), test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -782,5 +783,65 @@ func TestValidateGroupBy(t *testing.T) {
 		} else {
 			require.NoError(t, err)
 		}
+	}
+}
+
+func Test_buildLatencyPercentiles(t *testing.T) {
+	type args struct {
+		lats    []interface{}
+		display string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []float64
+	}{
+		{
+			name: "Full List Provided; Expect Full List",
+			args: args{
+				lats:    []interface{}{float64(50), float64(95), float64(99), 99.9},
+				display: "line",
+			},
+			want: []float64{50, 95, 99, 99.9},
+		},
+		{
+			name: "No List Provided; Expect Full List",
+			args: args{
+				lats:    []interface{}{},
+				display: "line",
+			},
+			want: []float64{50, 95, 99, 99.9},
+		},
+		{
+			name: "Partial List Provided; Expect Partial List",
+			args: args{
+				lats:    []interface{}{float64(50), float64(95)},
+				display: "line",
+			},
+			want: []float64{50, 95},
+		},
+		{
+			name: "Heatmap: No List Provided; Expect No List",
+			args: args{
+				lats:    []interface{}{},
+				display: "heatmap",
+			},
+			want: []float64{},
+		},
+		{
+			name: "Heatmap: Partial List Provided; Expect Partial List",
+			args: args{
+				lats:    []interface{}{float64(50), float64(95)},
+				display: "heatmap",
+			},
+			want: []float64{50, 95},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := buildLatencyPercentiles(tt.args.lats, tt.args.display); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("buildLatencyPercentiles() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }

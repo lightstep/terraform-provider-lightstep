@@ -491,7 +491,7 @@ func buildSpansGroupByKeys(keysIn []interface{}) []string {
 }
 
 func buildLatencyPercentiles(lats []interface{}, display string) []float64 {
-	var latencies []float64
+	latencies := make([]float64, 0)
 
 	// default (heatmap queries don't compute percentiles)
 	if len(lats) == 0 && display != "heatmap" {
