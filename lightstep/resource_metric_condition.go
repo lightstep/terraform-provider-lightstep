@@ -490,21 +490,22 @@ func buildSpansGroupByKeys(keysIn []interface{}) []string {
 	return keys
 }
 
-func buildLatencyPercentiles(lats []interface{}) []float64 {
-	var latencies []float64
-
-	// default
+func buildLatencyPercentiles(lats []interface{}, display string) []float64 {
+	if display == "heatmap" {
+		return []float64{}
+	}
+	// default (heatmap queries don't compute percentiles)
 	if len(lats) == 0 {
 		return []float64{50, 95, 99, 99.9}
 	}
-
+	latencies := make([]float64, 0, len(lats))
 	for _, l := range lats {
 		latencies = append(latencies, l.(float64))
 	}
 	return latencies
 }
 
-func buildSpansQuery(spansQuery interface{}) client.SpansQuery {
+func buildSpansQuery(spansQuery interface{}, display string) client.SpansQuery {
 	var sq client.SpansQuery
 	if spansQuery == nil || len(spansQuery.([]interface{})) == 0 {
 		return sq
@@ -514,7 +515,7 @@ func buildSpansQuery(spansQuery interface{}) client.SpansQuery {
 	sq.Operator = s["operator"].(string)
 
 	if sq.Operator == "latency" {
-		sq.LatencyPercentiles = buildLatencyPercentiles(s["latency_percentiles"].([]interface{}))
+		sq.LatencyPercentiles = buildLatencyPercentiles(s["latency_percentiles"].([]interface{}), display)
 	}
 	if groupByKeys, ok := s["group_by_keys"].([]interface{}); ok && len(groupByKeys) > 0 {
 		sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
@@ -554,12 +555,13 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 				if err != nil {
 					return nil, err
 				}
+				display := query["display"].(string)
 				newQuery := client.MetricQueryWithAttributes{
 					Name:       query["query_name"].(string),
 					Type:       "spans_single",
 					Hidden:     query["hidden"].(bool),
-					Display:    query["display"].(string),
-					SpansQuery: buildSpansQuery(spansQuery),
+					Display:    display,
+					SpansQuery: buildSpansQuery(spansQuery, display),
 				}
 				newQueries = append(newQueries, newQuery)
 				continue
