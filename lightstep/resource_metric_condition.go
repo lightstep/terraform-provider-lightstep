@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -79,7 +80,7 @@ func resourceMetricCondition() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
-					Schema: getQuerySchema(false),
+					Schema: getQuerySchema(),
 				},
 			},
 			"alerting_rule": {
@@ -180,7 +181,7 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
+func getQuerySchema() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
@@ -260,9 +261,7 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
-	}
-	if includeSpansQuery {
-		sma["spans"] = getSpansQuerySchema()
+		"spans": getSpansQuerySchema(),
 	}
 	return sma
 }
@@ -418,7 +417,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 		},
 	}
 
-	queries, err := buildQueries(d.Get("metric_query").([]interface{}), false)
+	queries, err := buildQueries(d.Get("metric_query").([]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -511,7 +510,7 @@ func buildLatencyPercentiles(lats []interface{}, display string) []float64 {
 	return latencies
 }
 
-func buildSpansQuery(spansQuery interface{}, display string) client.SpansQuery {
+func buildSpansQuery(spansQuery interface{}, display string, finalWindowOperation *client.FinalWindowOperation) client.SpansQuery {
 	var sq client.SpansQuery
 	if spansQuery == nil || len(spansQuery.([]interface{})) == 0 {
 		return sq
@@ -532,12 +531,12 @@ func buildSpansQuery(spansQuery interface{}, display string) client.SpansQuery {
 	if groupByKeys, ok := s["group_by_keys"].([]interface{}); ok && len(groupByKeys) > 0 {
 		sq.GroupByKeys = buildSpansGroupByKeys(s["group_by_keys"].([]interface{}))
 	}
-	sq.FinalWindowOperation = buildFinalWindowOperation(s["final_window_operation"])
+	sq.FinalWindowOperation = finalWindowOperation
 
 	return sq
 }
 
-func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.MetricQueryWithAttributes, error) {
+func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, error) {
 	var newQueries []client.MetricQueryWithAttributes
 	var queries []map[string]interface{}
 	for _, queryIn := range queriesIn {
@@ -560,25 +559,22 @@ func buildQueries(queriesIn []interface{}, includeSpansQuery bool) ([]client.Met
 			continue
 		}
 
-		// alerts currently do not support spans query, so they may not exist
-		if includeSpansQuery {
-			spansQuery := query["spans"]
-			if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
-				err := validateSpansQuery(spansQuery)
-				if err != nil {
-					return nil, err
-				}
-				display := query["display"].(string)
-				newQuery := client.MetricQueryWithAttributes{
-					Name:       query["query_name"].(string),
-					Type:       "spans_single",
-					Hidden:     query["hidden"].(bool),
-					Display:    display,
-					SpansQuery: buildSpansQuery(spansQuery, display),
-				}
-				newQueries = append(newQueries, newQuery)
-				continue
+		spansQuery := query["spans"]
+		if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
+			err := validateSpansQuery(spansQuery)
+			if err != nil {
+				return nil, err
 			}
+			display := query["display"].(string)
+			newQuery := client.MetricQueryWithAttributes{
+				Name:       query["query_name"].(string),
+				Type:       "spans_single",
+				Hidden:     query["hidden"].(bool),
+				Display:    display,
+				SpansQuery: buildSpansQuery(spansQuery, display, buildFinalWindowOperation(query["final_window_operation"])),
+			}
+			newQueries = append(newQueries, newQuery)
+			continue
 		}
 
 		// If this chart uses a regular query
@@ -877,7 +873,7 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		return fmt.Errorf("Unable to set expression resource field: %v", err)
 	}
 
-	queries := getQueriesFromResourceData(c.Attributes.Queries, false)
+	queries := getQueriesFromResourceData(c.Attributes.Queries)
 	if err := d.Set("metric_query", queries); err != nil {
 		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
 	}
@@ -931,7 +927,7 @@ func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []in
 	return includeFilters, excludeFilters, allFilters
 }
 
-func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, includeSpansQuery bool) []interface{} {
+func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(q.Query.Filters)
@@ -965,9 +961,11 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 			qs["final_window_operation"] = getFinalWindowOperationFromResourceData(q.Query.FinalWindowOperation)
 		} else if q.CompositeQuery.FinalWindowOperation != nil {
 			qs["final_window_operation"] = getFinalWindowOperationFromResourceData(q.CompositeQuery.FinalWindowOperation)
+		} else if q.SpansQuery.FinalWindowOperation != nil {
+			qs["final_window_operation"] = getFinalWindowOperationFromResourceData(q.SpansQuery.FinalWindowOperation)
 		}
 
-		if includeSpansQuery && q.SpansQuery.Query != "" {
+		if q.SpansQuery.Query != "" {
 			sqi := map[string]interface{}{
 				"query":                    q.SpansQuery.Query,
 				"operator":                 q.SpansQuery.Operator,
@@ -981,9 +979,6 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes, in
 			}
 			if q.SpansQuery.Operator == "latency" {
 				sqi["latency_percentiles"] = q.SpansQuery.LatencyPercentiles
-			}
-			if q.SpansQuery.FinalWindowOperation != nil {
-				sqi["final_window_operation"] = getFinalWindowOperationFromResourceData(q.SpansQuery.FinalWindowOperation)
 			}
 
 			qs["spans"] = []interface{}{
