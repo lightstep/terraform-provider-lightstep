@@ -560,6 +560,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 			continue
 		}
 
+		// If this chart uses a span query
 		spansQuery := query["spans"]
 		if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
 			hasSpanSingle = true
@@ -579,7 +580,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 			continue
 		}
 
-		// If this chart uses a regular query
+		// If this chart uses a metric query or composite query
 		metric := query["metric"].(string)
 		queryType := "single"
 		if metric == "" {
