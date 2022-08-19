@@ -543,6 +543,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 		queries = append(queries, queryIn.(map[string]interface{}))
 	}
 
+	hasSpanSingle := false
 	for _, query := range queries {
 
 		// If this chart uses a TQL query
@@ -561,6 +562,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 
 		spansQuery := query["spans"]
 		if spansQuery != nil && len(spansQuery.([]interface{})) > 0 {
+			hasSpanSingle = true
 			err := validateSpansQuery(spansQuery)
 			if err != nil {
 				return nil, err
@@ -650,6 +652,15 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 		}
 		newQueries = append(newQueries, newQuery)
 	}
+
+	if hasSpanSingle {
+		for i := 0; i < len(newQueries); i++ {
+			if newQueries[i].Type == "composite" {
+				newQueries[i].Type = "spans_composite"
+			}
+		}
+	}
+
 	return newQueries, nil
 }
 
