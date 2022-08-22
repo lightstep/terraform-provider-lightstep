@@ -179,7 +179,6 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		"metric": {
 			Type:     schema.TypeString,
 			Optional: true, // optional for composite formula
-			Computed: true,
 		},
 		"hidden": {
 			Type:     schema.TypeBool,
@@ -197,7 +196,6 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		"timeseries_operator": {
 			Type:         schema.TypeString,
 			Optional:     true,
-			Computed:     true,
 			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "last", "min", "max", "avg"}, false),
 		},
 		"timeseries_operator_input_window_ms": {
@@ -212,21 +210,18 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Non-equality filters (operand: contains, regexp)",
 			Optional:    true,
-			Computed:    true,
 		},
 		"include_filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Equality filters (operand: eq)",
 			Optional:    true,
-			Computed:    true,
 		},
 		"exclude_filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Not-equals filters (operand: neq)",
 			Optional:    true,
-			Computed:    true,
 		},
 		"group_by": {
 			Type:     schema.TypeList,
@@ -252,7 +247,6 @@ func getQuerySchema(includeSpansQuery bool) map[string]*schema.Schema {
 		"tql": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Computed: true,
 		},
 	}
 	if includeSpansQuery {
