@@ -226,19 +226,17 @@ resource "lightstep_metric_dashboard" "test" {
 			},
 			{
 				Config: spansQueryDashboardConfig,
-				Check: func(state *terraform.State) error {
-					return resource.ComposeTestCheckFunc(
-						testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
-						resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator_input_window_ms", "3600000"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.operator", "min"),
-						resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.input_window_ms", "30000"),
-					)(state)
-				},
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
+					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.operator", "min"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.input_window_ms", "30000"),
+				),
 			},
 			{
 				Config: updatedTitleDashboardConfig,
