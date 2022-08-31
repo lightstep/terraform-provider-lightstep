@@ -162,6 +162,7 @@ Optional:
 
 - `group_by_keys` (List of String)
 - `latency_percentiles` (List of Number)
+- `operator_input_window_ms` (Number)
 
 
 

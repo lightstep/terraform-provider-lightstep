@@ -66,10 +66,12 @@ type FinalWindowOperation struct {
 }
 
 type SpansQuery struct {
-	Query              string    `json:"query"`
-	Operator           string    `json:"operator"`
-	LatencyPercentiles []float64 `json:"latency-percentiles,omitempty"`
-	GroupByKeys        []string  `json:"group-by,omitempty"`
+	Query                 string                `json:"query"`
+	Operator              string                `json:"operator"`
+	OperatorInputWindowMs *int                  `json:"operator-input-window-ms,omitempty"`
+	LatencyPercentiles    []float64             `json:"latency-percentiles,omitempty"`
+	GroupByKeys           []string              `json:"group-by,omitempty"`
+	FinalWindowOperation  *FinalWindowOperation `json:"final-window-operation,omitempty"`
 }
 
 type CompositeQuery struct {

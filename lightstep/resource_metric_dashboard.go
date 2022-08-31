@@ -88,7 +88,7 @@ func getChartSchema() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getQuerySchema(true),
+				Schema: getQuerySchema(),
 			},
 		},
 	}
@@ -170,7 +170,7 @@ func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
 			ChartType: chart["type"].(string),
 		}
 
-		queries, err := buildQueries(chart["query"].([]interface{}), true)
+		queries, err := buildQueries(chart["query"].([]interface{}))
 		if err != nil {
 			return nil, err
 		}
@@ -238,7 +238,7 @@ func setResourceDataFromMetricDashboard(project string, dash client.MetricDashbo
 			chart["y_axis"] = []map[string]interface{}{yMap}
 		}
 
-		chart["query"] = getQueriesFromResourceData(c.MetricQueries, true)
+		chart["query"] = getQueriesFromResourceData(c.MetricQueries)
 		chart["name"] = c.Title
 		chart["rank"] = c.Rank
 		chart["type"] = c.ChartType

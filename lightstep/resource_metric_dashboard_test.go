@@ -89,6 +89,12 @@ resource "lightstep_metric_dashboard" "test_spans" {
       spans {
         query = "service IN (\"frontend\")"
         operator = "error_ratio"
+        operator_input_window_ms = 3600000
+      }
+
+      final_window_operation {
+        operator = "min"
+        input_window_ms  = 30000
       }
     }
   }
@@ -226,7 +232,10 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.operator", "min"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.input_window_ms", "30000"),
 				),
 			},
 			{

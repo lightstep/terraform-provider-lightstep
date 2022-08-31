@@ -8,9 +8,10 @@ description: |-
 
 # lightstep_metric_condition (Resource)
 
-Provides a Lightstep Metric Condition. This can be used to create and manage Lightstep Metric Conditions.
+Provides a Lightstep Metric Condition. This can be used to create and manage Lightstep Metric Conditions that can contain either
+metric queries or span queries.
 
-## Example Usage
+## Example Usage (metric query)
 
 ```hcl
 resource "lightstep_metric_condition" "beemo-requests" {
@@ -45,6 +46,37 @@ resource "lightstep_metric_condition" "beemo-requests" {
     group_by {
       aggregation_method = "max"
       keys               = ["key1", "key2"]
+    }
+  }
+```
+
+## Example Usage (span query)
+
+```hcl
+resource "lightstep_metric_condition" "beemo-requests" {
+  project_name = var.project
+  name         = "Frontend latency"
+
+  expression {
+    is_multi   = true
+    is_no_data = true
+    operand    = "above"
+    thresholds {
+      warning  = 5.0
+      critical = 10.0
+    }
+  }
+
+  metric_query {
+    query_name                          = "a"
+    hidden                              = false
+    display                             = "line"
+
+    spans {
+      query                    = "service IN (\"frontend\")"
+      operator                 = "latency"
+      operator_input_window_ms = 3600000
+      latency_percentiles      = [50]
     }
   }
 ```

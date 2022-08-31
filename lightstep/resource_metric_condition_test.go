@@ -232,6 +232,355 @@ resource "lightstep_metric_condition" "test" {
 	})
 }
 
+func TestAccSpanLatencyCondition(t *testing.T) {
+	var condition client.MetricCondition
+
+	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span latency alert"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "latency"
+      operator_input_window_ms = 3600000
+      latency_percentiles = [50]
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	updatedConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span latency alert - updated"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "latency"
+      operator_input_window_ms = 3600000
+      latency_percentiles = [95]
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	resourceName := "lightstep_metric_condition.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
+				),
+			},
+			{
+				Config: updatedConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert - updated"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "95"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSpanRateCondition(t *testing.T) {
+	var condition client.MetricCondition
+
+	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span rate alert"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "rate"
+      operator_input_window_ms = 3600000
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	updatedConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span rate alert - updated"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "rate"
+      operator_input_window_ms = 3600000
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	resourceName := "lightstep_metric_condition.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+				),
+			},
+			{
+				Config: updatedConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert - updated"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccSpanErrorRatioCondition(t *testing.T) {
+	var condition client.MetricCondition
+
+	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span error ratio alert"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 0.9
+		warning = 0.5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "error_ratio"
+      operator_input_window_ms = 3600000
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	updatedConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "terraform-provider-tests"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "terraform-provider-tests"
+  name = "Span error ratio alert - updated"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 0.9
+		warning = 0.5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "service IN (\"frontend\")"
+      operator = "error_ratio"
+      operator_input_window_ms = 3600000
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	resourceName := "lightstep_metric_condition.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+				),
+			},
+			{
+				Config: updatedConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert - updated"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccMetricConditionWithFormula(t *testing.T) {
 	var condition client.MetricCondition
 

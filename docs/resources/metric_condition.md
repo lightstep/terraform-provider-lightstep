@@ -8,9 +8,10 @@ description: |-
 
 # lightstep_metric_condition (Resource)
 
-Provides a Lightstep Metric Condition. This can be used to create and manage Lightstep Metric Conditions.
+Provides a Lightstep Metric Condition. This can be used to create and manage Lightstep Metric Conditions that can contain either
+metric queries or span queries.
 
-## Example Usage
+## Example Usage (metric query)
 
 ```hcl
 resource "lightstep_metric_condition" "beemo-requests" {
@@ -45,6 +46,37 @@ resource "lightstep_metric_condition" "beemo-requests" {
     group_by {
       aggregation_method = "max"
       keys               = ["key1", "key2"]
+    }
+  }
+```
+
+## Example Usage (span query)
+
+```hcl
+resource "lightstep_metric_condition" "beemo-requests" {
+  project_name = var.project
+  name         = "Frontend latency"
+
+  expression {
+    is_multi   = true
+    is_no_data = true
+    operand    = "above"
+    thresholds {
+      warning  = 5.0
+      critical = 10.0
+    }
+  }
+
+  metric_query {
+    query_name                          = "a"
+    hidden                              = false
+    display                             = "line"
+
+    spans {
+      query                    = "service IN (\"frontend\")"
+      operator                 = "latency"
+      operator_input_window_ms = 3600000
+      latency_percentiles      = [50]
     }
   }
 ```
@@ -109,6 +141,7 @@ Optional:
 - `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--group_by))
 - `include_filters` (List of Map of String) Equality filters (operand: eq)
 - `metric` (String)
+- `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
 - `tql` (String)
@@ -129,6 +162,21 @@ Optional:
 
 - `aggregation_method` (String)
 - `keys` (List of String)
+
+
+<a id="nestedblock--metric_query--spans"></a>
+### Nested Schema for `metric_query.spans`
+
+Required:
+
+- `operator` (String)
+- `query` (String)
+
+Optional:
+
+- `group_by_keys` (List of String)
+- `latency_percentiles` (List of Number)
+- `operator_input_window_ms` (Number)
 
 
 
