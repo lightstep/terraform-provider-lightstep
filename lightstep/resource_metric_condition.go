@@ -84,7 +84,7 @@ func resourceMetricCondition() *schema.Resource {
 				},
 			},
 			"alerting_rule": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchema(),
