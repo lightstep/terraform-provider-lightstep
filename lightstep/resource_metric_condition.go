@@ -424,7 +424,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 
 	attributes.Queries = queries
 
-	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").([]interface{}))
+	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").(*schema.Set))
 	if err != nil {
 		return nil, err
 	}
@@ -433,11 +433,11 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 	return attributes, nil
 }
 
-func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, error) {
+func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, error) {
 	var newRules []client.AlertingRule
 
 	var alertingRules []map[string]interface{}
-	for _, ruleIn := range alertingRulesIn {
+	for _, ruleIn := range alertingRulesIn.List() {
 		alertingRules = append(alertingRules, ruleIn.(map[string]interface{}))
 	}
 
