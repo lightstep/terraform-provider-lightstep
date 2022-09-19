@@ -903,7 +903,13 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		})
 	}
 
-	if err := d.Set("alerting_rule", alertingRules); err != nil {
+	alertingRuleSet := schema.NewSet(
+		schema.HashResource(&schema.Resource{
+			Schema: getAlertingRuleSchema(),
+		}),
+		alertingRules,
+	)
+	if err := d.Set("alerting_rule", alertingRuleSet); err != nil {
 		return fmt.Errorf("Unable to set alerting_rule resource field: %v", err)
 	}
 
