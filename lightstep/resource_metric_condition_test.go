@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/stretchr/testify/require"
@@ -1044,7 +1046,13 @@ func TestBuildAlertingRules(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		result, err := buildAlertingRules(c.rules)
+		alertingRuleSet := schema.NewSet(
+			schema.HashResource(&schema.Resource{
+				Schema: getAlertingRuleSchema(),
+			}),
+			c.rules,
+		)
+		result, err := buildAlertingRules(alertingRuleSet)
 		require.NoError(t, err)
 		require.Equal(t, c.expected, result)
 		require.Equal(t, c.expected, result)
