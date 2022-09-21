@@ -120,7 +120,6 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Non-equality filters (operand: contains, regexp, etc)",
 			Optional:    true,
-			Computed:    true,
 		},
 	}
 }
@@ -442,6 +441,12 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 	}
 
 	for _, rule := range alertingRules {
+		if rule["id"] == "" {
+			// This indicates the alerting destination was changed (and as such shows up as a different set entry
+			// We just want to skip over these.
+			continue
+		}
+
 		newRule := client.AlertingRule{
 			MessageDestinationID: rule["id"].(string),
 		}
