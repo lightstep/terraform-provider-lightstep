@@ -111,7 +111,7 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 
 func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getMetricDashboardAttributesFromResource(d)
+	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get metric dashboard attributes: %v", err))
 	}
@@ -152,8 +152,7 @@ func resourceMetricDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 	return diags
 }
 
-// Misnomer: this handles unified dashboards as well
-func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
+func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
 	chartSet := d.Get("chart").(*schema.Set)
 	charts, err := buildCharts(chartSet.List())
 	if err != nil {
@@ -272,7 +271,7 @@ func setResourceDataFromMetricDashboard(project string, dash client.UnifiedDashb
 
 func resourceMetricDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getMetricDashboardAttributesFromResource(d)
+	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get metric dashboard attributes from resource : %v", err))
 	}

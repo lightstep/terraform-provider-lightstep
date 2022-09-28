@@ -48,7 +48,7 @@ func resourceDashboard() *schema.Resource {
 
 func resourceDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getMetricDashboardAttributesFromResource(d)
+	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
 	}
@@ -146,7 +146,7 @@ func getQueriesFromDashboardResourceData(queriesIn []client.MetricQueryWithAttri
 
 func resourceDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getMetricDashboardAttributesFromResource(d)
+	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes from resource : %v", err))
 	}
