@@ -7,18 +7,18 @@ import (
 	"net/http"
 )
 
-type MetricDashboard struct {
-	Type       string                    `json:"type"`
-	ID         string                    `json:"id"`
-	Attributes MetricDashboardAttributes `json:"attributes,omitempty"`
+type UnifiedDashboard struct {
+	Type       string                     `json:"type"`
+	ID         string                     `json:"id"`
+	Attributes UnifiedDashboardAttributes `json:"attributes,omitempty"`
 }
 
-type MetricDashboardAttributes struct {
-	Name   string        `json:"name"`
-	Charts []MetricChart `json:"charts"`
+type UnifiedDashboardAttributes struct {
+	Name   string         `json:"name"`
+	Charts []UnifiedChart `json:"charts"`
 }
 
-type MetricChart struct {
+type UnifiedChart struct {
 	Rank          int                         `json:"rank"`
 	ID            string                      `json:"id"`
 	Title         string                      `json:"title"`
@@ -37,7 +37,7 @@ type MetricGroupBy struct {
 	AggregationMethod string   `json:"aggregation-method"`
 }
 
-func getMetricDashboardURL(project string, id string) string {
+func getUnifiedDashboardURL(project string, id string) string {
 	base := fmt.Sprintf("projects/%s/metric_dashboards", project)
 
 	if id != "" {
@@ -46,19 +46,19 @@ func getMetricDashboardURL(project string, id string) string {
 	return base
 }
 
-func (c *Client) CreateMetricDashboard(
+func (c *Client) CreateUnifiedDashboard(
 	ctx context.Context,
 	projectName string,
-	dashboard MetricDashboard) (MetricDashboard, error) {
+	dashboard UnifiedDashboard) (UnifiedDashboard, error) {
 
 	var (
-		cond MetricDashboard
+		cond UnifiedDashboard
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(MetricDashboard{
+	bytes, err := json.Marshal(UnifiedDashboard{
 		Type: dashboard.Type,
-		Attributes: MetricDashboardAttributes{
+		Attributes: UnifiedDashboardAttributes{
 			Name:   dashboard.Attributes.Name,
 			Charts: dashboard.Attributes.Charts,
 		},
@@ -68,7 +68,7 @@ func (c *Client) CreateMetricDashboard(
 		return cond, err
 	}
 
-	url := getMetricDashboardURL(projectName, "")
+	url := getUnifiedDashboardURL(projectName, "")
 
 	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
@@ -82,13 +82,13 @@ func (c *Client) CreateMetricDashboard(
 	return cond, err
 }
 
-func (c *Client) GetMetricDashboard(ctx context.Context, projectName string, id string) (*MetricDashboard, error) {
+func (c *Client) GetUnifiedDashboard(ctx context.Context, projectName string, id string) (*UnifiedDashboard, error) {
 	var (
-		d    *MetricDashboard
+		d    *UnifiedDashboard
 		resp Envelope
 	)
 
-	url := getMetricDashboardURL(projectName, id)
+	url := getUnifiedDashboardURL(projectName, id)
 	err := c.CallAPI(ctx, "GET", url, nil, &resp)
 	if err != nil {
 		return nil, err
@@ -98,18 +98,18 @@ func (c *Client) GetMetricDashboard(ctx context.Context, projectName string, id 
 	return d, err
 }
 
-func (c *Client) UpdateMetricDashboard(
+func (c *Client) UpdateUnifiedDashboard(
 	ctx context.Context,
 	projectName string,
 	dashboardID string,
-	attributes MetricDashboardAttributes,
-) (*MetricDashboard, error) {
+	attributes UnifiedDashboardAttributes,
+) (*UnifiedDashboard, error) {
 	var (
-		d    *MetricDashboard
+		d    *UnifiedDashboard
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(&MetricDashboard{
+	bytes, err := json.Marshal(&UnifiedDashboard{
 		Type:       "dashboard",
 		ID:         dashboardID,
 		Attributes: attributes,
@@ -118,7 +118,7 @@ func (c *Client) UpdateMetricDashboard(
 		return nil, err
 	}
 
-	url := getMetricDashboardURL(projectName, dashboardID)
+	url := getUnifiedDashboardURL(projectName, dashboardID)
 	err = c.CallAPI(ctx, "PUT", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
@@ -128,8 +128,8 @@ func (c *Client) UpdateMetricDashboard(
 	return d, err
 }
 
-func (c *Client) DeleteMetricDashboard(ctx context.Context, projectName string, dashboardID string) error {
-	url := getMetricDashboardURL(projectName, dashboardID)
+func (c *Client) DeleteUnifiedDashboard(ctx context.Context, projectName string, dashboardID string) error {
+	url := getUnifiedDashboardURL(projectName, dashboardID)
 
 	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {

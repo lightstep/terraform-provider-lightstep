@@ -39,14 +39,29 @@ func resourceMetricDashboard() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
-					Schema: getChartSchema(),
+					Schema: getChartSchema(MetricChartSchema),
 				},
 			},
 		},
 	}
 }
 
-func getChartSchema() map[string]*schema.Schema {
+type ChartSchemaType int
+
+const (
+	MetricChartSchema ChartSchemaType = iota
+	UnifiedChartSchema
+)
+
+func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
+
+	var querySchema map[string]*schema.Schema
+	if chartSchemaType == UnifiedChartSchema {
+		querySchema = getUnifiedQuerySchema()
+	} else {
+		querySchema = getMetricQuerySchema()
+	}
+
 	return map[string]*schema.Schema{
 		"name": {
 			Type:     schema.TypeString,
@@ -88,7 +103,7 @@ func getChartSchema() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getQuerySchema(),
+				Schema: querySchema,
 			},
 		},
 	}
@@ -98,17 +113,17 @@ func resourceMetricDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attrs, err := getMetricDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric dashboard attributes: %v", err))
 	}
 
-	dashboard := client.MetricDashboard{
+	dashboard := client.UnifiedDashboard{
 		Type:       "dashboard",
 		Attributes: *attrs,
 	}
 
-	created, err := c.CreateMetricDashboard(ctx, d.Get("project_name").(string), dashboard)
+	created, err := c.CreateUnifiedDashboard(ctx, d.Get("project_name").(string), dashboard)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create metric dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create metric dashboard: %v", err))
 	}
 
 	d.SetId(created.ID)
@@ -120,31 +135,32 @@ func resourceMetricDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 
 	c := m.(*client.Client)
 
-	dashboard, err := c.GetMetricDashboard(ctx, d.Get("project_name").(string), d.Id())
+	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse() != nil && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get metric dashboard: %v", apiErr))
 	}
 
 	if err := setResourceDataFromMetricDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set metric dashboard from API response to terraform state: %v", err))
 	}
 
 	return diags
 }
 
-func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.MetricDashboardAttributes, error) {
+// Misnomer: this handles unified dashboards as well
+func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
 	chartSet := d.Get("chart").(*schema.Set)
 	charts, err := buildCharts(chartSet.List())
 	if err != nil {
 		return nil, err
 	}
 
-	attributes := &client.MetricDashboardAttributes{
+	attributes := &client.UnifiedDashboardAttributes{
 		Name:   d.Get("dashboard_name").(string),
 		Charts: charts,
 	}
@@ -152,10 +168,10 @@ func getMetricDashboardAttributesFromResource(d *schema.ResourceData) (*client.M
 	return attributes, nil
 }
 
-func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
+func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	var (
 		charts    []map[string]interface{}
-		newCharts []client.MetricChart
+		newCharts []client.UnifiedChart
 	)
 
 	for _, chart := range chartsIn {
@@ -163,7 +179,7 @@ func buildCharts(chartsIn []interface{}) ([]client.MetricChart, error) {
 	}
 
 	for _, chart := range charts {
-		c := client.MetricChart{
+		c := client.UnifiedChart{
 			Title:     chart["name"].(string),
 			Rank:      chart["rank"].(int),
 			ID:        chart["id"].(string),
@@ -197,12 +213,12 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 
 	max, ok := y["max"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'max' for y_axis")
+		return nil, fmt.Errorf("missing required attribute 'max' for y_axis")
 	}
 
 	min, ok := y["min"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'min' for y_axis")
+		return nil, fmt.Errorf("missing required attribute 'min' for y_axis")
 	}
 
 	yAxis := &client.YAxis{
@@ -213,17 +229,17 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 	return yAxis, nil
 }
 
-func setResourceDataFromMetricDashboard(project string, dash client.MetricDashboard, d *schema.ResourceData) error {
+func setResourceDataFromMetricDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
-		return fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	if err := d.Set("dashboard_name", dash.Attributes.Name); err != nil {
-		return fmt.Errorf("Unable to set dashboard_name resource field: %v", err)
+		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
 	}
 
 	if err := d.Set("type", dash.Type); err != nil {
-		return fmt.Errorf("Unable to set type resource field: %v", err)
+		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
 	var charts []interface{}
@@ -238,7 +254,7 @@ func setResourceDataFromMetricDashboard(project string, dash client.MetricDashbo
 			chart["y_axis"] = []map[string]interface{}{yMap}
 		}
 
-		chart["query"] = getQueriesFromResourceData(c.MetricQueries)
+		chart["query"] = getQueriesFromMetricDashboardResourceData(c.MetricQueries)
 		chart["name"] = c.Title
 		chart["rank"] = c.Rank
 		chart["type"] = c.ChartType
@@ -248,7 +264,7 @@ func setResourceDataFromMetricDashboard(project string, dash client.MetricDashbo
 	}
 
 	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("Unable to set chart resource field: %v", err)
+		return fmt.Errorf("unable to set chart resource field: %v", err)
 	}
 
 	return nil
@@ -258,11 +274,11 @@ func resourceMetricDashboardUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attrs, err := getMetricDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric dashboard attributes from resource : %v", err))
 	}
 
-	if _, err := c.UpdateMetricDashboard(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to update metric dashboard: %v", err))
+	if _, err := c.UpdateUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to update metric dashboard: %v", err))
 	}
 
 	return resourceMetricDashboardRead(ctx, d, m)
@@ -272,8 +288,8 @@ func resourceMetricDashboardDelete(ctx context.Context, d *schema.ResourceData, 
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	if err := c.DeleteMetricDashboard(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to detele metrics dashboard: %v", err))
+	if err := c.DeleteUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to detele metrics dashboard: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
@@ -287,17 +303,17 @@ func resourceMetricDashboardImport(ctx context.Context, d *schema.ResourceData, 
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_dashboard_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_metric_dashboard. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_dashboard_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
-	dash, err := c.GetMetricDashboard(ctx, project, id)
+	dash, err := c.GetUnifiedDashboard(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric dashboard. err: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get metric dashboard. err: %v", err)
 	}
 	d.SetId(id)
 	if err := setResourceDataFromMetricDashboard(project, *dash, d); err != nil {
-		return nil, fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err)
+		return nil, fmt.Errorf("failed to set metric dashboard from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil

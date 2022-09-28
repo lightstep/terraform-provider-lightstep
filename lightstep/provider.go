@@ -57,6 +57,7 @@ func Provider() *schema.Provider {
 			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 			"lightstep_slack_destination":     resourceSlackDestination(),
 			"lightstep_alerting_rule":         resourceAlertingRule(),
+			"lightstep_dashboard":             resourceDashboard(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

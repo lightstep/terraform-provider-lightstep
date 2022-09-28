@@ -33,8 +33,16 @@ lint:
 
 .PHONY: acc-test
 acc-test:
+ifndef LIGHTSTEP_API_KEY_PUBLIC
+	$(error LIGHTSTEP_API_KEY_PUBLIC must be defined for acc-test)
+endif
 	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
 	@scripts/ensure_clean_repo.sh
+
+.PHONY: clean
+clean:
+	rm -rf terraform.d .terraform
+	rm terraform-provider-lightstep_v*
