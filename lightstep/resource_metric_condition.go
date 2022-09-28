@@ -857,19 +857,19 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 
 func setResourceDataFromMetricCondition(project string, c client.MetricCondition, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
-		return fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	if err := d.Set("name", c.Attributes.Name); err != nil {
-		return fmt.Errorf("Unable to set name resource field: %v", err)
+		return fmt.Errorf("unable to set name resource field: %v", err)
 	}
 
 	if err := d.Set("description", c.Attributes.Description); err != nil {
-		return fmt.Errorf("Unable to set description resource field: %v", err)
+		return fmt.Errorf("unable to set description resource field: %v", err)
 	}
 
 	if err := d.Set("type", "metric_alert"); err != nil {
-		return fmt.Errorf("Unable to set type resource field: %v", err)
+		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
 	thresholdEntries := map[string]interface{}{}
@@ -892,12 +892,12 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 			},
 		},
 	}); err != nil {
-		return fmt.Errorf("Unable to set expression resource field: %v", err)
+		return fmt.Errorf("unable to set expression resource field: %v", err)
 	}
 
 	queries := getQueriesFromMetricDashboardResourceData(c.Attributes.Queries)
 	if err := d.Set("metric_query", queries); err != nil {
-		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
+		return fmt.Errorf("unable to set metric_proxy resource field: %v", err)
 	}
 
 	var alertingRules []interface{}
@@ -914,7 +914,7 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 	}
 
 	if err := d.Set("alerting_rule", alertingRules); err != nil {
-		return fmt.Errorf("Unable to set alerting_rule resource field: %v", err)
+		return fmt.Errorf("unable to set alerting_rule resource field: %v", err)
 	}
 
 	return nil

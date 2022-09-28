@@ -211,8 +211,7 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 		},
 		"query_string": {
 			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Required: true,
 		},
 	}
 	return sma
