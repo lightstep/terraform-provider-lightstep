@@ -257,16 +257,18 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"tql": {
-			Deprecated: "Use query_string instead",
-			Type:       schema.TypeString,
-			Optional:   true,
-			Computed:   true,
+			Deprecated:  "Use lightstep_dashboard or query_string field instead",
+			Description: "Deprecated, use query_string instead",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
 		},
 		"spans": getSpansQuerySchema(),
 		"query_string": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Type:        schema.TypeString,
+			Description: "query expressed in Lightstep Unified Query Language (UQL)",
+			Optional:    true,
+			Computed:    true,
 		},
 	}
 	return sma
@@ -315,7 +317,7 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attributes, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
 	condition := client.MetricCondition{
@@ -325,7 +327,7 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 
 	created, err := c.CreateMetricCondition(ctx, d.Get("project_name").(string), condition)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create metric condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create metric condition: %v", err))
 	}
 
 	d.SetId(created.ID)
@@ -343,11 +345,11 @@ func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m 
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 
 	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), *cond, d); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err))
 	}
 
 	return diags
@@ -357,11 +359,11 @@ func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attrs, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
 	if _, err := c.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to update metric condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to update metric condition: %v", err))
 	}
 
 	return resourceMetricConditionRead(ctx, d, m)
@@ -372,7 +374,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 
 	c := m.(*client.Client)
 	if err := c.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to detele metrics condition: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
@@ -386,18 +388,18 @@ func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, 
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
 	c, err := clnt.GetMetricCondition(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition. err: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get metric condition. err: %v", err)
 	}
 
 	d.SetId(id)
 	if err := setResourceDataFromMetricCondition(project, *c, d); err != nil {
-		return nil, fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err)
+		return nil, fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
