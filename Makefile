@@ -44,5 +44,5 @@ ensure-clean-repo:
 
 .PHONY: clean
 clean:
-	rm -rf terraform.d .terraform
-	rm terraform-provider-lightstep_v*
+	-rm -rf terraform.d .terraform
+	-rm terraform-provider-lightstep_v*
