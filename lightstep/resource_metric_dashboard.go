@@ -126,7 +126,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get dashboard attributes: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
 	}
 
 	dashboard := client.UnifiedDashboard{
@@ -136,7 +136,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 
 	created, err := c.CreateUnifiedDashboard(ctx, d.Get("project_name").(string), dashboard)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create dashboard: %v", err))
 	}
 
 	d.SetId(created.ID)
@@ -155,11 +155,11 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get dashboard: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get dashboard: %v", apiErr))
 	}
 
 	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set dashboard from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 	}
 
 	return diags
@@ -225,12 +225,12 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 
 	max, ok := y["max"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'max' for y_axis")
+		return nil, fmt.Errorf("missing required attribute 'max' for y_axis")
 	}
 
 	min, ok := y["min"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("Missing required attribute 'min' for y_axis")
+		return nil, fmt.Errorf("missing required attribute 'min' for y_axis")
 	}
 
 	yAxis := &client.YAxis{
@@ -243,15 +243,15 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 
 func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
-		return fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	if err := d.Set("dashboard_name", dash.Attributes.Name); err != nil {
-		return fmt.Errorf("Unable to set dashboard_name resource field: %v", err)
+		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
 	}
 
 	if err := d.Set("type", dash.Type); err != nil {
-		return fmt.Errorf("Unable to set type resource field: %v", err)
+		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
 	var charts []interface{}
@@ -280,7 +280,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 
 	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("Unable to set chart resource field: %v", err)
+		return fmt.Errorf("unable to set chart resource field: %v", err)
 	}
 
 	return nil
@@ -290,11 +290,11 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get dashboard attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes from resource : %v", err))
 	}
 
 	if _, err := c.UpdateUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to update dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to update dashboard: %v", err))
 	}
 
 	return p.resourceUnifiedDashboardRead(ctx, d, m)

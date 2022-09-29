@@ -115,11 +115,11 @@ func testAccCheckStreamDashboardExists(resourceName string, dashboard *client.Da
 		// get dashboard from TF state
 		tfStream, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfStream.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get dashboard from LS
@@ -147,7 +147,7 @@ func testAccStreamDashboardDestroy(s *terraform.State) error {
 		s, err := conn.GetDashboard(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Dashboard with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("dashboard with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 

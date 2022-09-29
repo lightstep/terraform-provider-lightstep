@@ -47,11 +47,11 @@ func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get slack destination: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get slack destination: %v", apiErr))
 	}
 
 	if err := d.Set("channel", dest.Attributes.(map[string]interface{})["channel"]); err != nil {
-		return diag.FromErr(fmt.Errorf("Unable to set channel resource field: %v", err))
+		return diag.FromErr(fmt.Errorf("unable to set channel resource field: %v", err))
 	}
 
 	return diags
@@ -70,7 +70,7 @@ func resourceSlackDestinationCreate(ctx context.Context, d *schema.ResourceData,
 
 	destination, err := c.CreateDestination(ctx, d.Get("project_name").(string), dest)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create slack destination %v: %v", attrs.Channel, err))
+		return diag.FromErr(fmt.Errorf("failed to create slack destination %v: %v", attrs.Channel, err))
 	}
 
 	d.SetId(destination.ID)
@@ -88,17 +88,17 @@ func resourceSlackDestinationImport(ctx context.Context, d *schema.ResourceData,
 	project, id := ids[0], ids[1]
 	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get slack destination: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get slack destination: %v", err)
 	}
 
 	d.SetId(dest.ID)
 	if err := d.Set("project_name", project); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	attributes := dest.Attributes.(map[string]interface{})
 	if err := d.Set("channel", attributes["channel"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set channel resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set channel resource field: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
