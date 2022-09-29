@@ -836,7 +836,7 @@ func testAccCheckMetricConditionExists(resourceName string, condition *client.Me
 		}
 
 		if tfCondition.Primary.ID == "" {
-			return fmt.Errorf("iD is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		providerClient := testAccProvider.Meta().(*client.Client)

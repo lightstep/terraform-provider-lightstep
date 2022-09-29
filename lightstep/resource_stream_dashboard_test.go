@@ -119,7 +119,7 @@ func testAccCheckStreamDashboardExists(resourceName string, dashboard *client.Da
 		}
 
 		if tfStream.Primary.ID == "" {
-			return fmt.Errorf("iD is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get dashboard from LS

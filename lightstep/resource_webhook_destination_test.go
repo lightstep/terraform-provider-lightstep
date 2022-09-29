@@ -94,7 +94,7 @@ func testAccCheckWebhookDestinationExists(resourceName string, destination *clie
 		}
 
 		if tfDestination.Primary.ID == "" {
-			return fmt.Errorf("iD is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get destination from LS

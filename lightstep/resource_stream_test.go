@@ -185,7 +185,7 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 		}
 
 		if tfStream.Primary.ID == "" {
-			return fmt.Errorf("iD is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get stream from LS

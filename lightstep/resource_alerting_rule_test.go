@@ -184,7 +184,7 @@ func testAccCheckAlertingRuleExists(resourceName string, rule *client.StreamAler
 		}
 
 		if tfRule.Primary.ID == "" {
-			return fmt.Errorf("iD is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
