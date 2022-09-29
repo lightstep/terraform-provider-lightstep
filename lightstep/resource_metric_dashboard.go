@@ -126,7 +126,7 @@ func (p *resourceUnifiedDashboardImp) resourceMetricDashboardCreate(ctx context.
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to get dashboard attributes: %v", err))
 	}
 
 	dashboard := client.UnifiedDashboard{
@@ -136,7 +136,7 @@ func (p *resourceUnifiedDashboardImp) resourceMetricDashboardCreate(ctx context.
 
 	created, err := c.CreateUnifiedDashboard(ctx, d.Get("project_name").(string), dashboard)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("failed to create dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to create dashboard: %v", err))
 	}
 
 	d.SetId(created.ID)
@@ -155,11 +155,11 @@ func (p *resourceUnifiedDashboardImp) resourceMetricDashboardRead(ctx context.Co
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("failed to get metric dashboard: %v", apiErr))
+		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard: %v", apiErr))
 	}
 
 	if err := p.setResourceDataFromMetricDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to set metric dashboard from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err))
 	}
 
 	return diags
@@ -243,15 +243,15 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 
 func (p *resourceUnifiedDashboardImp) setResourceDataFromMetricDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
-		return fmt.Errorf("unable to set project_name resource field: %v", err)
+		return fmt.Errorf("Unable to set project_name resource field: %v", err)
 	}
 
 	if err := d.Set("dashboard_name", dash.Attributes.Name); err != nil {
-		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
+		return fmt.Errorf("Unable to set dashboard_name resource field: %v", err)
 	}
 
 	if err := d.Set("type", dash.Type); err != nil {
-		return fmt.Errorf("unable to set type resource field: %v", err)
+		return fmt.Errorf("Unable to set type resource field: %v", err)
 	}
 
 	var charts []interface{}
@@ -280,7 +280,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromMetricDashboard(project
 	}
 
 	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("unable to set chart resource field: %v", err)
+		return fmt.Errorf("Unable to set chart resource field: %v", err)
 	}
 
 	return nil
@@ -290,11 +290,11 @@ func (p *resourceUnifiedDashboardImp) resourceMetricDashboardUpdate(ctx context.
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("failed to get metric dashboard attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to get metric dashboard attributes from resource : %v", err))
 	}
 
 	if _, err := c.UpdateUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to update metric dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to update metric dashboard: %v", err))
 	}
 
 	return p.resourceMetricDashboardRead(ctx, d, m)
@@ -305,7 +305,7 @@ func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.C
 
 	c := m.(*client.Client)
 	if err := c.DeleteUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to detele metrics dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("Failed to detele metrics dashboard: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
@@ -325,11 +325,11 @@ func (p *resourceUnifiedDashboardImp) resourceMetricDashboardImport(ctx context.
 	project, id := ids[0], ids[1]
 	dash, err := c.GetUnifiedDashboard(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("failed to get metric dashboard. err: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric dashboard. err: %v", err)
 	}
 	d.SetId(id)
 	if err := p.setResourceDataFromMetricDashboard(project, *dash, d); err != nil {
-		return nil, fmt.Errorf("failed to set metric dashboard from API response to terraform state: %v", err)
+		return nil, fmt.Errorf("Failed to set metric dashboard from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil

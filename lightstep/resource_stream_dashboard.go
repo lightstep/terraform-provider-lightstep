@@ -51,7 +51,7 @@ func resourceStreamDashboardCreate(ctx context.Context, d *schema.ResourceData, 
 
 	dashboard, err := client.CreateDashboard(ctx, projectName, dashboardName, streams)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("failed to create stream dashboard for [project: %v; dashboard: %v]: %v", projectName, dashboardName, err))
+		return diag.FromErr(fmt.Errorf("Failed to create stream dashboard for [project: %v; dashboard: %v]: %v", projectName, dashboardName, err))
 	}
 
 	d.SetId(dashboard.ID)
@@ -73,11 +73,11 @@ func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v\n", projectName, resourceId, apiErr))
+		return diag.FromErr(fmt.Errorf("Failed to get stream dashboard for [project: %v; resource_id: %v]: %v\n", projectName, resourceId, apiErr))
 	}
 
 	if err := setResourceDataFromStreamDashboard(d, *dashboard); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to set stream dashboard response from API to terraform state for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
+		return diag.FromErr(fmt.Errorf("Failed to set stream dashboard response from API to terraform state for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
 	}
 
 	return diags
@@ -93,7 +93,7 @@ func resourceStreamDashboardUpdate(ctx context.Context, d *schema.ResourceData, 
 	streams := streamIDsToStreams(d.Get("stream_ids").([]interface{}))
 
 	if _, err := client.UpdateDashboard(ctx, projectName, dashboardName, streams, resourceId); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to update stream condition for [project: %v; dashboard_name: %v, resource_id: %v]: %v", projectName, dashboardName, resourceId, err))
+		return diag.FromErr(fmt.Errorf("Failed to update stream condition for [project: %v; dashboard_name: %v, resource_id: %v]: %v", projectName, dashboardName, resourceId, err))
 	}
 
 	return diags
@@ -107,7 +107,7 @@ func resourceStreamDashboardDelete(ctx context.Context, d *schema.ResourceData, 
 	resourceId := d.Id()
 
 	if err := client.DeleteDashboard(ctx, projectName, resourceId); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to delete stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
+		return diag.FromErr(fmt.Errorf("Failed to delete stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
 	}
 
 	d.SetId("")
@@ -135,7 +135,7 @@ func resourceStreamDashboardImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := setResourceDataFromStreamDashboard(d, *dashboard); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("failed to set stream dashboard from API response to terraform state: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream dashboard from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
@@ -143,7 +143,7 @@ func resourceStreamDashboardImport(ctx context.Context, d *schema.ResourceData, 
 
 func setResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard client.Dashboard) error {
 	if err := d.Set("dashboard_name", dashboard.Attributes.Name); err != nil {
-		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
+		return fmt.Errorf("Unable to set dashboard_name resource field: %v", err)
 	}
 
 	var streamIDs []string
@@ -152,7 +152,7 @@ func setResourceDataFromStreamDashboard(d *schema.ResourceData, dashboard client
 	}
 
 	if err := d.Set("stream_ids", streamIDs); err != nil {
-		return fmt.Errorf("unable to set stream_ids resource field: %v", err)
+		return fmt.Errorf("Unable to set stream_ids resource field: %v", err)
 	}
 
 	return nil
