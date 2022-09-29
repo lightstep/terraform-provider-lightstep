@@ -1,15 +1,12 @@
 package lightstep
 
 import (
-	"context"
-	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccDashboard(t *testing.T) {
@@ -154,43 +151,4 @@ resource "lightstep_dashboard" "test" {
 			},
 		},
 	})
-}
-
-func testGetDashboardDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*client.Client)
-	for _, r := range s.RootModule().Resources {
-		if r.Type != "metric_alert" {
-			continue
-		}
-
-		s, err := conn.GetUnifiedDashboard(context.Background(), test_project, r.Primary.ID)
-		if err == nil {
-			if s.ID == r.Primary.ID {
-				return fmt.Errorf("Dashboard with ID (%v) still exists.", r.Primary.ID)
-			}
-		}
-	}
-	return nil
-}
-
-func testAccCheckDashboardExists(resourceName string, dashboard *client.UnifiedDashboard) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		tfDashboard, ok := s.RootModule().Resources[resourceName]
-		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
-		}
-
-		if tfDashboard.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
-		}
-
-		c := testAccProvider.Meta().(*client.Client)
-		dash, err := c.GetUnifiedDashboard(context.Background(), test_project, tfDashboard.Primary.ID)
-		if err != nil {
-			return err
-		}
-
-		dashboard = dash
-		return nil
-	}
 }

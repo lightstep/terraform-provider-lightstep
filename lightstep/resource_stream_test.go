@@ -181,11 +181,11 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 		// get stream from TF state
 		tfStream, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfStream.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("iD is not set")
 		}
 
 		// get stream from LS
@@ -213,7 +213,7 @@ func testAccStreamDestroy(s *terraform.State) error {
 		s, err := conn.GetStream(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Stream with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("stream with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 

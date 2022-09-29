@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -89,11 +90,11 @@ func testAccCheckWebhookDestinationExists(resourceName string, destination *clie
 		// get destination from TF state
 		tfDestination, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfDestination.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("iD is not set")
 		}
 
 		// get destination from LS
@@ -118,7 +119,7 @@ func testAccWebhookDestinationDestroy(s *terraform.State) error {
 		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Destination with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("destination with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 

@@ -80,7 +80,7 @@ func resourceWebhookDestinationCreate(ctx context.Context, d *schema.ResourceDat
 	dest.Attributes = attrs
 	destination, err := c.CreateDestination(ctx, d.Get("project_name").(string), dest)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create webhook destination %s: %v", destination, err))
+		return diag.FromErr(fmt.Errorf("failed to create webhook destination %s: %v", destination, err))
 	}
 
 	d.SetId(destination.ID)
@@ -92,38 +92,38 @@ func resourceWebhookDestinationImport(ctx context.Context, d *schema.ResourceDat
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_webhook_destination. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_webhook_destination. Expecting an  ID formed as '<lightstep_project>.<lightstep_destination_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
 	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get webhook destination: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get webhook destination: %v", err)
 	}
 
 	d.SetId(dest.ID)
 	if err := d.Set("project_name", project); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	attributes := dest.Attributes.(map[string]interface{})
 	if err := d.Set("destination_name", attributes["name"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set destination_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set destination_name resource field: %v", err)
 	}
 
 	if err := d.Set("url", attributes["url"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set url resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set url resource field: %v", err)
 	}
 
 	if attributes["template"] != nil && len(attributes["template"].(string)) > 0 {
 		if err := d.Set("template", attributes["template"]); err != nil {
-			return []*schema.ResourceData{}, fmt.Errorf("Unable to set template resource field: %v", err)
+			return []*schema.ResourceData{}, fmt.Errorf("unable to set template resource field: %v", err)
 		}
 	}
 
 	if len(attributes["custom_headers"].(map[string]interface{})) > 0 {
 		if err := d.Set("custom_headers", attributes["custom_headers"]); err != nil {
-			return []*schema.ResourceData{}, fmt.Errorf("Unable to set custom_headers resource field: %v", err)
+			return []*schema.ResourceData{}, fmt.Errorf("unable to set custom_headers resource field: %v", err)
 		}
 	}
 

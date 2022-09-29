@@ -60,12 +60,12 @@ func resourceAlertingRuleCreate(ctx context.Context, d *schema.ResourceData, m i
 		d.Get("destination_id").(string),
 		d.Get("condition_id").(string))
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create alerting rule: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create alerting rule: %v", err))
 	}
 
 	d.SetId(rule.ID)
 	if err := setResourceDataFromAlertingRule(d, rule); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set alerting rule response from API to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set alerting rule response from API to terraform state: %v", err))
 	}
 
 	return diags
@@ -82,11 +82,11 @@ func resourceAlertingRuleRead(ctx context.Context, d *schema.ResourceData, m int
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get alerting rule: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get alerting rule: %v", apiErr))
 	}
 
 	if err := setResourceDataFromAlertingRule(d, *rule); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set alerting rule response from API to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set alerting rule response from API to terraform state: %v", err))
 	}
 
 	return diags
@@ -97,7 +97,7 @@ func resourceAlertingRuleDelete(ctx context.Context, d *schema.ResourceData, m i
 
 	client := m.(*client.Client)
 	if err := client.DeleteAlertingRule(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to delete alerting rule: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to delete alerting rule: %v", err))
 	}
 
 	return diags
@@ -108,7 +108,7 @@ func resourceAlertingRuleImport(ctx context.Context, d *schema.ResourceData, m i
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_alerting_rule. Expecting an  ID formed as '<lightstep_project>.<lightstep_lightstep_alerting_rule_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_alerting_rule. Expecting an  ID formed as '<lightstep_project>.<lightstep_lightstep_alerting_rule_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
