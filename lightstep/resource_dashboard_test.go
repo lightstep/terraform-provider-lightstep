@@ -12,12 +12,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccMetricDashboard(t *testing.T) {
+func TestAccDashboard(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
 	// missing required field 'type'
 	badDashboard := `
-resource "lightstep_metric_dashboard" "test" {
+resource "lightstep_dashboard" "test" {
   project_name   = "terraform-provider-tests"
   dashboard_name = "Acceptance Test Dashboard"
 
@@ -30,30 +30,18 @@ resource "lightstep_metric_dashboard" "test" {
       max = 5.0
     }
 
-
     query {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
-
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
+      query_string        = "metric requests | rate 10m"
     }
   }
 }
 `
 
-	tqlDashboardConfig := `
-resource "lightstep_metric_dashboard" "test" {
+	queryDashboardConfig := `
+resource "lightstep_dashboard" "test" {
   project_name = "terraform-provider-tests"
   dashboard_name = "Acceptance Test Dashboard"
 
@@ -66,43 +54,14 @@ resource "lightstep_metric_dashboard" "test" {
       hidden              = false
       query_name          = "a"
       display             = "line"
-      tql                 = "metric m | rate"
-    }
-  }
-}
-`
-	spansQueryDashboardConfig := `
-resource "lightstep_metric_dashboard" "test_spans" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-
-      spans {
-        query = "service IN (\"frontend\")"
-        operator = "error_ratio"
-        operator_input_window_ms = 3600000
-      }
-
-      final_window_operation {
-        operator = "min"
-        input_window_ms  = 30000
-      }
+      query_string        = "metric m | rate"
     }
   }
 }
 `
 
 	dashboardConfig := `
-resource "lightstep_metric_dashboard" "test" {
+resource "lightstep_dashboard" "test" {
   project_name = "terraform-provider-tests"
   dashboard_name = "Acceptance Test Dashboard"
 
@@ -116,35 +75,17 @@ resource "lightstep_metric_dashboard" "test" {
       max = 5.0
     }
 
-
     query {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
-
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      filters = [{
-        key   = "kube_app"
-        operand = "contains"
-        value = "frontend"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
+      query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
     }
   }
 }
 `
 	updatedTitleDashboardConfig := `
-resource "lightstep_metric_dashboard" "test" {
+resource "lightstep_dashboard" "test" {
   project_name = "terraform-provider-tests"
   dashboard_name = "Acceptance Test Dashboard Updated"
 
@@ -158,30 +99,18 @@ resource "lightstep_metric_dashboard" "test" {
       max = 5.0
     }
 
-
     query {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
+      query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
 
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
     }
   }
 }
 `
 
-	resourceName := "lightstep_metric_dashboard.test"
-	resourceNameSpans := "lightstep_metric_dashboard.test_spans"
+	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -202,40 +131,18 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "Chart Number One"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "pagerduty.task.success"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator", "rate"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator_input_window_ms", "0"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "bar"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.key", "kube_app"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.value", "pagerduty"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.key", "kube_app"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.operand", "contains"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.value", "frontend"),
 				),
 			},
 			{
-				Config: tqlDashboardConfig,
+				Config: queryDashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric m | rate"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", "metric m | rate"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
-				),
-			},
-			{
-				Config: spansQueryDashboardConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
-					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.operator", "min"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.input_window_ms", "30000"),
 				),
 			},
 			{
@@ -249,7 +156,7 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
-func testGetMetricDashboardDestroy(s *terraform.State) error {
+func testGetDashboardDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*client.Client)
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "metric_alert" {
@@ -259,14 +166,14 @@ func testGetMetricDashboardDestroy(s *terraform.State) error {
 		s, err := conn.GetUnifiedDashboard(context.Background(), test_project, r.Primary.ID)
 		if err == nil {
 			if s.ID == r.Primary.ID {
-				return fmt.Errorf("Metric dashboard with ID (%v) still exists.", r.Primary.ID)
+				return fmt.Errorf("Dashboard with ID (%v) still exists.", r.Primary.ID)
 			}
 		}
 	}
 	return nil
 }
 
-func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.UnifiedDashboard) resource.TestCheckFunc {
+func testAccCheckDashboardExists(resourceName string, dashboard *client.UnifiedDashboard) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfDashboard, ok := s.RootModule().Resources[resourceName]
 		if !ok {

@@ -80,7 +80,7 @@ func resourceMetricCondition() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
-					Schema: getQuerySchema(),
+					Schema: getMetricQuerySchema(),
 				},
 			},
 			"alerting_rule": {
@@ -181,7 +181,7 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getQuerySchema() map[string]*schema.Schema {
+func getMetricQuerySchema() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
@@ -257,11 +257,19 @@ func getQuerySchema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"tql": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Deprecated:  "Use lightstep_dashboard or query_string field instead",
+			Description: "Deprecated, use query_string instead",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
 		},
 		"spans": getSpansQuerySchema(),
+		"query_string": {
+			Type:        schema.TypeString,
+			Description: "query expressed in Lightstep Unified Query Language (UQL)",
+			Optional:    true,
+			Computed:    true,
+		},
 	}
 	return sma
 }
@@ -546,15 +554,19 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 	hasSpanSingle := false
 	for _, query := range queries {
 
-		// If this chart uses a TQL query
-		tqlQuery := query["tql"].(string)
-		if tqlQuery != "" {
+		// When checking if this chart uses a query string, check deprecated TQL field as well
+		queryString := query["query_string"].(string)
+		if queryString == "" {
+			queryString = query["tql"].(string)
+		}
+
+		if queryString != "" {
 			newQuery := client.MetricQueryWithAttributes{
 				Name:     query["query_name"].(string),
 				Type:     "tql",
 				Hidden:   query["hidden"].(bool),
 				Display:  query["display"].(string),
-				TQLQuery: tqlQuery,
+				TQLQuery: queryString,
 			}
 			newQueries = append(newQueries, newQuery)
 			continue
@@ -885,7 +897,7 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		return fmt.Errorf("Unable to set expression resource field: %v", err)
 	}
 
-	queries := getQueriesFromResourceData(c.Attributes.Queries)
+	queries := getQueriesFromMetricDashboardResourceData(c.Attributes.Queries)
 	if err := d.Set("metric_query", queries); err != nil {
 		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
 	}
@@ -939,7 +951,7 @@ func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []in
 	return includeFilters, excludeFilters, allFilters
 }
 
-func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromMetricDashboardResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(q.Query.Filters)
@@ -964,7 +976,8 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []
 			"exclude_filters":     excludeFilters,
 			"filters":             allFilters,
 			"group_by":            groupBy,
-			"tql":                 q.TQLQuery,
+			"tql":                 q.TQLQuery, // deprecated
+			"query_string":        q.TQLQuery,
 		}
 		if q.Query.TimeseriesOperatorInputWindowMs != nil {
 			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs

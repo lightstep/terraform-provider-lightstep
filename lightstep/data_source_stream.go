@@ -3,10 +3,11 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/client"
-	"net/http"
 )
 
 func dataSourceStream() *schema.Resource {

@@ -85,7 +85,7 @@ func Run(args ...string) error {
 	}
 
 	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepEnv)
-	d, err := c.GetMetricDashboard(context.Background(), args[3], args[4])
+	d, err := c.GetUnifiedDashboard(context.Background(), args[3], args[4])
 
 	if err != nil {
 		log.Fatalf("error: could not get dashboard: %v", err)
