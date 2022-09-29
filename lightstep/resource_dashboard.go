@@ -30,7 +30,7 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 	return sma
 }
 
-func getQueriesFromDashboardResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromUnifiedDashboardResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		qs := map[string]interface{}{

@@ -345,7 +345,7 @@ func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m 
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v", apiErr))
+		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v\n", apiErr))
 	}
 
 	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), *cond, d); err != nil {
@@ -388,7 +388,7 @@ func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, 
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
@@ -770,12 +770,12 @@ func validateSpansQuery(spansQuery interface{}) error {
 	s := spansQuery.([]interface{})[0].(map[string]interface{})
 	query, hasQuery := s["query"]
 	if !hasQuery {
-		return fmt.Errorf("Missing required field query om spans")
+		return fmt.Errorf("missing required field query om spans")
 	}
 
 	operator, hasOperator := s["operator"]
 	if !hasOperator {
-		return fmt.Errorf("Missing required field operator on spans")
+		return fmt.Errorf("missing required field operator on spans")
 	}
 
 	switch query.(type) {
@@ -845,13 +845,13 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 	}
 
 	if groupBy == nil || len(groupBy.([]interface{})) == 0 {
-		return fmt.Errorf("Missing fields in group_by found on composite")
+		return fmt.Errorf("missing fields in group_by found on composite")
 	}
 
 	g := groupBy.([]interface{})[0].(map[string]interface{})
 	_, hasAggMethod := g["aggregation_method"]
 	if !hasAggMethod {
-		return fmt.Errorf("Missing required field aggregation_method on group_by")
+		return fmt.Errorf("missing required field aggregation_method on group_by")
 	}
 
 	return nil
