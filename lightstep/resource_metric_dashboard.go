@@ -225,12 +225,12 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 
 	max, ok := y["max"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("missing required attribute 'max' for y_axis")
+		return nil, fmt.Errorf("Missing required attribute 'max' for y_axis")
 	}
 
 	min, ok := y["min"].(float64)
 	if !ok {
-		return nil, fmt.Errorf("missing required attribute 'min' for y_axis")
+		return nil, fmt.Errorf("Missing required attribute 'min' for y_axis")
 	}
 
 	yAxis := &client.YAxis{

@@ -770,12 +770,12 @@ func validateSpansQuery(spansQuery interface{}) error {
 	s := spansQuery.([]interface{})[0].(map[string]interface{})
 	query, hasQuery := s["query"]
 	if !hasQuery {
-		return fmt.Errorf("missing required field query om spans")
+		return fmt.Errorf("Missing required field query om spans")
 	}
 
 	operator, hasOperator := s["operator"]
 	if !hasOperator {
-		return fmt.Errorf("missing required field operator on spans")
+		return fmt.Errorf("Missing required field operator on spans")
 	}
 
 	switch query.(type) {
@@ -845,13 +845,13 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 	}
 
 	if groupBy == nil || len(groupBy.([]interface{})) == 0 {
-		return fmt.Errorf("missing fields in group_by found on composite")
+		return fmt.Errorf("Missing fields in group_by found on composite")
 	}
 
 	g := groupBy.([]interface{})[0].(map[string]interface{})
 	_, hasAggMethod := g["aggregation_method"]
 	if !hasAggMethod {
-		return fmt.Errorf("missing required field aggregation_method on group_by")
+		return fmt.Errorf("Missing required field aggregation_method on group_by")
 	}
 
 	return nil
