@@ -264,12 +264,6 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 			Computed:    true,
 		},
 		"spans": getSpansQuerySchema(),
-		"query_string": {
-			Type:        schema.TypeString,
-			Description: "query expressed in Lightstep Unified Query Language (UQL)",
-			Optional:    true,
-			Computed:    true,
-		},
 	}
 	return sma
 }
@@ -555,8 +549,8 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 	for _, query := range queries {
 
 		// When checking if this chart uses a query string, check deprecated TQL field as well
-		queryString := query["query_string"].(string)
-		if queryString == "" {
+		queryString, ok := query["query_string"].(string)
+		if !ok || queryString == "" {
 			queryString = query["tql"].(string)
 		}
 
@@ -977,7 +971,6 @@ func getQueriesFromMetricDashboardResourceData(queriesIn []client.MetricQueryWit
 			"filters":             allFilters,
 			"group_by":            groupBy,
 			"tql":                 q.TQLQuery, // deprecated
-			"query_string":        q.TQLQuery,
 		}
 		if q.Query.TimeseriesOperatorInputWindowMs != nil {
 			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs
