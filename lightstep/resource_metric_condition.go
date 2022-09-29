@@ -551,7 +551,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 		// When checking if this chart uses a query string, check deprecated TQL field as well
 		queryString, ok := query["query_string"].(string)
 		if !ok || queryString == "" {
-			queryString = query["tql"].(string)
+			queryString, _ = query["tql"].(string)
 		}
 
 		if queryString != "" {
