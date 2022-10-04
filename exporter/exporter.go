@@ -93,7 +93,11 @@ func escapeHCLString(input string) string {
 func escapeQueryString(input string) string {
 	// Use "heredoc" syntax if the query contains any newlines or other characters that'd
 	// need to be escaped and make the single line representation less convenient to work with.
-	if strings.Contains(input, "\n") || strings.Contains(input, "\t") || strings.Contains(input, "\"") {
+	if strings.Contains(input, "\"") ||
+		strings.Contains(input, "\n") ||
+		strings.Contains(input, "\r") ||
+		strings.Contains(input, "\t") ||
+		strings.Contains(input, "\\") {
 		return "<<EOT\n" + input + "\nEOT"
 	} else {
 		return escapeHCLString(input)
