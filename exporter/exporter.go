@@ -74,7 +74,7 @@ resource "lightstep_dashboard" "exported_dashboard" {
       display             = "{{.Display}}"
       hidden              = {{.Hidden}}
       query_string        = {{escapeQueryString .TQLQuery}}
-	}
+    }
 {{end}}
   }
 {{end}}
@@ -100,7 +100,9 @@ func escapeQueryString(input string) string {
 		strings.Contains(input, "\\") {
 		return "<<EOT\n" + input + "\nEOT"
 	} else {
-		return `"` + escapeHCLString(input) + `"`
+		// No need to escape input since the other branch should be hit for any strings requiring
+		// escaping.
+		return `"` + input + `"`
 	}
 }
 
