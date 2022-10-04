@@ -28,7 +28,7 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
       hidden              = {{.Hidden}}
 {{if (and .SpansQuery .SpansQuery.Query) }}
       spans {
-         query         = "{{escapeSpanQuery .SpansQuery.Query}}"
+         query         = "{{escapeHCLString .SpansQuery.Query}}"
          operator      = "{{.SpansQuery.Operator}}"
          group_by_keys = [{{range .SpansQuery.GroupByKeys}}"{{.}}",{{end}}]{{if eq .SpansQuery.Operator "latency"}}
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
@@ -68,22 +68,35 @@ resource "lightstep_dashboard" "exported_dashboard" {
     name = "{{.Title}}"
     rank = "{{.Rank}}"
     type = "{{.ChartType}}"
-    query_string = "{{escapeQueryString .TQLQuery}}"
+{{range .MetricQueries}}
+    query {
+      query_name          = "{{.Name}}"
+      display             = "{{.Display}}"
+      hidden              = {{.Hidden}}
+      query_string        = {{escapeQueryString .TQLQuery}}
+	}
+{{end}}
   }
 {{end}}
 }
 `
 
-func escapeSpanQuery(input string) string {
-	return strings.Replace(input, "\"", "\\\"", -1)
+func escapeHCLString(input string) string {
+	input = strings.Replace(input, "\"", "\\\"", -1)
+	input = strings.Replace(input, "\n", "\\\t", -1)
+	input = strings.Replace(input, "\r", "\\\t", -1)
+	input = strings.Replace(input, "\t", "\\\t", -1)
+	input = strings.Replace(input, "\\", "\\\\", -1)
+	return input
 }
 
 func escapeQueryString(input string) string {
-	// Use "heredoc" syntax if the query contains any newlines
-	if strings.Index(input, "\n") == -1 {
-		return strings.Replace(input, "\"", "\\\"", -1)
-	} else {
+	// Use "heredoc" syntax if the query contains any newlines or other characters that'd
+	// need to be escaped and make the single line representation less convenient to work with.
+	if strings.Contains(input, "\n") || strings.Contains(input, "\t") || strings.Contains(input, "\"") {
 		return "<<EOT\n" + input + "\nEOT"
+	} else {
+		return escapeHCLString(input)
 	}
 }
 
@@ -117,7 +130,7 @@ func dashboardUsesQueryString(d *client.UnifiedDashboard) (bool, error) {
 
 func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
 	t := template.New("").Funcs(template.FuncMap{
-		"escapeSpanQuery":   escapeSpanQuery,
+		"escapeHCLString":   escapeHCLString,
 		"escapeQueryString": escapeQueryString,
 	})
 
@@ -137,7 +150,7 @@ func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
 		return fmt.Errorf("dashboard parsing error: %v", err)
 	}
 
-	err = t.Execute(os.Stdout, d)
+	err = t.Execute(wr, d)
 	if err != nil {
 		log.Fatalf("Could not generate template: %v", err)
 	}
