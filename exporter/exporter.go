@@ -34,7 +34,7 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
       }
 {{end}}{{if .TQLQuery}}
-      tql                 = "{{escapeQueryString .TQLQuery}}"
+      tql                 = {{escapeQueryString .TQLQuery}}
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
       timeseries_operator = "{{.Query.TimeseriesOperator}}"
@@ -100,7 +100,7 @@ func escapeQueryString(input string) string {
 		strings.Contains(input, "\\") {
 		return "<<EOT\n" + input + "\nEOT"
 	} else {
-		return escapeHCLString(input)
+		return `"` + escapeHCLString(input) + `"`
 	}
 }
 

@@ -26,7 +26,7 @@ func TestExportToHCL(t *testing.T) {
 		},
 		{
 			QueryString: "metric requests | rate 10m",
-			Expected:    "query_string        = metric requests | rate 10m",
+			Expected:    `query_string        = "metric requests | rate 10m"`,
 		},
 		{
 			QueryString: `metric requests | rate | filter service = "apache" | group_by [], sum`,
