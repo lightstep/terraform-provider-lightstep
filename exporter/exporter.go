@@ -106,32 +106,20 @@ func escapeQueryString(input string) string {
 	}
 }
 
-// dashboardUsesQueryString returns true if any chart in the dashboard
-// uses the query string format.
-//
-// The Provider does not support mixing legacy query charts and
-// query-string charts in the same dashboard and will return an error
-// if there is a mix.
-func dashboardUsesQueryString(d *client.UnifiedDashboard) (bool, error) {
-
-	hasQueryString := false
-	hasLegacyQuery := false
+// dashboardUsesLegacyQuery returns true if any chart in the dashboard
+// uses the legacy query format.
+func dashboardUsesLegacyQuery(d *client.UnifiedDashboard) bool {
 	for _, chart := range d.Attributes.Charts {
 		for _, q := range chart.MetricQueries {
-			if len(q.TQLQuery) > 0 {
-				hasQueryString = true
-			} else {
-				hasLegacyQuery = true
-			}
-			if hasLegacyQuery && hasQueryString {
-				return false, fmt.Errorf("dashboards containing a mix of legacy and query string charts are not supported")
+			// Assume if a chart is defined but has query string defined, it uses a legacy query.  This
+			// isn't strictly correct if the chart has *no* query but a chart with no query is not
+			// meaningful to begin with.
+			if len(q.TQLQuery) == 0 {
+				return true
 			}
 		}
 	}
-	if hasLegacyQuery {
-		return false, nil
-	}
-	return true, nil
+	return false
 }
 
 func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
@@ -140,18 +128,16 @@ func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
 		"escapeQueryString": escapeQueryString,
 	})
 
-	usesQueryString, err := dashboardUsesQueryString(d)
-	if err != nil {
-		return err
-	}
+	usesLegacyQuery := dashboardUsesLegacyQuery(d)
 
+	// Use the legacy format if any chart uses a legacy query
 	var hclTemplate string
-	if usesQueryString {
-		hclTemplate = unifiedDashboardTemplate
-	} else {
+	if usesLegacyQuery {
 		hclTemplate = metricDashboardTemplate
+	} else {
+		hclTemplate = unifiedDashboardTemplate
 	}
-	t, err = t.Parse(hclTemplate)
+	t, err := t.Parse(hclTemplate)
 	if err != nil {
 		return fmt.Errorf("dashboard parsing error: %v", err)
 	}
