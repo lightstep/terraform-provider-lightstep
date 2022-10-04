@@ -82,7 +82,7 @@ resource "lightstep_dashboard" "exported_dashboard" {
 `
 
 func escapeHCLString(input string) string {
-	// Escape "/" first so other the other escape codes don't get escaped
+	// Escape "\" first so other the other escape codes don't get escaped
 	input = strings.Replace(input, "\\", "\\\\", -1)
 
 	input = strings.Replace(input, "\"", "\\\"", -1)
