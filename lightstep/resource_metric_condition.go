@@ -84,7 +84,7 @@ func resourceMetricCondition() *schema.Resource {
 				},
 			},
 			"alerting_rule": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchema(),
@@ -120,7 +120,6 @@ func getAlertingRuleSchema() map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Non-equality filters (operand: contains, regexp, etc)",
 			Optional:    true,
-			Computed:    true,
 		},
 	}
 }
@@ -426,7 +425,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 
 	attributes.Queries = queries
 
-	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").([]interface{}))
+	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").(*schema.Set))
 	if err != nil {
 		return nil, err
 	}
@@ -435,15 +434,21 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 	return attributes, nil
 }
 
-func buildAlertingRules(alertingRulesIn []interface{}) ([]client.AlertingRule, error) {
+func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, error) {
 	var newRules []client.AlertingRule
 
 	var alertingRules []map[string]interface{}
-	for _, ruleIn := range alertingRulesIn {
+	for _, ruleIn := range alertingRulesIn.List() {
 		alertingRules = append(alertingRules, ruleIn.(map[string]interface{}))
 	}
 
 	for _, rule := range alertingRules {
+		if rule["id"] == "" {
+			// This indicates the alerting destination was changed (and as such shows up as a different set entry
+			// We just want to skip over these.
+			continue
+		}
+
 		newRule := client.AlertingRule{
 			MessageDestinationID: rule["id"].(string),
 		}
@@ -909,7 +914,13 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		})
 	}
 
-	if err := d.Set("alerting_rule", alertingRules); err != nil {
+	alertingRuleSet := schema.NewSet(
+		schema.HashResource(&schema.Resource{
+			Schema: getAlertingRuleSchema(),
+		}),
+		alertingRules,
+	)
+	if err := d.Set("alerting_rule", alertingRuleSet); err != nil {
 		return fmt.Errorf("unable to set alerting_rule resource field: %v", err)
 	}
 

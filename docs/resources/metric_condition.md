@@ -93,7 +93,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 ### Optional
 
-- `alerting_rule` (Block List) (see [below for nested schema](#nestedblock--alerting_rule))
+- `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
 - `description` (String)
 
 ### Read-Only

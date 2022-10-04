@@ -59,6 +59,11 @@ It's possible to export an existing Lightstep dashboard to HCL code using the pr
 
 The `exporter` utility is built-in to the provider binary and requires certain environment variables to be set:
 
+For the LIGHTSTEP_ENV variable:
+- public = app.lightstep.com
+- meta = app-meta.lightstep.com
+- staging = app-staging.lightstep.com
+
 ```
 $ export LIGHTSTEP_API_KEY=....
 $ export LIGHTSTEP_ORG=your-org

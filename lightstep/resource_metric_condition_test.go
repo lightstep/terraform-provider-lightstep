@@ -7,6 +7,8 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/stretchr/testify/require"
@@ -212,11 +214,13 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.key", "project_name"),
-					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.include_filters.0.value", "catlab"),
-					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.key", "service_name"),
-					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.operand", "contains"),
-					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.filters.0.value", "frontend"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
+						"include_filters.0.key":   "project_name",
+						"include_filters.0.value": "catlab",
+						"filters.0.key":           "service_name",
+						"filters.0.operand":       "contains",
+						"filters.0.value":         "frontend",
+					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
@@ -1044,7 +1048,13 @@ func TestBuildAlertingRules(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		result, err := buildAlertingRules(c.rules)
+		alertingRuleSet := schema.NewSet(
+			schema.HashResource(&schema.Resource{
+				Schema: getAlertingRuleSchema(),
+			}),
+			c.rules,
+		)
+		result, err := buildAlertingRules(alertingRuleSet)
 		require.NoError(t, err)
 		require.Equal(t, c.expected, result)
 		require.Equal(t, c.expected, result)
