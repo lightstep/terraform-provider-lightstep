@@ -44,7 +44,7 @@ module "aws-dashboards" {
 
 ```
    # Avoids 500 errors when creating many resources.
-   terraform apply -parallelism=1 
+   terraform apply -parallelism=1
 ```
 ## Development
 
@@ -55,6 +55,11 @@ See `DEVELOPMENT.md`.
 It's possible to export an existing Lightstep dashboard to HCL code using the provider. This allows you to generate terrform code for a dashboard you created in the Lightstep UI ("reverse terraform").
 
 The `exporter` utility is built-in to the provider binary and requires certain environment variables to be set:
+
+For the LIGHTSTEP_ENV variable:
+- public = app.lightstep.com
+- meta = app-meta.lightstep.com
+- staging = app-staging.lightstep.com
 
 ```
 $ export LIGHTSTEP_API_KEY=....
