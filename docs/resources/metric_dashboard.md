@@ -129,7 +129,6 @@ Optional:
 - `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--group_by))
 - `include_filters` (List of Map of String) Equality filters (operand: eq)
 - `metric` (String)
-- `query_string` (String) query expressed in Lightstep Unified Query Language (UQL)
 - `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
