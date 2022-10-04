@@ -32,7 +32,7 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
       }
 {{end}}{{if .TQLQuery}}
-      tql                 = "{{.TQLQuery}}"
+      tql                 = {{escapeTQLQuery .TQLQuery}}
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
       timeseries_operator = "{{.Query.TimeseriesOperator}}"
@@ -59,6 +59,10 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
 
 func escapeSpanQuery(input string) string {
 	return strings.Replace(input, "\"", "\\\"", -1)
+}
+
+func escapeTQLQuery(input string) string {
+	return "<<EOT\n" + input + "\nEOT"
 }
 
 func Run(args ...string) error {
@@ -93,6 +97,7 @@ func Run(args ...string) error {
 
 	t := template.New("").Funcs(template.FuncMap{
 		"escapeSpanQuery": escapeSpanQuery,
+		"escapeTQLQuery":  escapeTQLQuery,
 	})
 
 	t, err = t.Parse(dashboardTemplate)
