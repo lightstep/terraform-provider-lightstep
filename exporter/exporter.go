@@ -2,6 +2,8 @@ package exporter
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -10,7 +12,7 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
-const dashboardTemplate = `
+const metricDashboardTemplate = `
 resource "lightstep_metric_dashboard" "exported_dashboard" {
   project_name = var.project
   dashboard_name = "{{.Attributes.Name}}"
@@ -26,13 +28,13 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
       hidden              = {{.Hidden}}
 {{if (and .SpansQuery .SpansQuery.Query) }}
       spans {
-         query         = "{{escapeSpanQuery .SpansQuery.Query}}"
+         query         = "{{escapeHCLString .SpansQuery.Query}}"
          operator      = "{{.SpansQuery.Operator}}"
          group_by_keys = [{{range .SpansQuery.GroupByKeys}}"{{.}}",{{end}}]{{if eq .SpansQuery.Operator "latency"}}
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
       }
 {{end}}{{if .TQLQuery}}
-      tql                 = "{{.TQLQuery}}"
+      tql                 = {{escapeQueryString .TQLQuery}}
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
       timeseries_operator = "{{.Query.TimeseriesOperator}}"
@@ -57,8 +59,96 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
 }
 `
 
-func escapeSpanQuery(input string) string {
-	return strings.Replace(input, "\"", "\\\"", -1)
+const unifiedDashboardTemplate = `
+resource "lightstep_dashboard" "exported_dashboard" {
+  project_name = var.project
+  dashboard_name = "{{.Attributes.Name}}"
+{{range .Attributes.Charts}}
+  chart {
+    name = "{{.Title}}"
+    rank = "{{.Rank}}"
+    type = "{{.ChartType}}"
+{{range .MetricQueries}}
+    query {
+      query_name          = "{{.Name}}"
+      display             = "{{.Display}}"
+      hidden              = {{.Hidden}}
+      query_string        = {{escapeQueryString .TQLQuery}}
+    }
+{{end}}
+  }
+{{end}}
+}
+`
+
+func escapeHCLString(input string) string {
+	// Escape "\" first so other the other escape codes don't get escaped
+	input = strings.Replace(input, "\\", "\\\\", -1)
+
+	input = strings.Replace(input, "\"", "\\\"", -1)
+	input = strings.Replace(input, "\n", "\\\t", -1)
+	input = strings.Replace(input, "\r", "\\\t", -1)
+	input = strings.Replace(input, "\t", "\\\t", -1)
+	return input
+}
+
+func escapeQueryString(input string) string {
+	// Use "heredoc" syntax if the query contains any newlines or other characters that'd
+	// need to be escaped and make the single line representation less convenient to work with.
+	if strings.Contains(input, "\"") ||
+		strings.Contains(input, "\n") ||
+		strings.Contains(input, "\r") ||
+		strings.Contains(input, "\t") ||
+		strings.Contains(input, "\\") {
+		return "<<EOT\n" + input + "\nEOT"
+	} else {
+		// No need to escape input since the other branch should be hit for any strings requiring
+		// escaping.
+		return `"` + input + `"`
+	}
+}
+
+// dashboardUsesLegacyQuery returns true if any chart in the dashboard
+// uses the legacy query format.
+func dashboardUsesLegacyQuery(d *client.UnifiedDashboard) bool {
+	for _, chart := range d.Attributes.Charts {
+		for _, q := range chart.MetricQueries {
+			// Assume if a chart is defined but has query string defined, it uses a legacy query.  This
+			// isn't strictly correct if the chart has *no* query but a chart with no query is not
+			// meaningful to begin with.
+			if len(q.TQLQuery) == 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
+	t := template.New("").Funcs(template.FuncMap{
+		"escapeHCLString":   escapeHCLString,
+		"escapeQueryString": escapeQueryString,
+	})
+
+	usesLegacyQuery := dashboardUsesLegacyQuery(d)
+
+	// Use the legacy format if any chart uses a legacy query
+	var hclTemplate string
+	if usesLegacyQuery {
+		hclTemplate = metricDashboardTemplate
+	} else {
+		hclTemplate = unifiedDashboardTemplate
+	}
+	t, err := t.Parse(hclTemplate)
+	if err != nil {
+		return fmt.Errorf("dashboard parsing error: %v", err)
+	}
+
+	err = t.Execute(wr, d)
+	if err != nil {
+		log.Fatalf("Could not generate template: %v", err)
+	}
+	return nil
 }
 
 func Run(args ...string) error {
@@ -86,23 +176,13 @@ func Run(args ...string) error {
 
 	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepEnv)
 	d, err := c.GetUnifiedDashboard(context.Background(), args[3], args[4])
-
 	if err != nil {
 		log.Fatalf("error: could not get dashboard: %v", err)
 	}
 
-	t := template.New("").Funcs(template.FuncMap{
-		"escapeSpanQuery": escapeSpanQuery,
-	})
-
-	t, err = t.Parse(dashboardTemplate)
+	err = exportToHCL(os.Stdout, d)
 	if err != nil {
-		log.Fatal("Dashboard parsing error: ", err)
-	}
-
-	err = t.Execute(os.Stdout, d)
-	if err != nil {
-		log.Fatalf("Could not generate template: %v", err)
+		log.Fatalf("Could not export to HCL: %v", err)
 	}
 
 	return nil
