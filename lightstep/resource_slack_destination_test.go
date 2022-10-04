@@ -3,8 +3,9 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -64,11 +65,11 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *client
 		// get destination from TF state
 		tfDestination, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfDestination.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get destination from LS
@@ -93,7 +94,7 @@ func testAccSlackDestinationDestroy(s *terraform.State) error {
 		d, err := conn.GetDestination(context.Background(), test_project, r.Primary.ID)
 		if err == nil {
 			if d.ID == r.Primary.ID {
-				return fmt.Errorf("Destination with ID (%v) still exists.", r.Primary.ID)
+				return fmt.Errorf("destination with ID (%v) still exists.", r.Primary.ID)
 			}
 		}
 	}

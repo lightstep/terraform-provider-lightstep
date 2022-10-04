@@ -73,7 +73,7 @@ func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v\n", projectName, resourceId, apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, apiErr))
 	}
 
 	if err := setResourceDataFromStreamDashboard(d, *dashboard); err != nil {

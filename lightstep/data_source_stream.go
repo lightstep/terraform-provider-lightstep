@@ -3,10 +3,11 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/lightstep/terraform-provider-lightstep/client"
-	"net/http"
 )
 
 func dataSourceStream() *schema.Resource {
@@ -43,9 +44,9 @@ func dataSourceLightstepStreamRead(ctx context.Context, d *schema.ResourceData, 
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
-			return diag.FromErr(fmt.Errorf("Stream not found: %v\n", apiErr))
+			return diag.FromErr(fmt.Errorf("stream not found: %v", apiErr))
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get stream: %v", apiErr))
 	}
 	d.SetId(s.ID)
 	if err := d.Set("stream_name", s.Attributes.Name); err != nil {

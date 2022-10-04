@@ -80,7 +80,7 @@ func resourceMetricCondition() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
-					Schema: getQuerySchema(),
+					Schema: getMetricQuerySchema(),
 				},
 			},
 			"alerting_rule": {
@@ -180,7 +180,7 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getQuerySchema() map[string]*schema.Schema {
+func getMetricQuerySchema() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
@@ -256,9 +256,11 @@ func getQuerySchema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"tql": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Computed: true,
+			Deprecated:  "Use lightstep_dashboard or query_string field instead",
+			Description: "Deprecated, use query_string instead",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Computed:    true,
 		},
 		"spans": getSpansQuerySchema(),
 	}
@@ -308,7 +310,7 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attributes, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
 	condition := client.MetricCondition{
@@ -318,7 +320,7 @@ func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, 
 
 	created, err := c.CreateMetricCondition(ctx, d.Get("project_name").(string), condition)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create metric condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create metric condition: %v", err))
 	}
 
 	d.SetId(created.ID)
@@ -336,11 +338,11 @@ func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m 
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition: %v\n", apiErr))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 
 	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), *cond, d); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err))
 	}
 
 	return diags
@@ -350,11 +352,11 @@ func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	attrs, err := getMetricConditionAttributesFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to get metric condition attributes from resource : %v", err))
+		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
 	if _, err := c.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to update metric condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to update metric condition: %v", err))
 	}
 
 	return resourceMetricConditionRead(ctx, d, m)
@@ -365,7 +367,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 
 	c := m.(*client.Client)
 	if err := c.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to detele metrics condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to detele metrics condition: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
@@ -379,18 +381,18 @@ func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, 
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
 	}
 
 	project, id := ids[0], ids[1]
 	c, err := clnt.GetMetricCondition(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get metric condition. err: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get metric condition. err: %v", err)
 	}
 
 	d.SetId(id)
 	if err := setResourceDataFromMetricCondition(project, *c, d); err != nil {
-		return nil, fmt.Errorf("Failed to set metric condition from API response to terraform state: %v", err)
+		return nil, fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
@@ -551,15 +553,19 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 	hasSpanSingle := false
 	for _, query := range queries {
 
-		// If this chart uses a TQL query
-		tqlQuery := query["tql"].(string)
-		if tqlQuery != "" {
+		// When checking if this chart uses a query string, check deprecated TQL field as well
+		queryString, ok := query["query_string"].(string)
+		if !ok || queryString == "" {
+			queryString, _ = query["tql"].(string)
+		}
+
+		if queryString != "" {
 			newQuery := client.MetricQueryWithAttributes{
 				Name:     query["query_name"].(string),
 				Type:     "tql",
 				Hidden:   query["hidden"].(bool),
 				Display:  query["display"].(string),
-				TQLQuery: tqlQuery,
+				TQLQuery: queryString,
 			}
 			newQueries = append(newQueries, newQuery)
 			continue
@@ -852,19 +858,19 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 
 func setResourceDataFromMetricCondition(project string, c client.MetricCondition, d *schema.ResourceData) error {
 	if err := d.Set("project_name", project); err != nil {
-		return fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	if err := d.Set("name", c.Attributes.Name); err != nil {
-		return fmt.Errorf("Unable to set name resource field: %v", err)
+		return fmt.Errorf("unable to set name resource field: %v", err)
 	}
 
 	if err := d.Set("description", c.Attributes.Description); err != nil {
-		return fmt.Errorf("Unable to set description resource field: %v", err)
+		return fmt.Errorf("unable to set description resource field: %v", err)
 	}
 
 	if err := d.Set("type", "metric_alert"); err != nil {
-		return fmt.Errorf("Unable to set type resource field: %v", err)
+		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
 	thresholdEntries := map[string]interface{}{}
@@ -887,12 +893,12 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 			},
 		},
 	}); err != nil {
-		return fmt.Errorf("Unable to set expression resource field: %v", err)
+		return fmt.Errorf("unable to set expression resource field: %v", err)
 	}
 
-	queries := getQueriesFromResourceData(c.Attributes.Queries)
+	queries := getQueriesFromMetricDashboardResourceData(c.Attributes.Queries)
 	if err := d.Set("metric_query", queries); err != nil {
-		return fmt.Errorf("Unable to set metric_proxy resource field: %v", err)
+		return fmt.Errorf("unable to set metric_proxy resource field: %v", err)
 	}
 
 	var alertingRules []interface{}
@@ -915,7 +921,7 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		alertingRules,
 	)
 	if err := d.Set("alerting_rule", alertingRuleSet); err != nil {
-		return fmt.Errorf("Unable to set alerting_rule resource field: %v", err)
+		return fmt.Errorf("unable to set alerting_rule resource field: %v", err)
 	}
 
 	return nil
@@ -950,7 +956,7 @@ func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []in
 	return includeFilters, excludeFilters, allFilters
 }
 
-func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromMetricDashboardResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(q.Query.Filters)
@@ -975,7 +981,7 @@ func getQueriesFromResourceData(queriesIn []client.MetricQueryWithAttributes) []
 			"exclude_filters":     excludeFilters,
 			"filters":             allFilters,
 			"group_by":            groupBy,
-			"tql":                 q.TQLQuery,
+			"tql":                 q.TQLQuery, // deprecated
 		}
 		if q.Query.TimeseriesOperatorInputWindowMs != nil {
 			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs

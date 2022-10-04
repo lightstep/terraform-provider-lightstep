@@ -6,6 +6,8 @@ description: |-
 
 ---
 
+# NOTE: this resource will be deprecated in v2+. Use `lightstep_dashboard` instead.
+
 # lightstep_metric_dashboard (Resource)
 
 Provides a [Lightstep Metric Dashboard](https://api-docs.lightstep.com/reference/listmetricdashboardid). This can be used to create and manage Lightstep Metric Dashboards.
@@ -130,7 +132,7 @@ Optional:
 - `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
-- `tql` (String)
+- `tql` (String, Deprecated) Deprecated, use query_string instead
 
 <a id="nestedblock--chart--query--final_window_operation"></a>
 ### Nested Schema for `chart.query.final_window_operation`

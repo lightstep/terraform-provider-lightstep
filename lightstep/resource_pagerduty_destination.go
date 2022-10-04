@@ -3,6 +3,7 @@ package lightstep
 import (
 	"context"
 	"fmt"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -52,7 +53,7 @@ func resourcePagerdutyDestinationCreate(ctx context.Context, d *schema.ResourceD
 			},
 		})
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create pagerduty destination: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create pagerduty destination: %v", err))
 	}
 
 	d.SetId(destination.ID)
@@ -70,21 +71,21 @@ func resourcePagerdutyDestinationImport(ctx context.Context, d *schema.ResourceD
 	project, id := ids[0], ids[1]
 	dest, err := c.GetDestination(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get pagerduty destination: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get pagerduty destination: %v", err)
 	}
 
 	d.SetId(dest.ID)
 	if err := d.Set("project_name", project); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	attributes := dest.Attributes.(map[string]interface{})
 	if err := d.Set("destination_name", attributes["name"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set destination_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set destination_name resource field: %v", err)
 	}
 
 	if err := d.Set("integration_key", attributes["integration_key"]); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set integration_key resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set integration_key resource field: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil

@@ -3,8 +3,9 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"testing"
 
@@ -179,11 +180,11 @@ func testAccCheckAlertingRuleExists(resourceName string, rule *client.StreamAler
 	return func(s *terraform.State) error {
 		tfRule, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfRule.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
@@ -209,7 +210,7 @@ func testAccAlertingRuleDestroy(s *terraform.State) error {
 		s, err := conn.GetAlertingRule(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Alerting Rule with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("alerting Rule with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 	}

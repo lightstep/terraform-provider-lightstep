@@ -67,16 +67,16 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		if err != nil {
 			// Fix until lock error is resolved
 			if strings.Contains(err.Error(), "Internal Server Error") {
-				return resource.RetryableError(fmt.Errorf("Expected Creation of stream but not done yet: %s", err))
+				return resource.RetryableError(fmt.Errorf("expected Creation of stream but not done yet: %s", err))
 			} else {
-				return resource.NonRetryableError(fmt.Errorf("Error creating stream: %s", err))
+				return resource.NonRetryableError(fmt.Errorf("error creating stream: %s", err))
 			}
 		}
 
 		d.SetId(stream.ID)
 		if err := resourceStreamRead(ctx, d, m); err != nil {
 			if len(err) == 0 {
-				return resource.NonRetryableError(fmt.Errorf("Failed to read stream: %v", err))
+				return resource.NonRetryableError(fmt.Errorf("failed to read stream: %v", err))
 			}
 
 			return resource.NonRetryableError(fmt.Errorf(err[0].Summary))
@@ -85,7 +85,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		d.Set("query", origQuery)
 		return nil
 	}); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to create stream: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to create stream: %v", err))
 	}
 
 	return diags
@@ -102,7 +102,7 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 		if isApiErr {
 			resp := apiErr.GetHTTPResponse()
 			if resp == nil {
-				return diag.FromErr(fmt.Errorf("Failed to get stream response: %v\n", err))
+				return diag.FromErr(fmt.Errorf("failed to get stream response: %v", err))
 			}
 
 			if resp.StatusCode == http.StatusNotFound {
@@ -111,11 +111,11 @@ func resourceStreamRead(ctx context.Context, d *schema.ResourceData, m interface
 			}
 		}
 
-		return diag.FromErr(fmt.Errorf("Failed to get stream: %v\n", err))
+		return diag.FromErr(fmt.Errorf("failed to get stream: %v", err))
 	}
 
 	if err := setResourceDataFromStream(d, *s); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to set stream from API response to terraform state: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to set stream from API response to terraform state: %v", err))
 	}
 
 	return diags
@@ -133,7 +133,7 @@ func resourceStreamUpdate(ctx context.Context, d *schema.ResourceData, m interfa
 	s.Attributes.CustomData = client.CustomDataConvert(d.Get("custom_data").([]interface{}))
 
 	if _, err := c.UpdateStream(ctx, d.Get("project_name").(string), d.Id(), s); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to update stream: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to update stream: %v", err))
 	}
 
 	return resourceStreamRead(ctx, d, m)
@@ -144,7 +144,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	c := m.(*client.Client)
 	if err := c.DeleteStream(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("Failed to detele stream: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to detele stream: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
@@ -158,22 +158,22 @@ func resourceStreamImport(ctx context.Context, d *schema.ResourceData, m interfa
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("Error importing lightstep_stream. Expecting an  ID formed as '<lightstep_project>.<stream_id>'. Got: %v", d.Id())
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_stream. Expecting an  ID formed as '<lightstep_project>.<stream_id>'. Got: %v", d.Id())
 	}
 
 	project, id := ids[0], ids[1]
 	stream, err := c.GetStream(ctx, project, id)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to get stream: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to get stream: %v", err)
 	}
 
 	d.SetId(id)
 	if err := d.Set("project_name", project); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Unable to set project_name resource field: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
 
 	if err := setResourceDataFromStream(d, *stream); err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("Failed to set stream from API response to terraform state: %v", err)
+		return []*schema.ResourceData{}, fmt.Errorf("failed to set stream from API response to terraform state: %v", err)
 	}
 	d.Set("query", stream.Attributes.Query)
 
@@ -182,7 +182,7 @@ func resourceStreamImport(ctx context.Context, d *schema.ResourceData, m interfa
 
 func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 	if err := d.Set("stream_name", s.Attributes.Name); err != nil {
-		return fmt.Errorf("Unable to set stream_name resource field: %v", err)
+		return fmt.Errorf("unable to set stream_name resource field: %v", err)
 	}
 
 	// Convert custom_data to list
@@ -223,7 +223,7 @@ func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 	}
 
 	if err := d.Set("custom_data", customData); err != nil {
-		return fmt.Errorf("Unable to set custom_data resource field: %v", err)
+		return fmt.Errorf("unable to set custom_data resource field: %v", err)
 	}
 
 	// don't set query here to avoid backend normalization issue

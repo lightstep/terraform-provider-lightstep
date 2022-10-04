@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -132,11 +133,11 @@ func testAccCheckStreamConditionExists(resourceName string, condition *client.St
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfCondition.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
@@ -162,7 +163,7 @@ func testAccStreamConditionDestroy(s *terraform.State) error {
 		s, err := conn.GetStreamCondition(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Condition with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("condition with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 	}

@@ -3,9 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
 	"regexp"
 	"testing"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -57,21 +58,21 @@ resource "lightstep_stream_dashboard" "customer_charges" {
 			{
 				Config: missingStream,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
+					testAccCheckStreamDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
 				),
 				ExpectError: regexp.MustCompile("InvalidArgument"),
 			},
 			{
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
+					testAccCheckStreamDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
 					resource.TestCheckResourceAttr("lightstep_stream_dashboard.customer_charges", "dashboard_name", "All Non-BEEMO Charges"),
 				),
 			},
 			{
 				Config: updatedNameDashboard,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
+					testAccCheckStreamDashboardExists("lightstep_stream_dashboard.customer_charges", &dashboard),
 					resource.TestCheckResourceAttr("lightstep_stream_dashboard.customer_charges", "dashboard_name", "Customer Charges"),
 				),
 			},
@@ -109,16 +110,16 @@ resource "lightstep_stream_dashboard" "ingress" {
 	})
 }
 
-func testAccCheckDashboardExists(resourceName string, dashboard *client.Dashboard) resource.TestCheckFunc {
+func testAccCheckStreamDashboardExists(resourceName string, dashboard *client.Dashboard) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		// get dashboard from TF state
 		tfStream, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfStream.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		// get dashboard from LS
@@ -146,7 +147,7 @@ func testAccStreamDashboardDestroy(s *terraform.State) error {
 		s, err := conn.GetDashboard(context.Background(), test_project, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
-				return fmt.Errorf("Dashboard with ID (%v) still exists.", resource.Primary.ID)
+				return fmt.Errorf("dashboard with ID (%v) still exists.", resource.Primary.ID)
 			}
 		}
 

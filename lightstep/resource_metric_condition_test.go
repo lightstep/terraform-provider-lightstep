@@ -836,11 +836,11 @@ func testAccCheckMetricConditionExists(resourceName string, condition *client.Me
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
-			return fmt.Errorf("Not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", resourceName)
 		}
 
 		if tfCondition.Primary.ID == "" {
-			return fmt.Errorf("ID is not set")
+			return fmt.Errorf("id is not set")
 		}
 
 		providerClient := testAccProvider.Meta().(*client.Client)
@@ -864,7 +864,7 @@ func testAccMetricConditionDestroy(s *terraform.State) error {
 		s, err := conn.GetMetricCondition(context.Background(), test_project, res.Primary.ID)
 		if err == nil {
 			if s.ID == res.Primary.ID {
-				return fmt.Errorf("Metric condition with ID (%v) still exists.", res.Primary.ID)
+				return fmt.Errorf("metric condition with ID (%v) still exists.", res.Primary.ID)
 			}
 		}
 	}
