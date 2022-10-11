@@ -136,7 +136,7 @@ func getSpansQuerySchema() *schema.Schema {
 				},
 				"operator": {
 					Type:         schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{"latency", "rate", "error_ratio"}, false),
+					ValidateFunc: validation.StringInSlice([]string{"latency", "rate", "error_ratio", "count"}, false),
 					Required:     true,
 				},
 				"operator_input_window_ms": {
