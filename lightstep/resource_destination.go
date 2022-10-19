@@ -12,6 +12,9 @@ import (
 )
 
 func errorIsNotFound(err error) bool {
+	if err == nil {
+		return false
+	}
 	apiErr, ok := err.(client.APIResponseCarrier)
 	if !ok {
 		return false
