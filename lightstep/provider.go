@@ -42,7 +42,7 @@ func Provider() *schema.Provider {
 			"api_key_env_var": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Environment variable for Lightstep api key.",
+				Description: "Environment variable for Lightstep API key.",
 				Default:     "LIGHTSTEP_API_KEY",
 			},
 		},

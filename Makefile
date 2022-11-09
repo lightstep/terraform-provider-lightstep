@@ -1,35 +1,41 @@
+# Currently always builds for amd64
+#PLATFORM_ARCH=$(shell uname -m | tr '[:upper:]' '[:lower:]')
+PLATFORM_ARCH=amd64
+PLATFORM_NAME=$(shell uname -s | tr '[:upper:]' '[:lower:]')
+VERSION_TAG=$(shell cat .go-version)
+
 .PHONY: build
 build:
-	@go build -o terraform-provider-lightstep_v$(shell cat .go-version)
+	GOARCH=$(PLATFORM_ARCH) go build -o terraform-provider-lightstep_v$(VERSION_TAG)
 	@rm -f .terraform.lock.hcl
-	@mkdir -p .terraform/providers/registry.terraform.io/lightstep/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_arm64/
-	@cp terraform-provider-lightstep_v$(shell cat .go-version) .terraform/providers/registry.terraform.io/lightstep/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_arm64/terraform-provider-lightstep_v$(shell cat .go-version)
-	@mkdir -p terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_arm64/
-	@cp terraform-provider-lightstep_v$(shell cat .go-version) terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(shell cat .go-version)/$(shell uname -s | tr '[:upper:]' '[:lower:]')_arm64/terraform-provider-lightstep
+	@mkdir -p .terraform/providers/registry.terraform.io/lightstep/lightstep/$(VERSION_TAG)/$(PLATFORM_NAME)_$(PLATFORM_ARCH)/
+	@cp terraform-provider-lightstep_v$(VERSION_TAG) .terraform/providers/registry.terraform.io/lightstep/lightstep/$(VERSION_TAG)/$(PLATFORM_NAME)_$(PLATFORM_ARCH)/terraform-provider-lightstep_v$(VERSION_TAG)
+	@mkdir -p terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(VERSION_TAG)/$(PLATFORM_NAME)_$(PLATFORM_ARCH)/
+	@cp terraform-provider-lightstep_v$(VERSION_TAG) terraform.d/plugins/terraform.lightstep.com/lightstep-org/lightstep/$(VERSION_TAG)/$(PLATFORM_NAME)_$(PLATFORM_ARCH)/terraform-provider-lightstep
 
 .PHONY: install
 install:
-	@terraform init
+	terraform init
 
 .PHONY: check-deps
 check_deps:
-	@go mod tidy -v
+	go mod tidy -v
 
 .PHONY: test
 test:
-	@go test ./...
+	go test ./...
 
 .PHONY: fmt
 fmt:
-	@go fmt
+	go fmt
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
-	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
 
 .PHONY: lint
 lint:
-	@golangci-lint run --deadline 3m0s --no-config ./...
+	golangci-lint run --deadline 3m0s --no-config ./...
 
 .PHONY: acc-test
 acc-test:
@@ -40,7 +46,7 @@ endif
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
-	@scripts/ensure_clean_repo.sh
+	scripts/ensure_clean_repo.sh
 
 .PHONY: clean
 clean:
