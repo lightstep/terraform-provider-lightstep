@@ -17,6 +17,7 @@ Provides a [Lightstep Dashboard](https://api-docs.lightstep.com/reference/listme
 resource "lightstep_dashboard" "customer_charges" {
   project_name   = var.project
   dashboard_name = "Customer Charges (Metrics)"
+  dashboard_description = "Dashboard for customer charges metrics"
 
   chart {
     name = "Requests by Project"

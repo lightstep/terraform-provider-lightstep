@@ -47,6 +47,10 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"dashboard_description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -173,8 +177,9 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	}
 
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:   d.Get("dashboard_name").(string),
-		Charts: charts,
+		Name:        d.Get("dashboard_name").(string),
+		Description: d.Get("dashboard_description").(string),
+		Charts:      charts,
 	}
 
 	return attributes, nil
@@ -248,6 +253,10 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 
 	if err := d.Set("dashboard_name", dash.Attributes.Name); err != nil {
 		return fmt.Errorf("unable to set dashboard_name resource field: %v", err)
+	}
+
+	if err := d.Set("dashboard_description", dash.Attributes.Description); err != nil {
+		return fmt.Errorf("unable to set dashboard_description resource field: %v", err)
 	}
 
 	if err := d.Set("type", dash.Type); err != nil {

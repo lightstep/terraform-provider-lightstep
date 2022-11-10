@@ -14,8 +14,9 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name   string         `json:"name"`
-	Charts []UnifiedChart `json:"charts"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Charts      []UnifiedChart `json:"charts"`
 }
 
 type UnifiedChart struct {
@@ -59,8 +60,9 @@ func (c *Client) CreateUnifiedDashboard(
 	bytes, err := json.Marshal(UnifiedDashboard{
 		Type: dashboard.Type,
 		Attributes: UnifiedDashboardAttributes{
-			Name:   dashboard.Attributes.Name,
-			Charts: dashboard.Attributes.Charts,
+			Name:        dashboard.Attributes.Name,
+			Description: dashboard.Attributes.Description,
+			Charts:      dashboard.Attributes.Charts,
 		},
 	})
 
