@@ -236,7 +236,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
 					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
+					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_description", "Dashboard to test if the terraform provider works"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),

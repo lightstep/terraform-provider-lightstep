@@ -48,7 +48,8 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Required: true,
 			},
 			"dashboard_description": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"type": {
 				Type:     schema.TypeString,
