@@ -18,8 +18,9 @@ func TestAccMetricDashboard(t *testing.T) {
 	// missing required field 'type'
 	badDashboard := `
 resource "lightstep_metric_dashboard" "test" {
-  project_name   = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
 
   chart {
     name = "Chart Number One"
@@ -54,8 +55,9 @@ resource "lightstep_metric_dashboard" "test" {
 
 	tqlDashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
 
   chart {
     name = "Chart Number One"
@@ -73,8 +75,9 @@ resource "lightstep_metric_dashboard" "test" {
 `
 	spansQueryDashboardConfig := `
 resource "lightstep_metric_dashboard" "test_spans" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
 
   chart {
     name = "Chart Number One"
@@ -103,8 +106,9 @@ resource "lightstep_metric_dashboard" "test_spans" {
 
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
 
   chart {
     name = "Chart Number One"
@@ -145,8 +149,9 @@ resource "lightstep_metric_dashboard" "test" {
 `
 	updatedTitleDashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard Updated"
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard Updated"
+  dashboard_description = "Dashboard to test if the terraform provider still works"
 
   chart {
     name = "Chart Number One"
@@ -199,6 +204,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "Chart Number One"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
@@ -219,6 +225,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric m | rate"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
@@ -229,6 +236,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
 					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
@@ -243,6 +251,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard Updated"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider still works"),
 				),
 			},
 		},

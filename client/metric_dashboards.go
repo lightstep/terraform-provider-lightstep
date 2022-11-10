@@ -14,8 +14,9 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name   string         `json:"name"`
-	Charts []UnifiedChart `json:"charts"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Charts      []UnifiedChart `json:"charts"`
 }
 
 type UnifiedChart struct {
