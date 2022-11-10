@@ -40,7 +40,7 @@ func getQueriesFromUnifiedDashboardResourceData(
 
 	var queries []interface{}
 	for _, q := range queriesIn {
-		// Check if a query using is using the legacy representation.  In that case,
+		// Check if a query is using the legacy representation.  In that case,
 		// it can't be represented in the "query_string" field and the call should
 		// fail. In the future, we should attempt to automatically convert legacy -> query
 		// string format. At the moment, there's no public API to implement this, so
