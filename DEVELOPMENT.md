@@ -1,4 +1,4 @@
-## Provider Development
+# Provider Development
 
 ## Testing the provider
 
@@ -12,7 +12,7 @@ LIGHTSTEP_API_KEY_PUBLIC=(your api key here) make acc-test
 
 ## Using a local build for development (vs the one in the registry)
 
-1. Update the version in `.version` and run `make build`
+1. Update the version in `.go-version` and run `make build`
 2. Create a [`.terraformrc`](https://www.terraform.io/cli/config/config-file) in your $HOME directory that points this checked-out repository with your changes.
 
 ```
