@@ -278,7 +278,15 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		if p.chartSchemaType == MetricChartSchema {
 			chart["query"] = getQueriesFromMetricDashboardResourceData(c.MetricQueries)
 		} else {
-			chart["query"] = getQueriesFromUnifiedDashboardResourceData(c.MetricQueries)
+			queries, err := getQueriesFromUnifiedDashboardResourceData(
+				c.MetricQueries,
+				dash.ID,
+				c.ID,
+			)
+			if err != nil {
+				return err
+			}
+			chart["query"] = queries
 		}
 		chart["name"] = c.Title
 		chart["rank"] = c.Rank
