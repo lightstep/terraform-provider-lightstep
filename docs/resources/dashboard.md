@@ -17,6 +17,7 @@ Provides a [Lightstep Dashboard](https://api-docs.lightstep.com/reference/listme
 resource "lightstep_dashboard" "customer_charges" {
   project_name   = var.project
   dashboard_name = "Customer Charges (Metrics)"
+  dashboard_description = "Dashboard for customer charges metrics"
 
   chart {
     name = "Requests by Project"
@@ -57,6 +58,7 @@ resource "lightstep_dashboard" "customer_charges" {
 ### Optional
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
+- `dashboard_description` (String)
 
 ### Read-Only
 
