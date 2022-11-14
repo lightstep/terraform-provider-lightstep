@@ -16,6 +16,7 @@ const metricDashboardTemplate = `
 resource "lightstep_metric_dashboard" "exported_dashboard" {
   project_name = var.project
   dashboard_name = "{{.Attributes.Name}}"
+  dashboard_description = {{escapeHeredocString .Attributes.Description}}
 {{range .Attributes.Charts}}
   chart {
     name = "{{.Title}}"
@@ -34,7 +35,7 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
       }
 {{end}}{{if .TQLQuery}}
-      tql                 = {{escapeQueryString .TQLQuery}}
+      tql                 = {{escapeHeredocString .TQLQuery}}
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
       timeseries_operator = "{{.Query.TimeseriesOperator}}"
@@ -63,6 +64,7 @@ const unifiedDashboardTemplate = `
 resource "lightstep_dashboard" "exported_dashboard" {
   project_name = var.project
   dashboard_name = "{{.Attributes.Name}}"
+  dashboard_description = {{escapeHeredocString .Attributes.Description}}
 {{range .Attributes.Charts}}
   chart {
     name = "{{.Title}}"
@@ -73,7 +75,7 @@ resource "lightstep_dashboard" "exported_dashboard" {
       query_name          = "{{.Name}}"
       display             = "{{.Display}}"
       hidden              = {{.Hidden}}
-      query_string        = {{escapeQueryString .TQLQuery}}
+      query_string        = {{escapeHeredocString .TQLQuery}}
     }
 {{end}}
   }
@@ -92,7 +94,7 @@ func escapeHCLString(input string) string {
 	return input
 }
 
-func escapeQueryString(input string) string {
+func escapeHeredocString(input string) string {
 	// Use "heredoc" syntax if the query contains any newlines or other characters that'd
 	// need to be escaped and make the single line representation less convenient to work with.
 	if strings.Contains(input, "\"") ||
@@ -126,8 +128,8 @@ func dashboardUsesLegacyQuery(d *client.UnifiedDashboard) bool {
 
 func exportToHCL(wr io.Writer, d *client.UnifiedDashboard) error {
 	t := template.New("").Funcs(template.FuncMap{
-		"escapeHCLString":   escapeHCLString,
-		"escapeQueryString": escapeQueryString,
+		"escapeHCLString":     escapeHCLString,
+		"escapeHeredocString": escapeHeredocString,
 	})
 
 	usesLegacyQuery := dashboardUsesLegacyQuery(d)
