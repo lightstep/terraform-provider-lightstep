@@ -16,6 +16,7 @@ const metricDashboardTemplate = `
 resource "lightstep_metric_dashboard" "exported_dashboard" {
   project_name = var.project
   dashboard_name = "{{.Attributes.Name}}"
+  dashboard_description = {{escapeQueryString .Attributes.Description}}
 {{range .Attributes.Charts}}
   chart {
     name = "{{.Title}}"
@@ -63,6 +64,7 @@ const unifiedDashboardTemplate = `
 resource "lightstep_dashboard" "exported_dashboard" {
   project_name = var.project
   dashboard_name = "{{.Attributes.Name}}"
+  dashboard_description = {{escapeQueryString .Attributes.Description}}
 {{range .Attributes.Charts}}
   chart {
     name = "{{.Title}}"
