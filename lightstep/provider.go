@@ -58,6 +58,7 @@ func Provider() *schema.Provider {
 			"lightstep_slack_destination":     resourceSlackDestination(),
 			"lightstep_alerting_rule":         resourceAlertingRule(),
 			"lightstep_dashboard":             resourceUnifiedDashboard(UnifiedChartSchema),
+			"lightstep_notebook":              resourceNotebook(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
