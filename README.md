@@ -58,6 +58,7 @@ It's possible to export an existing Lightstep dashboard to HCL code using the pr
 The `exporter` utility is built-in to the provider binary and requires certain environment variables to be set:
 
 For the LIGHTSTEP_ENV variable:
+
 - public = app.lightstep.com
 - meta = app-meta.lightstep.com
 - staging = app-staging.lightstep.com
@@ -68,5 +69,5 @@ $ export LIGHTSTEP_ORG=your-org
 $ export LIGHTSTEP_ENV=public
 
 # exports to console dashboard id = rZbPJ33q from project terraform-shop
-$ go run github.com/lightstep/terraform-provider-lightstep exporter dashboard terraform-shop rZbPJ33q
+$ go run github.com/lightstep/terraform-provider-lightstep exporter lightstep_dashboard terraform-shop rZbPJ33q
 ```
