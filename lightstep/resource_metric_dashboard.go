@@ -152,7 +152,14 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 
 	c := m.(*client.Client)
 
-	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id())
+	// The lightstep_dashboard resource always wants to use query_strings rather than
+	// JSON-based queries
+	convertToQueryString := false
+	if p.chartSchemaType == UnifiedChartSchema {
+		convertToQueryString = true
+	}
+
+	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse() != nil && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -343,8 +350,13 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 		return []*schema.ResourceData{}, fmt.Errorf("error importing %v. Expecting an  ID formed as '<lightstep_project>.<%v_ID>'", resourceName, resourceName)
 	}
 
+	convertToQueryString := false
+	if p.chartSchemaType == UnifiedChartSchema {
+		convertToQueryString = true
+	}
+
 	project, id := ids[0], ids[1]
-	dash, err := c.GetUnifiedDashboard(ctx, project, id)
+	dash, err := c.GetUnifiedDashboard(ctx, project, id, convertToQueryString)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("failed to get dashboard. err: %v", err)
 	}

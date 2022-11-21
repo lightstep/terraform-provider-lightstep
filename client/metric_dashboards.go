@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type UnifiedDashboard struct {
@@ -38,13 +39,23 @@ type MetricGroupBy struct {
 	AggregationMethod string   `json:"aggregation-method"`
 }
 
-func getUnifiedDashboardURL(project string, id string) string {
-	base := fmt.Sprintf("projects/%s/metric_dashboards", project)
-
+func getUnifiedDashboardURL(project, id string, query map[string]string) string {
+	path := fmt.Sprintf(
+		"projects/%s/metric_dashboards",
+		url.PathEscape(project),
+	)
 	if id != "" {
-		return fmt.Sprintf("%s/%s", base, id)
+		path += "/" + url.PathEscape(id)
 	}
-	return base
+	u := url.URL{Path: path}
+	if len(query) > 0 {
+		q := u.Query()
+		for k, v := range query {
+			q.Set(k, v)
+		}
+		u.RawQuery = q.Encode()
+	}
+	return u.String()
 }
 
 func (c *Client) CreateUnifiedDashboard(
@@ -70,7 +81,7 @@ func (c *Client) CreateUnifiedDashboard(
 		return cond, err
 	}
 
-	url := getUnifiedDashboardURL(projectName, "")
+	url := getUnifiedDashboardURL(projectName, "", nil)
 
 	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
@@ -84,13 +95,18 @@ func (c *Client) CreateUnifiedDashboard(
 	return cond, err
 }
 
-func (c *Client) GetUnifiedDashboard(ctx context.Context, projectName string, id string) (*UnifiedDashboard, error) {
+func (c *Client) GetUnifiedDashboard(ctx context.Context, projectName string, id string, convertToQueryString bool) (*UnifiedDashboard, error) {
 	var (
 		d    *UnifiedDashboard
 		resp Envelope
 	)
 
-	url := getUnifiedDashboardURL(projectName, id)
+	var q map[string]string
+	if convertToQueryString {
+		q = map[string]string{"query_format": "query_string"}
+	}
+
+	url := getUnifiedDashboardURL(projectName, id, q)
 	err := c.CallAPI(ctx, "GET", url, nil, &resp)
 	if err != nil {
 		return nil, err
@@ -120,7 +136,7 @@ func (c *Client) UpdateUnifiedDashboard(
 		return nil, err
 	}
 
-	url := getUnifiedDashboardURL(projectName, dashboardID)
+	url := getUnifiedDashboardURL(projectName, dashboardID, nil)
 	err = c.CallAPI(ctx, "PUT", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
@@ -131,7 +147,7 @@ func (c *Client) UpdateUnifiedDashboard(
 }
 
 func (c *Client) DeleteUnifiedDashboard(ctx context.Context, projectName string, dashboardID string) error {
-	url := getUnifiedDashboardURL(projectName, dashboardID)
+	url := getUnifiedDashboardURL(projectName, dashboardID, nil)
 
 	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {

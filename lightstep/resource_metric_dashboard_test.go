@@ -265,7 +265,7 @@ func testGetMetricDashboardDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetUnifiedDashboard(context.Background(), test_project, r.Primary.ID)
+		s, err := conn.GetUnifiedDashboard(context.Background(), test_project, r.Primary.ID, false)
 		if err == nil {
 			if s.ID == r.Primary.ID {
 				return fmt.Errorf("metric dashboard with ID (%v) still exists.", r.Primary.ID)
@@ -287,7 +287,7 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Un
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
-		dash, err := c.GetUnifiedDashboard(context.Background(), test_project, tfDashboard.Primary.ID)
+		dash, err := c.GetUnifiedDashboard(context.Background(), test_project, tfDashboard.Primary.ID, false)
 		if err != nil {
 			return err
 		}
