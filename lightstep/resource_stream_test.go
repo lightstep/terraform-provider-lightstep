@@ -42,6 +42,23 @@ resource "lightstep_stream" "aggie_errors" {
 }
 `
 
+	uqlStreamConfig := `
+resource "lightstep_stream" "aggie_errors" {
+  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  stream_name = "Aggie Errors"
+  uql_query = <<EOT
+spans count | filter ((service == "aggie") && (error == true)) | rate | group_by [], sum
+EOT
+  custom_data = [
+	  {
+		// This name field is special and becomes the key
+		"name" = "object1"
+		"url" = "https://lightstep.atlassian.net/l/c/M7b0rBsj",
+		"key_other" = "value_other",
+	  },
+  ]
+}
+`
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
   project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
@@ -75,6 +92,16 @@ resource "lightstep_stream" "aggie_errors" {
 					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "stream_name", "Aggie Errors"),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "query", "service IN (\"aggie\") AND \"error\" IN (\"true\")"),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.name", "object1"),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.url", "https://lightstep.atlassian.net/l/c/M7b0rBsj"),
+				),
+			},
+			{
+				Config: uqlStreamConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStreamExists("lightstep_stream.aggie_errors", &stream),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "stream_name", "Aggie Errors uql"),
+					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "uql_query", `spans count | filter ((service == "aggie") && (error == true)) | rate | group_by [], sum`),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.name", "object1"),
 					resource.TestCheckResourceAttr("lightstep_stream.aggie_errors", "custom_data.0.url", "https://lightstep.atlassian.net/l/c/M7b0rBsj"),
 				),
@@ -188,6 +215,7 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 			return fmt.Errorf("id is not set")
 		}
 
+		fmt.Printf("id: %v\n", tfStream.Primary.ID)
 		// get stream from LS
 		client := testAccProvider.Meta().(*client.Client)
 		str, err := client.GetStream(context.Background(), test_project, tfStream.Primary.ID)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -33,6 +34,11 @@ func dataSourceStream() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"stream_uql_query": {
+				Description: "Stream uql query",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -54,6 +60,10 @@ func dataSourceLightstepStreamRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if err := d.Set("stream_query", s.Attributes.Query); err != nil {
+		return diag.FromErr(err)
+	}
+
+	if err := d.Set("stream_uql_query", s.Attributes.UQLQuery); err != nil {
 		return diag.FromErr(err)
 	}
 	return nil

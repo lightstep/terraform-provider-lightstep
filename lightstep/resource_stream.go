@@ -34,7 +34,12 @@ func resourceStream() *schema.Resource {
 			},
 			"query": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				ForceNew: true,
+			},
+			"uql_query": {
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 			"custom_data": {
@@ -57,11 +62,13 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 	c := m.(*client.Client)
 	if err := resource.RetryContext(ctx, d.Timeout(schema.TimeoutCreate), func() *resource.RetryError {
 		origQuery := d.Get("query").(string)
+		origUQLQuery := d.Get("uql_query").(string)
 		stream, err := c.CreateStream(
 			ctx,
 			d.Get("project_name").(string),
 			d.Get("stream_name").(string),
 			d.Get("query").(string),
+			d.Get("uql_query").(string),
 			d.Get("custom_data").([]interface{}),
 		)
 		if err != nil {
@@ -73,6 +80,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 			}
 		}
 
+		// This is empty when creating a stream with UQL
 		d.SetId(stream.ID)
 		if err := resourceStreamRead(ctx, d, m); err != nil {
 			if len(err) == 0 {
@@ -83,6 +91,7 @@ func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interfa
 		}
 		// workaround: if read succeeds, persist the *client-side* query expression to avoid backend normalization issue
 		d.Set("query", origQuery)
+		d.Set("uql_query", origUQLQuery)
 		return nil
 	}); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create stream: %v", err))
@@ -176,6 +185,7 @@ func resourceStreamImport(ctx context.Context, d *schema.ResourceData, m interfa
 		return []*schema.ResourceData{}, fmt.Errorf("failed to set stream from API response to terraform state: %v", err)
 	}
 	d.Set("query", stream.Attributes.Query)
+	d.Set("uql_query", stream.Attributes.UQLQuery)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -189,7 +199,7 @@ func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 	customData := []map[string]string{}
 
 	// This is what Lightstep sends
-	//"custom_data": {
+	// "custom_data": {
 	//	"object1": {
 	//		"url": "http://",
 	//		"key": "value"
@@ -197,7 +207,7 @@ func setResourceDataFromStream(d *schema.ResourceData, s client.Stream) error {
 	//	"object2": {
 	//		"key": "value"
 	//	}
-	//},
+	// },
 
 	// This is what terraform expects
 	//	custom_data = [
