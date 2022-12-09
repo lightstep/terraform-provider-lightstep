@@ -70,13 +70,22 @@ func NewClient(apiKey string, orgName string, env string) *Client {
 }
 
 func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
-	var baseURL string
+	// Let the user override the API base URL.
+	// e.g. http://localhost:8080
+	envBaseURL := os.Getenv("LIGHTSTEP_API_BASE_URL")
 
-	if env == "public" {
-		baseURL = fmt.Sprintf("https://api.lightstep.com/public/v0.2/%v", orgName)
+	var baseURL string
+	if envBaseURL != "" {
+		// User specified a base URL, let that take priority.
+		baseURL = envBaseURL
+	} else if env == "public" {
+		baseURL = "https://api.lightstep.com"
 	} else {
-		baseURL = fmt.Sprintf("https://api-%v.lightstep.com/public/v0.2/%v", env, orgName)
+		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
 	}
+
+	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
+
 	newClient := &retryablehttp.Client{
 		HTTPClient:   http.DefaultClient,
 		CheckRetry:   checkHTTPRetry,
@@ -89,7 +98,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 	return &Client{
 		apiKey:      apiKey,
 		orgName:     orgName,
-		baseURL:     baseURL,
+		baseURL:     fullBaseURL,
 		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(DefaultRateLimitPerSecond), 1),
 		client:      newClient,
