@@ -329,7 +329,7 @@ func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.C
 
 	c := m.(*client.Client)
 	if err := c.DeleteUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to detele dashboard: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to delete dashboard: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but

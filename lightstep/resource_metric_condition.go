@@ -367,7 +367,7 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 
 	c := m.(*client.Client)
 	if err := c.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to detele metrics condition: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to delete metrics condition: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but

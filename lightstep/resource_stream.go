@@ -144,7 +144,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	c := m.(*client.Client)
 	if err := c.DeleteStream(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to detele stream: %v", err))
+		return diag.FromErr(fmt.Errorf("failed to delete stream: %v", err))
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but
