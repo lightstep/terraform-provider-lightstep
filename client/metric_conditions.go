@@ -119,6 +119,7 @@ func (c *Client) CreateMetricCondition(
 			Expression:    condition.Attributes.Expression,
 			Queries:       condition.Attributes.Queries,
 			AlertingRules: condition.Attributes.AlertingRules,
+			Description:   condition.Attributes.Description,
 		},
 	})
 
