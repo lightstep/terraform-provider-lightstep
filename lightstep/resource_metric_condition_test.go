@@ -71,6 +71,7 @@ resource "lightstep_slack_destination" "slack" {
 resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
+  description = "A link to a playbook"
 
   expression {
 	  is_multi   = true
@@ -141,6 +142,7 @@ resource "lightstep_slack_destination" "slack" {
 resource "lightstep_metric_condition" "test" {
   project_name = "terraform-provider-tests"
   name = "updated"
+  description = "A link to a fresh playbook"
 
   expression {
 	  is_multi   = true
@@ -213,6 +215,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
@@ -229,6 +232,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
 				),
 			},
