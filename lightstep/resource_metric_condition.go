@@ -194,7 +194,7 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 		"display": {
 			Type:         schema.TypeString,
 			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap"}, false),
+			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map"}, false),
 		},
 		"query_name": {
 			Type:     schema.TypeString,
