@@ -40,15 +40,21 @@ type Thresholds struct {
 	Critical *float64 `json:"critical,omitempty"`
 }
 
+type DependencyMapOptions struct {
+	Scope   string `json:"scope,omitempty"`
+	MapType string `json:"map-type,omitempty"`
+}
+
 type MetricQueryWithAttributes struct {
-	Name           string         `json:"query-name"`
-	Type           string         `json:"query-type"`
-	Hidden         bool           `json:"hidden"`
-	Display        string         `json:"display-type"`
-	Query          MetricQuery    `json:"metric-query"`
-	SpansQuery     SpansQuery     `json:"spans-query,omitempty"`
-	CompositeQuery CompositeQuery `json:"composite-query,omitempty"`
-	TQLQuery       string         `json:"tql-query"`
+	Name                 string                `json:"query-name"`
+	Type                 string                `json:"query-type"`
+	Hidden               bool                  `json:"hidden"`
+	Display              string                `json:"display-type"`
+	Query                MetricQuery           `json:"metric-query"`
+	SpansQuery           SpansQuery            `json:"spans-query,omitempty"`
+	CompositeQuery       CompositeQuery        `json:"composite-query,omitempty"`
+	TQLQuery             string                `json:"tql-query"`
+	DependencyMapOptions *DependencyMapOptions `json:"dependency-map-options,omitempty"`
 }
 
 type MetricQuery struct {

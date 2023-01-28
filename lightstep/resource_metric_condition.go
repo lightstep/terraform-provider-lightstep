@@ -561,11 +561,12 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 
 		if queryString != "" {
 			newQuery := client.MetricQueryWithAttributes{
-				Name:     query["query_name"].(string),
-				Type:     "tql",
-				Hidden:   query["hidden"].(bool),
-				Display:  query["display"].(string),
-				TQLQuery: queryString,
+				Name:                 query["query_name"].(string),
+				Type:                 "tql",
+				Hidden:               query["hidden"].(bool),
+				Display:              query["display"].(string),
+				TQLQuery:             queryString,
+				DependencyMapOptions: buildDependencyMapOptions(query["dependency_map_options"]),
 			}
 			newQueries = append(newQueries, newQuery)
 			continue
@@ -674,6 +675,21 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 	}
 
 	return newQueries, nil
+}
+
+func buildDependencyMapOptions(in interface{}) *client.DependencyMapOptions {
+	if in == nil || len(in.([]interface{})) == 0 {
+		return nil
+	}
+
+	options := in.([]interface{})[0].(map[string]interface{})
+	scope := options["scope"].(string)
+	mapType := options["map_type"].(string)
+
+	return &client.DependencyMapOptions{
+		Scope:   scope,
+		MapType: mapType,
+	}
 }
 
 func buildFinalWindowOperation(in interface{}) *client.FinalWindowOperation {

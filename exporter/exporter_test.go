@@ -17,8 +17,9 @@ func TestExportToHCL(t *testing.T) {
 	}
 
 	testCases := []struct {
-		QueryString string
-		Expected    string
+		QueryString          string
+		DependencyMapOptions *client.DependencyMapOptions
+		Expected             string
 	}{
 		{
 			QueryString: "",
@@ -52,6 +53,18 @@ EOT`,
 metric w	|rate 10m
 EOT`,
 		},
+		{
+			QueryString: "spans_sample service = apache | assemble",
+			DependencyMapOptions: &client.DependencyMapOptions{
+				Scope:   "all",
+				MapType: "service",
+			},
+			Expected: `query_string        = "spans_sample service = apache | assemble"
+      dependency_map_options {
+        scope    = "all"
+        map_type = "service"
+      }`,
+		},
 	}
 
 	for index, testCase := range testCases {
@@ -64,10 +77,11 @@ EOT`,
 						{
 							MetricQueries: []client.MetricQueryWithAttributes{
 								{
-									Name:     "my_query",
-									Display:  "line",
-									Hidden:   false,
-									TQLQuery: testCase.QueryString,
+									Name:                 "my_query",
+									Display:              "line",
+									Hidden:               false,
+									TQLQuery:             testCase.QueryString,
+									DependencyMapOptions: testCase.DependencyMapOptions,
 								},
 							},
 						},
