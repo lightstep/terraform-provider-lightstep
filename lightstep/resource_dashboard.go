@@ -28,6 +28,25 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Required: true,
 		},
+		"dependency_map_options": {
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"scope": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringInSlice([]string{"all", "upstream", "downstream", "immediate"}, false),
+					},
+					"map_type": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringInSlice([]string{"service", "operation"}, false),
+					},
+				},
+			},
+		},
 	}
 	return sma
 }
@@ -60,12 +79,26 @@ func getQueriesFromUnifiedDashboardResourceData(
 		}
 
 		qs := map[string]interface{}{
-			"hidden":       q.Hidden,
-			"display":      q.Display,
-			"query_name":   q.Name,
-			"query_string": q.TQLQuery,
+			"hidden":                 q.Hidden,
+			"display":                q.Display,
+			"query_name":             q.Name,
+			"query_string":           q.TQLQuery,
+			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
 		}
 		queries = append(queries, qs)
 	}
 	return queries, nil
+}
+
+func getDependencyMapOptions(options *client.DependencyMapOptions) []interface{} {
+	if options == nil {
+		return nil
+	}
+
+	return []interface{}{
+		map[string]interface{}{
+			"map_type": options.MapType,
+			"scope":    options.Scope,
+		},
+	}
 }

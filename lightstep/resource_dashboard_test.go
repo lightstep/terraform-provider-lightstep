@@ -107,6 +107,30 @@ resource "lightstep_dashboard" "test" {
 }
 `
 
+	dependencyMapDashboard := `
+resource "lightstep_dashboard" "test" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "Acceptance Test Dashboard"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden       = false
+      query_name   = "b"
+      display      = "dependency_map"
+      query_string = "spans_sample service = apache | assemble"
+      dependency_map_options {
+        scope    = "upstream"
+        map_type = "operation"
+      }
+    }
+  }
+}
+`
+
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
@@ -147,6 +171,18 @@ resource "lightstep_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard Updated"),
+				),
+			},
+			{
+				Config: dependencyMapDashboard,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", "spans_sample service = apache | assemble"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "dependency_map"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.scope", "upstream"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.map_type", "operation"),
 				),
 			},
 		},

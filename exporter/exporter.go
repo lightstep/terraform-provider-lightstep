@@ -76,6 +76,12 @@ resource "lightstep_dashboard" "exported_dashboard" {
       display             = "{{.Display}}"
       hidden              = {{.Hidden}}
       query_string        = {{escapeHeredocString .TQLQuery}}
+{{- if .DependencyMapOptions}}
+      dependency_map_options {
+        scope    = "{{.DependencyMapOptions.Scope}}"
+        map_type = "{{.DependencyMapOptions.MapType}}"
+      }
+{{- end}}
     }
 {{end}}
   }

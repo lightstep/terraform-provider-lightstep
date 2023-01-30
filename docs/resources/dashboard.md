@@ -94,7 +94,17 @@ Required:
 
 Optional:
 
+- `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--dependency_map_options))
 - `display` (String)
+
+<a id="nestedblock--chart--query--dependency_map_options"></a>
+### Nested Schema for `chart.query.dependency_map_options`
+
+Optional:
+
+- `map_type` (String)
+- `scope` (String)
+
 
 
 <a id="nestedblock--chart--y_axis"></a>
