@@ -28,6 +28,7 @@ type Headers map[string]string
 
 type APIResponseCarrier interface {
 	GetHTTPResponse() *http.Response
+	GetStatusCode() int
 }
 
 // APIClientError contains the HTTP Response(for inspection of the error code) as well as the error message
@@ -41,6 +42,14 @@ func (a APIClientError) Error() string {
 }
 func (a APIClientError) GetHTTPResponse() *http.Response {
 	return a.Response
+}
+
+func (a APIClientError) GetStatusCode() int {
+	if a.Response == nil {
+		return -1 // not a known http status code
+	}
+
+	return a.Response.StatusCode
 }
 
 // Envelope represents a generic response from the API

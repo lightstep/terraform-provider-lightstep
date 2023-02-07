@@ -68,11 +68,16 @@ func resourceStreamDashboardRead(ctx context.Context, d *schema.ResourceData, m 
 
 	dashboard, err := c.GetDashboard(ctx, projectName, resourceId)
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
+
 		return diag.FromErr(fmt.Errorf("failed to get stream dashboard for [project: %v; resource_id: %v]: %v", projectName, resourceId, apiErr))
 	}
 
