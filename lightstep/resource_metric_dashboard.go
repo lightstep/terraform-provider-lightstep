@@ -71,11 +71,6 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 	var querySchema map[string]*schema.Schema
 	if chartSchemaType == UnifiedChartSchema {
 		querySchema = getUnifiedQuerySchema()
-		querySchema["display"] = &schema.Schema{
-			Type:         schema.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map"}, false),
-		}
 		querySchema["dependency_map_options"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Optional: true,

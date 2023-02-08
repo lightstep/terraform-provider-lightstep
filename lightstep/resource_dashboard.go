@@ -6,6 +6,7 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func getUnifiedQuerySchema() map[string]*schema.Schema {
@@ -13,6 +14,11 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 		"hidden": {
 			Type:     schema.TypeBool,
 			Required: true,
+		},
+		"display": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map"}, false),
 		},
 		"query_name": {
 			Type:     schema.TypeString,

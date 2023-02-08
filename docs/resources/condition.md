@@ -93,6 +93,10 @@ Required:
 - `query_name` (String)
 - `query_string` (String)
 
+Optional:
+
+- `display` (String)
+
 
 <a id="nestedblock--alerting_rule"></a>
 ### Nested Schema for `alerting_rule`
