@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_DeleteMetricCondition_when_connection_is_closed(t *testing.T) {
+func Test_DeleteUnifiedCondition_when_connection_is_closed(t *testing.T) {
 	var server *httptest.Server
 	server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/public/v0.2/blars/projects/tacoman/metric_alerts/hi", r.URL.Path)
@@ -20,7 +20,7 @@ func Test_DeleteMetricCondition_when_connection_is_closed(t *testing.T) {
 
 	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
 	c := NewClient("api", "blars", "staging")
-	err := c.DeleteMetricCondition(context.Background(), "tacoman", "hi")
+	err := c.DeleteUnifiedCondition(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)
 
@@ -30,7 +30,7 @@ func Test_DeleteMetricCondition_when_connection_is_closed(t *testing.T) {
 	assert.Equal(t, -1, apiErr.GetStatusCode())
 }
 
-func Test_DeleteMetricCondition_when_connection_has_wrong_content_length(t *testing.T) {
+func Test_DeleteUnifiedCondition_when_connection_has_wrong_content_length(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", "1") // set content length to 1 so reading body fails
 	}))
@@ -38,7 +38,7 @@ func Test_DeleteMetricCondition_when_connection_has_wrong_content_length(t *test
 
 	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
 	c := NewClient("api", "blars", "staging")
-	err := c.DeleteMetricCondition(context.Background(), "tacoman", "hi")
+	err := c.DeleteUnifiedCondition(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)
 	assert.Equal(t, "unexpected EOF", err.Error())
