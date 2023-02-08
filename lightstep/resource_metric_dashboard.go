@@ -283,7 +283,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 
 		if p.chartSchemaType == MetricChartSchema {
-			chart["query"] = getQueriesFromMetricDashboardResourceData(c.MetricQueries)
+			chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
 		} else {
 			queries, err := getQueriesFromUnifiedDashboardResourceData(
 				c.MetricQueries,

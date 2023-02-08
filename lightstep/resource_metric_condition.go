@@ -16,14 +16,23 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
-func resourceMetricCondition() *schema.Resource {
-	return &schema.Resource{
-		CreateContext: resourceMetricConditionCreate,
-		ReadContext:   resourceMetricConditionRead,
-		UpdateContext: resourceMetricConditionUpdate,
-		DeleteContext: resourceMetricConditionDelete,
+// resourceUnifiedCondition creates a resource for either:
+//
+// (1) The legacy lightstep_metric_condition
+// (2) The unified lightstep_condition
+//
+// The resources are largely the same with the primary difference being the
+// query format.
+func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.Resource {
+	p := resourceUnifiedConditionImp{conditionSchemaType: conditionSchemaType}
+
+	resource := &schema.Resource{
+		CreateContext: p.resourceUnifiedConditionCreate,
+		ReadContext:   p.resourceUnifiedConditionRead,
+		UpdateContext: p.resourceUnifiedConditionUpdate,
+		DeleteContext: p.resourceUnifiedConditionDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceMetricConditionImport,
+			StateContext: p.resourceUnifiedConditionImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
@@ -76,13 +85,6 @@ func resourceMetricCondition() *schema.Resource {
 					},
 				},
 			},
-			"metric_query": {
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: getMetricQuerySchema(),
-				},
-			},
 			"alerting_rule": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -92,6 +94,25 @@ func resourceMetricCondition() *schema.Resource {
 			},
 		},
 	}
+
+	if conditionSchemaType == UnifiedConditionSchema {
+		resource.Schema["query"] = &schema.Schema{
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Resource{
+				Schema: getUnifiedQuerySchema(),
+			},
+		}
+	} else {
+		resource.Schema["metric_query"] = &schema.Schema{
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Resource{
+				Schema: getMetricQuerySchema(),
+			},
+		}
+	}
+	return resource
 }
 
 func getAlertingRuleSchema() map[string]*schema.Schema {
@@ -256,8 +277,8 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"tql": {
-			Deprecated:  "Use lightstep_dashboard or query_string field instead",
-			Description: "Deprecated, use query_string instead",
+			Deprecated:  "Use lightstep_dashboard or lightstep_condition instead",
+			Description: "Deprecated, use the query_string field in lightstep_dashboard or lightstep_condition instead",
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,
@@ -306,32 +327,43 @@ func getThresholdSchema() map[string]*schema.Schema {
 	}
 }
 
-func resourceMetricConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+type ConditionSchemaType int
+
+const (
+	MetricConditionSchema ConditionSchemaType = iota
+	UnifiedConditionSchema
+)
+
+type resourceUnifiedConditionImp struct {
+	conditionSchemaType ConditionSchemaType
+}
+
+func (p *resourceUnifiedConditionImp) resourceUnifiedConditionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attributes, err := getMetricConditionAttributesFromResource(d)
+	attributes, err := getUnifiedConditionAttributesFromResource(d, p.conditionSchemaType)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
-	condition := client.MetricCondition{
+	condition := client.UnifiedCondition{
 		Type:       "metric_alert",
 		Attributes: *attributes,
 	}
 
-	created, err := c.CreateMetricCondition(ctx, d.Get("project_name").(string), condition)
+	created, err := c.CreateUnifiedCondition(ctx, d.Get("project_name").(string), condition)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to create metric condition: %v", err))
 	}
 
 	d.SetId(created.ID)
-	return resourceMetricConditionRead(ctx, d, m)
+	return p.resourceUnifiedConditionRead(ctx, d, m)
 }
 
-func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	cond, err := c.GetMetricCondition(ctx, d.Get("project_name").(string), d.Id())
+	cond, err := c.GetUnifiedCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr := err.(client.APIResponseCarrier)
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
@@ -341,32 +373,32 @@ func resourceMetricConditionRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 
-	if err := setResourceDataFromMetricCondition(d.Get("project_name").(string), *cond, d); err != nil {
+	if err := setResourceDataFromUnifiedCondition(d.Get("project_name").(string), *cond, d, p.conditionSchemaType); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err))
 	}
 
 	return diags
 }
 
-func resourceMetricConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *resourceUnifiedConditionImp) resourceUnifiedConditionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getMetricConditionAttributesFromResource(d)
+	attrs, err := getUnifiedConditionAttributesFromResource(d, p.conditionSchemaType)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get metric condition attributes from resource : %v", err))
 	}
 
-	if _, err := c.UpdateMetricCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
+	if _, err := c.UpdateUnifiedCondition(ctx, d.Get("project_name").(string), d.Id(), *attrs); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to update metric condition: %v", err))
 	}
 
-	return resourceMetricConditionRead(ctx, d, m)
+	return p.resourceUnifiedConditionRead(ctx, d, m)
 }
 
-func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func (p *resourceUnifiedConditionImp) resourceUnifiedConditionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
-	if err := c.DeleteMetricCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
+	if err := c.DeleteUnifiedCondition(ctx, d.Get("project_name").(string), d.Id()); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to delete metrics condition: %v", err))
 	}
 
@@ -376,29 +408,33 @@ func resourceMetricConditionDelete(ctx context.Context, d *schema.ResourceData, 
 	return diags
 }
 
-func resourceMetricConditionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func (p *resourceUnifiedConditionImp) resourceUnifiedConditionImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	clnt := m.(*client.Client)
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_metric_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_metric_condition_ID>'")
+		resourceName := "lighstep_condition"
+		if p.conditionSchemaType == MetricConditionSchema {
+			resourceName = "lightstep_metric_condition"
+		}
+		return []*schema.ResourceData{}, fmt.Errorf("error importing %v. Expecting an  ID formed as '<lightstep_project>.<%v_ID>'", resourceName, resourceName)
 	}
 
 	project, id := ids[0], ids[1]
-	c, err := clnt.GetMetricCondition(ctx, project, id)
+	c, err := clnt.GetUnifiedCondition(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("failed to get metric condition. err: %v", err)
 	}
 
 	d.SetId(id)
-	if err := setResourceDataFromMetricCondition(project, *c, d); err != nil {
+	if err := setResourceDataFromUnifiedCondition(project, *c, d, p.conditionSchemaType); err != nil {
 		return nil, fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err)
 	}
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.MetricConditionAttributes, error) {
+func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaType ConditionSchemaType) (*client.UnifiedConditionAttributes, error) {
 	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
 
 	thresholds, err := buildThresholds(d)
@@ -406,7 +442,7 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 		return nil, err
 	}
 
-	attributes := &client.MetricConditionAttributes{
+	attributes := &client.UnifiedConditionAttributes{
 		Type:        "metrics",
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
@@ -418,7 +454,11 @@ func getMetricConditionAttributesFromResource(d *schema.ResourceData) (*client.M
 		},
 	}
 
-	queries, err := buildQueries(d.Get("metric_query").([]interface{}))
+	schemaQuery := d.Get("metric_query")
+	if schemaType == UnifiedConditionSchema {
+		schemaQuery = d.Get("query")
+	}
+	queries, err := buildQueries(schemaQuery.([]interface{}))
 	if err != nil {
 		return nil, err
 	}
@@ -872,7 +912,7 @@ func validateGroupBy(groupBy interface{}, queryType string) error {
 	return nil
 }
 
-func setResourceDataFromMetricCondition(project string, c client.MetricCondition, d *schema.ResourceData) error {
+func setResourceDataFromUnifiedCondition(project string, c client.UnifiedCondition, d *schema.ResourceData, schemaType ConditionSchemaType) error {
 	if err := d.Set("project_name", project); err != nil {
 		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
@@ -912,9 +952,21 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 		return fmt.Errorf("unable to set expression resource field: %v", err)
 	}
 
-	queries := getQueriesFromMetricDashboardResourceData(c.Attributes.Queries)
-	if err := d.Set("metric_query", queries); err != nil {
-		return fmt.Errorf("unable to set metric_proxy resource field: %v", err)
+	if schemaType == MetricConditionSchema {
+		if err := d.Set("metric_query", getQueriesFromMetricConditionData(c.Attributes.Queries)); err != nil {
+			return fmt.Errorf("unable to set metric_query resource field: %v", err)
+		}
+	} else {
+		queries, err := getQueriesFromUnifiedConditionResourceData(
+			c.Attributes.Queries,
+			c.ID,
+		)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("query", queries); err != nil {
+			return fmt.Errorf("unable to set query resource field: %v", err)
+		}
 	}
 
 	var alertingRules []interface{}
@@ -941,6 +993,36 @@ func setResourceDataFromMetricCondition(project string, c client.MetricCondition
 	}
 
 	return nil
+}
+
+func getQueriesFromUnifiedConditionResourceData(
+	queriesIn []client.MetricQueryWithAttributes,
+	conditionID string,
+) ([]interface{}, error) {
+	var queries []interface{}
+	for _, q := range queriesIn {
+		if q.Type != "tql" {
+			return nil, fmt.Errorf(
+				"cannot convert query from condition %v\n\n"+
+					"Query is of type '%v' but must be of type 'tql' for use with the resource\n"+
+					"type lightstep_condition.\n"+
+					"\n"+
+					"Try using the lightstep_metrics_condition resource type for this condition\n"+
+					"or convert all queries in the condition to query string format. ",
+				conditionID,
+				q.Type,
+			)
+		}
+
+		qs := map[string]interface{}{
+			"hidden":       q.Hidden,
+			"display":      q.Display,
+			"query_name":   q.Name,
+			"query_string": q.TQLQuery,
+		}
+		queries = append(queries, qs)
+	}
+	return queries, nil
 }
 
 func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}, []interface{}) {
@@ -972,7 +1054,7 @@ func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []in
 	return includeFilters, excludeFilters, allFilters
 }
 
-func getQueriesFromMetricDashboardResourceData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
+func getQueriesFromMetricConditionData(queriesIn []client.MetricQueryWithAttributes) []interface{} {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(q.Query.Filters)
