@@ -77,12 +77,18 @@ func resourceAlertingRuleRead(ctx context.Context, d *schema.ResourceData, m int
 	c := m.(*client.Client)
 	rule, err := c.GetAlertingRule(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get alerting rule: %v", err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
-		return diag.FromErr(fmt.Errorf("failed to get alerting rule: %v", apiErr))
+
+		return diag.FromErr(fmt.Errorf("failed to get alerting rule: %v", err))
 	}
 
 	if err := setResourceDataFromAlertingRule(d, *rule); err != nil {

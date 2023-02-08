@@ -173,8 +173,8 @@ func (c *Client) UpdateStream(ctx context.Context, projectName string,
 func (c *Client) DeleteStream(ctx context.Context, projectName string, StreamID string) error {
 	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/streams/%v", projectName, StreamID), nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}

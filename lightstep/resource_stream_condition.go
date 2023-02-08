@@ -77,11 +77,16 @@ func resourceStreamConditionRead(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(*client.Client)
 	condition, err := c.GetStreamCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get stream condition: %v", err))
+		}
+
 		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
+
 		return diag.FromErr(fmt.Errorf("failed to get stream condition: %v", apiErr))
 	}
 

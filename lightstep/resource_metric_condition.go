@@ -365,11 +365,16 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 	c := m.(*client.Client)
 	cond, err := c.GetUnifiedCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
+
 		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 

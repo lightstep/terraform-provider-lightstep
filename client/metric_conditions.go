@@ -206,8 +206,8 @@ func (c *Client) DeleteUnifiedCondition(ctx context.Context, projectName string,
 
 	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}

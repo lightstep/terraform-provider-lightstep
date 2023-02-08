@@ -138,8 +138,8 @@ func (c *Client) GetStreamCondition(ctx context.Context, projectName string, con
 func (c *Client) DeleteStreamCondition(ctx context.Context, projectName string, conditionID string) error {
 	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/conditions/%v", projectName, conditionID), nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}
