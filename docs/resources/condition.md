@@ -93,6 +93,11 @@ Required:
 - `query_name` (String)
 - `query_string` (String)
 
+Optional:
+
+- `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--query--dependency_map_options))
+- `display` (String)
+
 <a id="nestedblock--query--dependency_map_options"></a>
 ### Nested Schema for `query.dependency_map_options`
 
