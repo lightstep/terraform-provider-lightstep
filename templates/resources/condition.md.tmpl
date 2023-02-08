@@ -31,7 +31,6 @@ resource "lightstep_condition" "beemo-requests" {
   query {
     query_name                          = "a"
     hidden                              = false
-    display                             = "line"
     query_string                        = <<EOT
 spans latency
 | delta 1h

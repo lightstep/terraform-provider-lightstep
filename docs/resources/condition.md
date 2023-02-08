@@ -31,7 +31,6 @@ resource "lightstep_condition" "beemo-requests" {
   query {
     query_name                          = "a"
     hidden                              = false
-    display                             = "line"
     query_string                        = <<EOT
 spans latency
 | delta 1h
@@ -93,11 +92,6 @@ Required:
 - `hidden` (Boolean)
 - `query_name` (String)
 - `query_string` (String)
-
-Optional:
-
-- `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--query--dependency_map_options))
-- `display` (String)
 
 <a id="nestedblock--query--dependency_map_options"></a>
 ### Nested Schema for `query.dependency_map_options`

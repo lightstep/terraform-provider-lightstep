@@ -53,7 +53,6 @@ resource "lightstep_condition" "test" {
   query {
     query_name          = "a"
     hidden              = false
-    display 			= "line"
 	query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
   }
 
@@ -103,7 +102,6 @@ resource "lightstep_condition" "test" {
   query {
     query_name          = "a"
     hidden              = false
-    display 			= "line"
 	query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
   }
 
