@@ -135,7 +135,7 @@ func resourceStreamConditionImport(ctx context.Context, d *schema.ResourceData, 
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
-		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_condition. Expecting an  ID formed as '<lightstep_project>.<lightstep_condition_ID>'")
+		return []*schema.ResourceData{}, fmt.Errorf("error importing lightstep_alert. Expecting an  ID formed as '<lightstep_project>.<lightstep_alert_ID>'")
 	}
 
 	project, id := ids[0], ids[1]

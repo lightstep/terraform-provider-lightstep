@@ -9,11 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccCondition(t *testing.T) {
+func TestAccAlert(t *testing.T) {
 	var condition client.UnifiedCondition
 
 	badCondition := `
-resource "lightstep_condition" "errors" {
+resource "lightstep_alert" "errors" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
   expression {
@@ -35,7 +35,7 @@ resource "lightstep_slack_destination" "slack" {
   channel = "#emergency-room"
 }
 
-resource "lightstep_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
   description = "A link to a playbook"
@@ -84,7 +84,7 @@ resource "lightstep_slack_destination" "slack" {
   channel = "#emergency-room"
 }
 
-resource "lightstep_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "updated"
   description = "A link to a fresh playbook"
@@ -119,7 +119,7 @@ resource "lightstep_condition" "test" {
 }
 `
 
-	resourceName := "lightstep_condition.test"
+	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

@@ -5,7 +5,7 @@ import (
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
-// most of the code that backs the lightstep_condition resource is shared with the legacy resource_metric_condition,
+// most of the code that backs the lightstep_alert resource is shared with the legacy resource_metric_condition,
 // and can be found in resource_metric_condition.go
 
 func getQueriesFromUnifiedConditionResourceData(
@@ -18,7 +18,7 @@ func getQueriesFromUnifiedConditionResourceData(
 			return nil, fmt.Errorf(
 				"cannot convert query from condition %v\n\n"+
 					"Query is of type '%v' but must be of type 'tql' for use with the resource\n"+
-					"type lightstep_condition.\n"+
+					"type lightstep_alert.\n"+
 					"\n"+
 					"Try using the lightstep_metrics_condition resource type for this condition\n"+
 					"or convert all queries in the condition to query string format. ",

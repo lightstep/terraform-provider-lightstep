@@ -19,7 +19,7 @@ import (
 // resourceUnifiedCondition creates a resource for either:
 //
 // (1) The legacy lightstep_metric_condition
-// (2) The unified lightstep_condition
+// (2) The unified lightstep_alert
 //
 // The resources are largely the same with the primary difference being the
 // query format.
@@ -277,8 +277,8 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"tql": {
-			Deprecated:  "Use lightstep_dashboard or lightstep_condition instead",
-			Description: "Deprecated, use the query_string field in lightstep_dashboard or lightstep_condition instead",
+			Deprecated:  "Use lightstep_dashboard or lightstep_alert instead",
+			Description: "Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead",
 			Type:        schema.TypeString,
 			Optional:    true,
 			Computed:    true,

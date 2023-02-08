@@ -144,7 +144,7 @@ Optional:
 - `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
-- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_condition instead
+- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
 
 <a id="nestedblock--metric_query--final_window_operation"></a>
 ### Nested Schema for `metric_query.final_window_operation`
