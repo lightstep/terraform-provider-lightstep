@@ -42,11 +42,16 @@ func resourceSlackDestinationRead(ctx context.Context, d *schema.ResourceData, m
 	c := m.(*client.Client)
 	dest, err := c.GetDestination(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get slack destination: %v", err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
+
 		return diag.FromErr(fmt.Errorf("failed to get slack destination: %v", apiErr))
 	}
 

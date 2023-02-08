@@ -121,8 +121,8 @@ func (c *Client) GetAlertingRule(ctx context.Context, projectName string, alerti
 func (c *Client) DeleteAlertingRule(ctx context.Context, projectName string, alertingRuleID string) error {
 	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/alerting_rules/%v", projectName, alertingRuleID), nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}

@@ -41,8 +41,12 @@ func dataSourceLightstepStreamRead(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*client.Client)
 	s, err := c.GetStream(ctx, d.Get("project_name").(string), d.Get("stream_id").(string))
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get stream: %v", err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diag.FromErr(fmt.Errorf("stream not found: %v", apiErr))
 		}

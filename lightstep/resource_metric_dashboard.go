@@ -161,11 +161,16 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 
 	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
 	if err != nil {
-		apiErr := err.(client.APIResponseCarrier)
-		if apiErr.GetHTTPResponse() != nil && apiErr.GetHTTPResponse().StatusCode == http.StatusNotFound {
+		apiErr, ok := err.(client.APIResponseCarrier)
+		if !ok {
+			return diag.FromErr(fmt.Errorf("failed to get dashboard: %v", err))
+		}
+
+		if apiErr.GetStatusCode() == http.StatusNotFound {
 			d.SetId("")
 			return diags
 		}
+
 		return diag.FromErr(fmt.Errorf("failed to get dashboard: %v", apiErr))
 	}
 

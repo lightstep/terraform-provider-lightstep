@@ -76,8 +76,8 @@ func (c *Client) GetDestination(ctx context.Context, projectName string, destina
 func (c *Client) DeleteDestination(ctx context.Context, project string, destinationID string) error {
 	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/destinations/%v", project, destinationID), nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}

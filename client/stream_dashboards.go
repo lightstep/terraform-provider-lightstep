@@ -114,8 +114,8 @@ func (c *Client) GetDashboard(ctx context.Context, projectName string, dashboard
 func (c *Client) DeleteDashboard(ctx context.Context, projectName string, dashboardID string) error {
 	err := c.CallAPI(ctx, "DELETE", fmt.Sprintf("projects/%v/dashboards/%v", projectName, dashboardID), nil, nil)
 	if err != nil {
-		apiClientError := err.(APIResponseCarrier)
-		if apiClientError.GetHTTPResponse().StatusCode != http.StatusNoContent {
+		apiClientError, ok := err.(APIResponseCarrier)
+		if !ok || apiClientError.GetStatusCode() != http.StatusNoContent {
 			return err
 		}
 	}
