@@ -18,7 +18,17 @@ type UnifiedDashboardAttributes struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Charts      []UnifiedChart `json:"charts"`
+	Groups      []UnifiedGroup `json:"groups"`
 	Labels      []Label        `json:"labels"`
+}
+
+type UnifiedGroup struct {
+	ID             string         `json:"id"`
+	Rank           int            `json:"rank"`
+	Title          string         `json:"title"`
+	VisibilityType string         `json:"visibility-type"`
+	Charts         []UnifiedChart `json:"charts"`
+	Labels         []Label        `json:"labels"`
 }
 
 type UnifiedChart struct {
@@ -80,6 +90,7 @@ func (c *Client) CreateUnifiedDashboard(
 			Name:        dashboard.Attributes.Name,
 			Description: dashboard.Attributes.Description,
 			Charts:      dashboard.Attributes.Charts,
+			Groups:      dashboard.Attributes.Groups,
 			Labels:      dashboard.Attributes.Labels,
 		},
 	})

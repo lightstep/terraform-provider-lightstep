@@ -62,6 +62,13 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					Schema: getChartSchema(chartSchemaType),
 				},
 			},
+			"group": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getGroupSchema(chartSchemaType),
+				},
+			},
 			"label": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -78,6 +85,36 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
+		"rank": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Required:     true,
+		},
+		"title": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"visibility_type": {
+			Type:         schema.TypeString,
+			ValidateFunc: validation.StringInSlice([]string{"implicit", "explicit"}, false),
+			Required:     true,
+		},
+		"chart": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: getChartSchema(chartSchemaType),
 			},
 		},
 	}
@@ -269,6 +306,11 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	if err != nil {
 		return nil, err
 	}
+	groupSet := d.Get("group").(*schema.Set)
+	groups, err := buildGroups(groupSet.List())
+	if err != nil {
+		return nil, err
+	}
 
 	labelSet := d.Get("label").(*schema.Set)
 	labels, err := buildLabels(labelSet.List())
@@ -280,10 +322,40 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		Name:        d.Get("dashboard_name").(string),
 		Description: d.Get("dashboard_description").(string),
 		Charts:      charts,
+		Groups:      groups,
 		Labels:      labels,
 	}
 
 	return attributes, nil
+}
+
+func buildGroups(groupsIn []interface{}) ([]client.UnifiedGroup, error) {
+	var (
+		groups    []map[string]interface{}
+		newGroups []client.UnifiedGroup
+		charts    []client.UnifiedChart
+	)
+
+	for _, group := range groupsIn {
+		group = append(groups, group.(map[string]interface{}))
+	}
+
+	for _, group := range groups {
+		c, err := buildCharts(group["chart"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		charts = append(charts, c...)
+		g := client.UnifiedGroup{
+			ID:             group["id"].(string),
+			Rank:           group["rank"].(int),
+			Title:          group["title"].(string),
+			VisibilityType: group["visibility_type"].(string),
+			Charts:         charts,
+		}
+		newGroups = append(newGroups, g)
+	}
+	return newGroups, nil
 }
 
 func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
@@ -402,6 +474,68 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
+	assembleCharts := func(chartsIn []client.UnifiedChart) ([]interface{}, error) {
+		var charts []interface{}
+		for _, c := range chartsIn {
+			chart := map[string]interface{}{}
+
+			yMap := map[string]interface{}{}
+
+			if c.YAxis != nil {
+				yMap["max"] = c.YAxis.Max
+				yMap["min"] = c.YAxis.Min
+				chart["y_axis"] = []map[string]interface{}{yMap}
+			}
+
+			if p.chartSchemaType == MetricChartSchema {
+				chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
+			} else {
+				queries, err := getQueriesFromUnifiedDashboardResourceData(
+					c.MetricQueries,
+					dash.ID,
+					c.ID,
+				)
+				if err != nil {
+					return nil, err
+				}
+				chart["query"] = queries
+			}
+			chart["name"] = c.Title
+			chart["rank"] = c.Rank
+			chart["type"] = c.ChartType
+			chart["id"] = c.ID
+
+			charts = append(charts, chart)
+		}
+		return charts, nil
+	}
+	charts, err := assembleCharts(dash.Attributes.Charts)
+	if err != nil {
+		return err
+	}
+	if err := d.Set("chart", charts); err != nil {
+		return fmt.Errorf("unable to set chart resource field: %v", err)
+	}
+
+	var groups []interface{}
+	for _, g := range dash.Attributes.Groups {
+		group := map[string]interface{}{}
+		group["title"] = g.Title
+		group["id"] = g.ID
+		group["visibility_type"] = g.VisibilityType
+		group["rank"] = g.Rank
+
+		groupCharts, err := assembleCharts(g.Charts)
+		if err != nil {
+			return err
+		}
+		group["chart"] = groupCharts
+		groups = append(groups, group)
+	}
+	if err := d.Set("group", groups); err != nil {
+		return fmt.Errorf("unable to set group resource field: %v", err)
+	}
+
 	var labels []interface{}
 	for _, l := range dash.Attributes.Labels {
 		label := map[string]interface{}{}
@@ -413,43 +547,6 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 	if err := d.Set("label", labels); err != nil {
 		return fmt.Errorf("unable to set labels resource field: %v", err)
-	}
-
-	var charts []interface{}
-	for _, c := range dash.Attributes.Charts {
-		chart := map[string]interface{}{}
-
-		yMap := map[string]interface{}{}
-
-		if c.YAxis != nil {
-			yMap["max"] = c.YAxis.Max
-			yMap["min"] = c.YAxis.Min
-			chart["y_axis"] = []map[string]interface{}{yMap}
-		}
-
-		if p.chartSchemaType == MetricChartSchema {
-			chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
-		} else {
-			queries, err := getQueriesFromUnifiedDashboardResourceData(
-				c.MetricQueries,
-				dash.ID,
-				c.ID,
-			)
-			if err != nil {
-				return err
-			}
-			chart["query"] = queries
-		}
-		chart["name"] = c.Title
-		chart["rank"] = c.Rank
-		chart["type"] = c.ChartType
-		chart["id"] = c.ID
-
-		charts = append(charts, chart)
-	}
-
-	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("unable to set chart resource field: %v", err)
 	}
 
 	return nil
