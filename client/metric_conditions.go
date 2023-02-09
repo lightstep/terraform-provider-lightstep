@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-type MetricCondition struct {
-	ID         string                    `json:"id"`
-	Type       string                    `json:"type"`
-	Attributes MetricConditionAttributes `json:"attributes"`
+type UnifiedCondition struct {
+	ID         string                     `json:"id"`
+	Type       string                     `json:"type"`
+	Attributes UnifiedConditionAttributes `json:"attributes"`
 }
 
-type MetricConditionAttributes struct {
+type UnifiedConditionAttributes struct {
 	Name          string                      `json:"name"`
 	Description   string                      `json:"description"`
 	Type          string                      `json:"condition_type"`
@@ -107,19 +107,19 @@ func getURL(project string, id string) string {
 	return base
 }
 
-func (c *Client) CreateMetricCondition(
+func (c *Client) CreateUnifiedCondition(
 	ctx context.Context,
 	projectName string,
-	condition MetricCondition) (MetricCondition, error) {
+	condition UnifiedCondition) (UnifiedCondition, error) {
 
 	var (
-		cond MetricCondition
+		cond UnifiedCondition
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(MetricCondition{
+	bytes, err := json.Marshal(UnifiedCondition{
 		Type: condition.Type,
-		Attributes: MetricConditionAttributes{
+		Attributes: UnifiedConditionAttributes{
 			Name:          condition.Attributes.Name,
 			Type:          condition.Type,
 			Expression:    condition.Attributes.Expression,
@@ -147,18 +147,18 @@ func (c *Client) CreateMetricCondition(
 	return cond, err
 }
 
-func (c *Client) UpdateMetricCondition(
+func (c *Client) UpdateUnifiedCondition(
 	ctx context.Context,
 	projectName string,
 	conditionID string,
-	attributes MetricConditionAttributes,
-) (MetricCondition, error) {
+	attributes UnifiedConditionAttributes,
+) (UnifiedCondition, error) {
 	var (
-		cond MetricCondition
+		cond UnifiedCondition
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(&MetricCondition{
+	bytes, err := json.Marshal(&UnifiedCondition{
 		Type:       "metric_alert",
 		ID:         conditionID,
 		Attributes: attributes,
@@ -182,9 +182,9 @@ func (c *Client) UpdateMetricCondition(
 	return cond, err
 }
 
-func (c *Client) GetMetricCondition(ctx context.Context, projectName string, conditionID string) (*MetricCondition, error) {
+func (c *Client) GetUnifiedCondition(ctx context.Context, projectName string, conditionID string) (*UnifiedCondition, error) {
 	var (
-		cond MetricCondition
+		cond UnifiedCondition
 		resp Envelope
 	)
 
@@ -201,7 +201,7 @@ func (c *Client) GetMetricCondition(ctx context.Context, projectName string, con
 	return &cond, err
 }
 
-func (c *Client) DeleteMetricCondition(ctx context.Context, projectName string, conditionID string) error {
+func (c *Client) DeleteUnifiedCondition(ctx context.Context, projectName string, conditionID string) error {
 	url := getURL(projectName, conditionID)
 
 	err := c.CallAPI(ctx, "DELETE", url, nil, nil)

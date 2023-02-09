@@ -71,6 +71,25 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 	var querySchema map[string]*schema.Schema
 	if chartSchemaType == UnifiedChartSchema {
 		querySchema = getUnifiedQuerySchema()
+		querySchema["dependency_map_options"] = &schema.Schema{
+			Type:     schema.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"scope": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringInSlice([]string{"all", "upstream", "downstream", "immediate"}, false),
+					},
+					"map_type": {
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringInSlice([]string{"service", "operation"}, false),
+					},
+				},
+			},
+		}
 	} else {
 		querySchema = getMetricQuerySchema()
 	}
@@ -288,7 +307,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 
 		if p.chartSchemaType == MetricChartSchema {
-			chart["query"] = getQueriesFromMetricDashboardResourceData(c.MetricQueries)
+			chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
 		} else {
 			queries, err := getQueriesFromUnifiedDashboardResourceData(
 				c.MetricQueries,

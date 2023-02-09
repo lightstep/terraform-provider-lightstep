@@ -51,13 +51,14 @@ func Provider() *schema.Provider {
 			"lightstep_stream":                resourceStream(),
 			"lightstep_stream_dashboard":      resourceStreamDashboard(),
 			"lightstep_stream_condition":      resourceStreamCondition(),
-			"lightstep_metric_condition":      resourceMetricCondition(),
+			"lightstep_metric_condition":      resourceUnifiedCondition(MetricConditionSchema),
 			"lightstep_metric_dashboard":      resourceUnifiedDashboard(MetricChartSchema),
 			"lightstep_webhook_destination":   resourceWebhookDestination(),
 			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
 			"lightstep_slack_destination":     resourceSlackDestination(),
 			"lightstep_alerting_rule":         resourceAlertingRule(),
 			"lightstep_dashboard":             resourceUnifiedDashboard(UnifiedChartSchema),
+			"lightstep_alert":                 resourceUnifiedCondition(UnifiedConditionSchema),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

@@ -28,25 +28,6 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Required: true,
 		},
-		"dependency_map_options": {
-			Type:     schema.TypeList,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"scope": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"all", "upstream", "downstream", "immediate"}, false),
-					},
-					"map_type": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"service", "operation"}, false),
-					},
-				},
-			},
-		},
 	}
 	return sma
 }

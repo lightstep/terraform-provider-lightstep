@@ -41,7 +41,7 @@ var (
 )
 
 func TestAccMetricCondition(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	badCondition := `
 resource "lightstep_metric_condition" "errors" {
@@ -241,7 +241,7 @@ resource "lightstep_metric_condition" "test" {
 }
 
 func TestAccSpanLatencyCondition(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -360,7 +360,7 @@ resource "lightstep_metric_condition" "test" {
 }
 
 func TestAccSpanRateCondition(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -475,7 +475,7 @@ resource "lightstep_metric_condition" "test" {
 }
 
 func TestAccSpanErrorRatioCondition(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -590,7 +590,7 @@ resource "lightstep_metric_condition" "test" {
 }
 
 func TestAccSpanRateConditionWithFormula(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -716,7 +716,7 @@ resource "lightstep_metric_condition" "test" {
 }
 
 func TestAccMetricConditionWithFormula(t *testing.T) {
-	var condition client.MetricCondition
+	var condition client.UnifiedCondition
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -836,7 +836,7 @@ resource "lightstep_metric_condition" "test" {
 	})
 }
 
-func testAccCheckMetricConditionExists(resourceName string, condition *client.MetricCondition) resource.TestCheckFunc {
+func testAccCheckMetricConditionExists(resourceName string, condition *client.UnifiedCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -848,7 +848,7 @@ func testAccCheckMetricConditionExists(resourceName string, condition *client.Me
 		}
 
 		providerClient := testAccProvider.Meta().(*client.Client)
-		cond, err := providerClient.GetMetricCondition(context.Background(), test_project, tfCondition.Primary.ID)
+		cond, err := providerClient.GetUnifiedCondition(context.Background(), test_project, tfCondition.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -865,7 +865,7 @@ func testAccMetricConditionDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetMetricCondition(context.Background(), test_project, res.Primary.ID)
+		s, err := conn.GetUnifiedCondition(context.Background(), test_project, res.Primary.ID)
 		if err == nil {
 			if s.ID == res.Primary.ID {
 				return fmt.Errorf("metric condition with ID (%v) still exists.", res.Primary.ID)
