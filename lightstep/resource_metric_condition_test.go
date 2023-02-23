@@ -718,13 +718,20 @@ resource "lightstep_metric_condition" "test" {
 func TestAccMetricConditionWithFormula(t *testing.T) {
 	var condition client.UnifiedCondition
 
-	conditionConfig := `
+	// The query string should come back exactly without losing the comment or user formatting
+	const uqlQuery = `	
+# Test comment to ensure this is retained too
+with 
+	a = metric requests | rate 1h | filter "service_name" == "frontend" | group_by ["method"], mean;
+	b = metric requests | rate 1h | filter "service_name" == "frontend" && "error" == "true" | group_by ["method"], mean;
+join (a/b)*100, a=0, b=0`
+	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
 
@@ -738,60 +745,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
-    metric                              = "requests"
-    query_name                          = "a"
-    timeseries_operator                 = "rate"
-    timeseries_operator_input_window_ms = 3600000
-    hidden                              = false
+  query {
+	query_name                          = "a"
+	hidden                              = false
     display                             = "line"
-
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
-
-    group_by  {
-      aggregation_method = "avg"
-      keys = ["method"]
-    }
-  }
-
-  metric_query {
-    metric                              = "requests"
-    query_name                          = "b"
-    timeseries_operator                 = "rate"
-    timeseries_operator_input_window_ms = 3600000
-    hidden                              = false
-    display                             = "line"
-
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
-
-	include_filters = [{
-		  key   = "error"
-		  value = "true"
-	}]
-
-    group_by  {
-      aggregation_method = "avg"
-      keys = ["method"]
-    }
-  }
-
-  metric_query {
-    query_name          = "(a/b)*100"
-    hidden              = false
-    display             = "line"
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+	query_string                        = <<EOT
+%s
+EOT
   }
 
   alerting_rule {
@@ -810,8 +770,9 @@ resource "lightstep_metric_condition" "test" {
 	}]
   }
 }
-`
-	resourceName := "lightstep_metric_condition.test"
+`, uqlQuery)
+
+	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -822,14 +783,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.filters.0.key", "service_name"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.filters.0.value", "frontend"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.filters.0.key", "service_name"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.filters.0.value", "frontend"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.include_filters.0.key", "error"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.include_filters.0.value", "true"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.2.final_window_operation.0.operator", "min"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.2.final_window_operation.0.input_window_ms", "30000"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
 			},
 		},
