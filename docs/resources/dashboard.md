@@ -20,7 +20,7 @@ resource "lightstep_dashboard" "customer_charges" {
   dashboard_description = "Dashboard for customer charges metrics"
 
   chart {
-    name = "Requests by Project"
+    name = "Requests by Project for $service"
     rank = 1
     type = "timeseries"
 
@@ -28,7 +28,7 @@ resource "lightstep_dashboard" "customer_charges" {
       hidden         = false
       query_name     = "a"
       display        = "line"
-      query_string   = "metric requests | rate 10m | group_by [project_id], sum"
+      query_string   = "metric requests | filter (service == $service) | rate 10m | group_by [project_id], sum"
     }
   }
 
@@ -43,6 +43,12 @@ resource "lightstep_dashboard" "customer_charges" {
       hidden         = false
       query_string   = "spans latency | rate 10m | group_by [customer_name], max"
     }
+  }
+
+  template_variable {
+    name = "service"
+    default_values = ["adservice"]
+    suggestion_attribute_key = "service.name"
   }
 }
 ```
@@ -59,6 +65,7 @@ resource "lightstep_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
+- `template_variable` (Block Set) (see [below for nested schema](#nestedblock--template_variable))
 
 ### Read-Only
 
@@ -114,3 +121,17 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--template_variable"></a>
+### Nested Schema for `template_variable`
+
+Required:
+
+- `default_values` (List of String)
+- `name` (String)
+
+Optional:
+
+- `suggestion_attribute_key` (String)

@@ -62,6 +62,33 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					Schema: getChartSchema(chartSchemaType),
 				},
 			},
+			"template_variable": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getTemplateVariableSchema(),
+				},
+			},
+		},
+	}
+}
+
+func getTemplateVariableSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"default_values": {
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"suggestion_attribute_key": {
+			Type:     schema.TypeString,
+			Optional: true,
 		},
 	}
 }
@@ -207,13 +234,33 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		return nil, err
 	}
 
+	templateVariableSet := d.Get("template_variable").(*schema.Set)
+	templateVariables := buildTemplateVariables(templateVariableSet.List())
+
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:        d.Get("dashboard_name").(string),
-		Description: d.Get("dashboard_description").(string),
-		Charts:      charts,
+		Name:              d.Get("dashboard_name").(string),
+		Description:       d.Get("dashboard_description").(string),
+		Charts:            charts,
+		TemplateVariables: templateVariables,
 	}
 
 	return attributes, nil
+}
+
+func buildTemplateVariables(inTemplateVariables []interface{}) []client.TemplateVariable {
+	var newTemplateVariables []client.TemplateVariable
+	for _, tv := range inTemplateVariables {
+		name := tv.(map[string]interface{})["name"]
+		defaultValues := tv.(map[string]interface{})["default_values"]
+		suggestionAttributeKey := tv.(map[string]interface{})["suggestion_attribute_key"]
+
+		newTemplateVariables = append(newTemplateVariables, client.TemplateVariable{
+			Name:                   name.(string),
+			DefaultValues:          defaultValues.([]string),
+			SuggestionAttributeKey: suggestionAttributeKey.(string),
+		})
+	}
+	return newTemplateVariables
 }
 
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
@@ -329,6 +376,19 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 
 	if err := d.Set("chart", charts); err != nil {
 		return fmt.Errorf("unable to set chart resource field: %v", err)
+	}
+
+	var templateVariables []interface{}
+	for _, tv := range dash.Attributes.TemplateVariables {
+		templateVariable := map[string]interface{}{}
+		templateVariable["name"] = tv.Name
+		templateVariable["default_values"] = tv.DefaultValues
+		templateVariable["suggestion_attribute_key"] = tv.SuggestionAttributeKey
+
+		templateVariables = append(templateVariables, templateVariable)
+	}
+	if err := d.Set("template_variable", templateVariables); err != nil {
+		return fmt.Errorf("unable to set template variables resource field: %v", err)
 	}
 
 	return nil

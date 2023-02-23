@@ -15,9 +15,10 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Charts      []UnifiedChart `json:"charts"`
+	Name              string             `json:"name"`
+	Description       string             `json:"description"`
+	Charts            []UnifiedChart     `json:"charts"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
 }
 
 type UnifiedChart struct {
@@ -37,6 +38,12 @@ type YAxis struct {
 type MetricGroupBy struct {
 	LabelKeys         []string `json:"label-keys"`
 	AggregationMethod string   `json:"aggregation-method"`
+}
+
+type TemplateVariable struct {
+	Name                   string   `json:"name"`
+	DefaultValues          []string `json:"default_values"`
+	SuggestionAttributeKey string   `json:"suggestion_attribute_key"`
 }
 
 func getUnifiedDashboardURL(project, id string, query map[string]string) string {
@@ -71,9 +78,10 @@ func (c *Client) CreateUnifiedDashboard(
 	bytes, err := json.Marshal(UnifiedDashboard{
 		Type: dashboard.Type,
 		Attributes: UnifiedDashboardAttributes{
-			Name:        dashboard.Attributes.Name,
-			Description: dashboard.Attributes.Description,
-			Charts:      dashboard.Attributes.Charts,
+			Name:              dashboard.Attributes.Name,
+			Description:       dashboard.Attributes.Description,
+			Charts:            dashboard.Attributes.Charts,
+			TemplateVariables: dashboard.Attributes.TemplateVariables,
 		},
 	})
 

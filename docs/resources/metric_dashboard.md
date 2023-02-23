@@ -90,6 +90,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
+- `template_variable` (Block Set) (see [below for nested schema](#nestedblock--template_variable))
 
 ### Read-Only
 
@@ -177,3 +178,17 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--template_variable"></a>
+### Nested Schema for `template_variable`
+
+Required:
+
+- `default_values` (List of String)
+- `name` (String)
+
+Optional:
+
+- `suggestion_attribute_key` (String)
