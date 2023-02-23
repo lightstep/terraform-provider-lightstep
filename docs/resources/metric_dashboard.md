@@ -90,6 +90,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
+- `labels` (Set of Map of String) Each label is a map with key and value fields. key is optional for free-form strings that don't use the "key:value" syntax.
 
 ### Read-Only
 
