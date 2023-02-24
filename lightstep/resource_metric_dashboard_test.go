@@ -184,7 +184,6 @@ resource "lightstep_metric_dashboard" "test" {
   }
 }
 `
-
 	templateVariableDashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
   project_name          = "terraform-provider-tests"
@@ -210,6 +209,7 @@ resource "lightstep_metric_dashboard" "test" {
     suggestion_attribute_key = "service.name"
   }
 }
+`
 
 	resourceName := "lightstep_metric_dashboard.test"
 	resourceNameSpans := "lightstep_metric_dashboard.test_spans"
