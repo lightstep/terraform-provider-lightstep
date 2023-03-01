@@ -207,13 +207,15 @@ EOT
 func TestAccSpanLatencyCondition(t *testing.T) {
 	var condition client.UnifiedCondition
 
-	conditionConfig := `
+	const uqlQuery = `spans latency | delta 1h, 1h | filter (service == "frontend") | group_by [], sum | point percentile(value, 50.0) | reduce 30s, min`
+
+	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Span latency alert"
 
@@ -227,21 +229,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
+  query {
     hidden              = false
     query_name          = "a"
     display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "latency"
-      operator_input_window_ms = 3600000
-      latency_percentiles = [50]
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+    query_string 	= <<EOT
+%s
+EOT
   }
 
   alerting_rule {
@@ -249,15 +243,17 @@ resource "lightstep_metric_condition" "test" {
     update_interval = "1h"
   }
 }
-`
+`, uqlQuery)
 
-	updatedConditionConfig := `
+	const uqlQuery2 = `spans latency | delta 1h, 1h | filter (service == "frontend") | group_by [], sum | point percentile(value, 95.0) | reduce 30s, min`
+
+	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Span latency alert - updated"
 
@@ -271,21 +267,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
+  query {
     hidden              = false
     query_name          = "a"
     display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "latency"
-      operator_input_window_ms = 3600000
-      latency_percentiles = [95]
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+    query_string 	= <<EOT
+%s
+EOT	
   }
 
   alerting_rule {
@@ -293,9 +281,9 @@ resource "lightstep_metric_condition" "test" {
     update_interval = "1h"
   }
 }
-`
+`, uqlQuery2)
 
-	resourceName := "lightstep_metric_condition.test"
+	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -306,8 +294,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
 			},
 			{
@@ -315,8 +302,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "95"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery2+"\n"),
 				),
 			},
 		},

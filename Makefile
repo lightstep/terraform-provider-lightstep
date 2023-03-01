@@ -45,7 +45,7 @@ endif
 	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep
 
 tmp-test:
-	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_PUBLIC_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep -run TestAccMetricCondition
+	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_PUBLIC_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep -run TestAccSpanLatency
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
