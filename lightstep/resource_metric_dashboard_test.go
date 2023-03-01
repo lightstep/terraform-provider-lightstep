@@ -15,9 +15,11 @@ import (
 func TestAccMetricDashboard(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
+	uqlQuery := `metric pagerduty.task.success | filter (kube_app == "pagerduty") | rate | group_by ["cluster-name"], max`
+
 	// missing required field 'type'
-	badDashboard := `
-resource "lightstep_metric_dashboard" "test" {
+	badDashboard := fmt.Sprintf(`
+resource "lightstep_dashboard" "test" {
   project_name          = "terraform-provider-tests"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
@@ -36,76 +38,16 @@ resource "lightstep_metric_dashboard" "test" {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
-
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
+      query_string        = <<EOT
+%s
+EOT
     }
   }
 }
-`
+`, uqlQuery)
 
-	tqlDashboardConfig := `
-resource "lightstep_metric_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
-  dashboard_name        = "Acceptance Test Dashboard"
-  dashboard_description = "Dashboard to test if the terraform provider works"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-      tql                 = "metric m | rate"
-    }
-  }
-}
-`
-	spansQueryDashboardConfig := `
-resource "lightstep_metric_dashboard" "test_spans" {
-  project_name          = "terraform-provider-tests"
-  dashboard_name        = "Acceptance Test Dashboard"
-  dashboard_description = "Dashboard to test if the terraform provider works"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-
-      spans {
-        query = "service IN (\"frontend\")"
-        operator = "error_ratio"
-        operator_input_window_ms = 3600000
-      }
-
-      final_window_operation {
-        operator = "min"
-        input_window_ms  = 30000
-      }
-    }
-  }
-}
-`
-
-	dashboardConfig := `
-resource "lightstep_metric_dashboard" "test" {
+	dashboardConfig := fmt.Sprintf(`
+resource "lightstep_dashboard" "test" {
   project_name          = "terraform-provider-tests"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
@@ -125,29 +67,15 @@ resource "lightstep_metric_dashboard" "test" {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
-
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      filters = [{
-        key   = "kube_app"
-        operand = "contains"
-        value = "frontend"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
+      query_string        = <<EOT
+%s
+EOT
     }
   }
 }
-`
-	updatedTitleDashboardConfig := `
+`, uqlQuery)
+
+	updatedTitleDashboardConfig := fmt.Sprintf(`
 resource "lightstep_metric_dashboard" "test" {
   project_name          = "terraform-provider-tests"
   dashboard_name        = "Acceptance Test Dashboard Updated"
@@ -168,25 +96,15 @@ resource "lightstep_metric_dashboard" "test" {
       hidden              = false
       query_name          = "a"
       display             = "bar"
-      timeseries_operator = "rate"
-      metric              = "pagerduty.task.success"
-
-      include_filters = [{
-        key   = "kube_app"
-        value = "pagerduty"
-      }]
-
-      group_by {
-        aggregation_method = "max"
-        keys               = ["cluster-name"]
-      }
+      query_string        = <<EOT
+%s
+EOT
     }
   }
 }
-`
+`, uqlQuery)
 
-	resourceName := "lightstep_metric_dashboard.test"
-	resourceNameSpans := "lightstep_metric_dashboard.test_spans"
+	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -208,42 +126,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "Chart Number One"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "pagerduty.task.success"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator", "rate"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.timeseries_operator_input_window_ms", "0"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "bar"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.key", "kube_app"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.include_filters.0.value", "pagerduty"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.key", "kube_app"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.operand", "contains"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.filters.0.value", "frontend"),
-				),
-			},
-			{
-				Config: tqlDashboardConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric m | rate"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
-				),
-			},
-			{
-				Config: spansQueryDashboardConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricDashboardExists(resourceNameSpans, &dashboard),
-					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "dashboard_description", "Dashboard to test if the terraform provider works"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.display", "line"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.hidden", "false"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator", "error_ratio"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.spans.0.query", "service IN (\"frontend\")"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.operator", "min"),
-					resource.TestCheckResourceAttr(resourceNameSpans, "chart.0.query.0.final_window_operation.0.input_window_ms", "30000"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", uqlQuery+"\n"),
 				),
 			},
 			{

@@ -309,246 +309,18 @@ EOT
 	})
 }
 
-func TestAccSpanRateCondition(t *testing.T) {
-	var condition client.UnifiedCondition
-
-	conditionConfig := `
-resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
-}
-
-resource "lightstep_metric_condition" "test" {
-  project_name = "terraform-provider-tests"
-  name = "Span rate alert"
-
-  expression {
-	  is_multi   = false
-	  is_no_data = true
-      operand  = "above"
-	  thresholds {
-		critical  = 10
-		warning = 5
-	  }
-  }
-
-  metric_query {
-    hidden              = false
-    query_name          = "a"
-    display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "rate"
-      operator_input_window_ms = 3600000
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
-  }
-
-  alerting_rule {
-    id          = lightstep_slack_destination.slack.id
-    update_interval = "1h"
-  }
-}
-`
-
-	updatedConditionConfig := `
-resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
-}
-
-resource "lightstep_metric_condition" "test" {
-  project_name = "terraform-provider-tests"
-  name = "Span rate alert - updated"
-
-  expression {
-	  is_multi   = false
-	  is_no_data = true
-      operand  = "above"
-	  thresholds {
-		critical  = 10
-		warning = 5
-	  }
-  }
-
-  metric_query {
-    hidden              = false
-    query_name          = "a"
-    display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "rate"
-      operator_input_window_ms = 3600000
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
-  }
-
-  alerting_rule {
-    id          = lightstep_slack_destination.slack.id
-    update_interval = "1h"
-  }
-}
-`
-
-	resourceName := "lightstep_metric_condition.test"
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccMetricConditionDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: conditionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-				),
-			},
-			{
-				Config: updatedConditionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccSpanErrorRatioCondition(t *testing.T) {
-	var condition client.UnifiedCondition
-
-	conditionConfig := `
-resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
-}
-
-resource "lightstep_metric_condition" "test" {
-  project_name = "terraform-provider-tests"
-  name = "Span error ratio alert"
-
-  expression {
-	  is_multi   = false
-	  is_no_data = true
-      operand  = "above"
-	  thresholds {
-		critical  = 0.9
-		warning = 0.5
-	  }
-  }
-
-  metric_query {
-    hidden              = false
-    query_name          = "a"
-    display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "error_ratio"
-      operator_input_window_ms = 3600000
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
-  }
-
-  alerting_rule {
-    id          = lightstep_slack_destination.slack.id
-    update_interval = "1h"
-  }
-}
-`
-
-	updatedConditionConfig := `
-resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
-  channel = "#emergency-room"
-}
-
-resource "lightstep_metric_condition" "test" {
-  project_name = "terraform-provider-tests"
-  name = "Span error ratio alert - updated"
-
-  expression {
-	  is_multi   = false
-	  is_no_data = true
-      operand  = "above"
-	  thresholds {
-		critical  = 0.9
-		warning = 0.5
-	  }
-  }
-
-  metric_query {
-    hidden              = false
-    query_name          = "a"
-    display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "error_ratio"
-      operator_input_window_ms = 3600000
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
-  }
-
-  alerting_rule {
-    id          = lightstep_slack_destination.slack.id
-    update_interval = "1h"
-  }
-}
-`
-
-	resourceName := "lightstep_metric_condition.test"
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccMetricConditionDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: conditionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-				),
-			},
-			{
-				Config: updatedConditionConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSpanRateConditionWithFormula(t *testing.T) {
 	var condition client.UnifiedCondition
 
-	conditionConfig := `
+	uqlQuery := `spans latency | delta 1h | filter (service == "frontend") | group_by [], sum | point percentile(value, 50.0) | point (value + value)`
+
+	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Span rate alert"
 
@@ -562,26 +334,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
+  query {
     hidden              = false
     query_name          = "a"
     display = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "rate"
-      operator_input_window_ms = 3600000
-    }
-  }
-
-  metric_query {
-    hidden              = false
-    query_name          = "a+a"
-    display = "line"
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+    query_string = <<EOT
+%s
+EOT
   }
 
   alerting_rule {
@@ -589,15 +348,17 @@ resource "lightstep_metric_condition" "test" {
     update_interval = "1h"
   }
 }
-`
+`, uqlQuery)
 
-	updatedConditionConfig := `
+	uqlQuery2 := `spans latency | delta 1h | filter (service == "frontend") | group_by [], sum | point percentile(value, 50.0) | point (value + value + value)`
+
+	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Span rate alert - updated"
 
@@ -611,26 +372,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
+  query {
     hidden     = false
     query_name = "a"
     display    = "line"
-    spans {
-      query = "service IN (\"frontend\")"
-      operator = "rate"
-      operator_input_window_ms = 3600000
-    }
-  }
-
-  metric_query {
-    hidden     = false
-    query_name = "a+a+a"
-    display    = "line"
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+    query_string = <<EOT
+%s
+EOT
   }
 
   alerting_rule {
@@ -638,9 +386,9 @@ resource "lightstep_metric_condition" "test" {
     update_interval = "1h"
   }
 }
-`
+`, uqlQuery2)
 
-	resourceName := "lightstep_metric_condition.test"
+	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -651,14 +399,14 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.query_name", "a+a"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
 			},
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.1.query_name", "a+a+a"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery2+"\n"),
 				),
 			},
 		},
