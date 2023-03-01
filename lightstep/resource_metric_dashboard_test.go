@@ -76,7 +76,7 @@ EOT
 `, uqlQuery)
 
 	updatedTitleDashboardConfig := fmt.Sprintf(`
-resource "lightstep_metric_dashboard" "test" {
+resource "lightstep_dashboard" "test" {
   project_name          = "terraform-provider-tests"
   dashboard_name        = "Acceptance Test Dashboard Updated"
   dashboard_description = "Dashboard to test if the terraform provider still works"
