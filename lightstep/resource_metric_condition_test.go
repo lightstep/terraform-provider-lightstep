@@ -43,6 +43,8 @@ var (
 func TestAccMetricCondition(t *testing.T) {
 	var condition client.UnifiedCondition
 
+	uqlQuery := `metric requests | filter ((service != "android") && (project_name == "catlab")) | rate 1h, 1h | group_by ["method"], mean | reduce 5m, min`
+
 	badCondition := `
 resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
@@ -62,13 +64,13 @@ resource "lightstep_metric_condition" "errors" {
 }
 `
 
-	conditionConfig := `
+	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
   description = "A link to a playbook"
@@ -83,32 +85,13 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
-    metric         = "requests"
-    query_name          = "a"
-    timeseries_operator = "rate"
-    timeseries_operator_input_window_ms = 3600000
-    hidden              = false
-    display = "line"
-    include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
-
-    exclude_filters = [{
-      key   = "service"
-      value = "android"
-    }]
-
-    group_by  {
-      aggregation_method = "avg"
-      keys = ["method"]
-    }
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+  query {
+    query_name      = "a"
+    hidden          = false
+    display 		= "line"
+	query_string 	= <<EOT
+%s
+EOT
   }
 
   alerting_rule {
@@ -131,15 +114,15 @@ resource "lightstep_metric_condition" "test" {
 	  ]
   }
 }
-`
+`, uqlQuery)
 
-	updatedConditionConfig := `
+	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
   project_name = "terraform-provider-tests"
   channel = "#emergency-room"
 }
 
-resource "lightstep_metric_condition" "test" {
+resource "lightstep_alert" "test" {
   project_name = "terraform-provider-tests"
   name = "updated"
   description = "A link to a fresh playbook"
@@ -154,33 +137,14 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
-  metric_query {
-    metric         = "requests"
+  query {
     query_name          = "a"
-    timeseries_operator = "rate"
-    timeseries_operator_input_window_ms = 3600000
     hidden              = false
 	display             = "line"
-
-    include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
-
-    exclude_filters = [{
-      key   = "service"
-      value = "android"
-    }]
-
-    group_by  {
-      aggregation_method = "avg"
-      keys = ["method"]
-    }
-    
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
+	query_string 	= <<EOT
+%s
+EOT
+	
   }
 
   alerting_rule {
@@ -195,9 +159,9 @@ resource "lightstep_metric_condition" "test" {
     ]
   }
 }
-`
+`, uqlQuery)
 
-	resourceName := "lightstep_metric_condition.test"
+	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -216,7 +180,7 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
