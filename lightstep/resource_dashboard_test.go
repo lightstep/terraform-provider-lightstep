@@ -133,6 +133,30 @@ resource "lightstep_dashboard" "test" {
 }
 `
 
+	templateVariableDashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+      tql                 = "metric m | filter (service == $service) | rate | group_by [], sum"
+    }
+  }
+  template_variable {
+	name = "service"
+	default_values = ["myService"]
+    suggestion_attribute_key = "service.name"
+  }
+}
+`
+
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
@@ -185,6 +209,20 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.scope", "upstream"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.map_type", "operation"),
+				),
+			},
+			{
+				Config: templateVariableDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric m | filter (service == $service) | rate | group_by [], sum"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.name", "service"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.default_values.0", "myService"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.suggestion_attribute_key", "service.name"),
 				),
 			},
 		},
