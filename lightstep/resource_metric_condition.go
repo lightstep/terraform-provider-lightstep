@@ -281,7 +281,7 @@ func getMetricQuerySchema() map[string]*schema.Schema {
 			Description: "Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead",
 			Type:        schema.TypeString,
 			Optional:    true,
-			Computed:    true,
+			Computed:    false,
 		},
 		"spans": getSpansQuerySchema(),
 	}

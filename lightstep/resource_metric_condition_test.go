@@ -717,7 +717,7 @@ resource "lightstep_metric_condition" "test" {
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point (value + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point ((value + value) + value) | reduce 30s, min"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
