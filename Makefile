@@ -44,6 +44,7 @@ ifndef LIGHTSTEP_API_KEY_PUBLIC
 endif
 	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep
 
+
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
 	scripts/ensure_clean_repo.sh
