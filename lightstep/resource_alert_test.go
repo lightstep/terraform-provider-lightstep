@@ -323,7 +323,7 @@ EOT
 	})
 }
 
-func TestAccSpanLatencyCondition(t *testing.T) {
+func TestAccSpanLatencyAlert(t *testing.T) {
 	var condition client.UnifiedCondition
 
 	const uqlQuery = `spans latency | delta 1h, 1h | filter (service == "frontend") | group_by [], sum | point percentile(value, 50.0) | reduce 30s, min`
@@ -627,21 +627,4 @@ func testAccChecLightstepAlertExists(resourceName string, condition *client.Unif
 		condition = cond
 		return nil
 	}
-}
-
-func testAccMetricConditionDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*client.Client)
-	for _, res := range s.RootModule().Resources {
-		if res.Type != "metric_alert" {
-			continue
-		}
-
-		s, err := conn.GetUnifiedCondition(context.Background(), test_project, res.Primary.ID)
-		if err == nil {
-			if s.ID == res.Primary.ID {
-				return fmt.Errorf("metric condition with ID (%v) still exists.", res.Primary.ID)
-			}
-		}
-	}
-	return nil
 }

@@ -104,7 +104,6 @@ resource "lightstep_dashboard" "test" {
       query_name          = "a"
       display             = "bar"
       query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
-
     }
   }
 }
@@ -122,7 +121,7 @@ resource "lightstep_dashboard" "test" {
 
     query {
       hidden       = false
-      query_name   = "b"
+      query_name   = "a"
       display      = "dependency_map"
       query_string = "spans_sample service = apache | assemble"
       dependency_map_options {
