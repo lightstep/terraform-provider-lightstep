@@ -353,7 +353,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans latency | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point percentile(value, 50.0) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans latency | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point percentile(value, 95.0) | reduce 30s, min"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -717,7 +717,7 @@ resource "lightstep_metric_condition" "test" {
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point (value + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point ((value + value) + value) | reduce 30s, min"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
