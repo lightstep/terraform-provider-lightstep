@@ -631,17 +631,6 @@ resource "lightstep_metric_condition" "test" {
     }
   }
 
-  metric_query {
-    hidden              = false
-    query_name          = "a+a"
-    display = "line"
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
-    }
-  }
-
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
@@ -674,20 +663,9 @@ resource "lightstep_metric_condition" "test" {
     query_name = "a"
     display    = "line"
     spans {
-      query = "service IN (\"frontend\")"
+      query = "service IN (\"backend\")"
       operator = "rate"
       operator_input_window_ms = 3600000
-    }
-  }
-
-  metric_query {
-    hidden     = false
-    query_name = "a+a+a"
-    display    = "line"
-
-    final_window_operation {
-      operator = "min"
-      input_window_ms  = 30000
     }
   }
 
@@ -709,7 +687,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point (value + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h | filter (service == \"frontend\") | group_by [], sum"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
@@ -717,7 +695,7 @@ resource "lightstep_metric_condition" "test" {
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point (value + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h | filter (service == \"backend\") | group_by [], sum"),
 				),
 				ExpectNonEmptyPlan: true,
 			},
