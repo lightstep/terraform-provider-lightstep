@@ -45,15 +45,14 @@ resource "lightstep_dashboard" "customer_charges" {
     }
   }
 
-  labels = [
-    {
-      key = "team",
-      value = "billing"
-    },
-    {
-      value = "customlabel"
-    }
-  ]
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "customlabel"
+  }
 }
 ```
 

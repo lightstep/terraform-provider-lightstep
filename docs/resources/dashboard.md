@@ -45,15 +45,14 @@ resource "lightstep_dashboard" "customer_charges" {
     }
   }
 
-  labels = [
-    {
-      key = "team",
-      value = "billing"
-    },
-    {
-      value = "customlabel"
-    }
-  ]
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "customlabel"
+  }
 }
 ```
 
@@ -69,7 +68,7 @@ resource "lightstep_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
-- `labels` (Set of Map of String) Each label is a map with key and value fields. key is optional for free-form strings that don't use the "key:value" syntax.
+- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
 
@@ -125,3 +124,16 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)

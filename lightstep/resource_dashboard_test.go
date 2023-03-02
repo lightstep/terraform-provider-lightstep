@@ -329,15 +329,10 @@ resource "lightstep_dashboard" "labels" {
   project_name   = "terraform-provider-tests"
   dashboard_name = "Acceptance Test Dashboard"
 
-  labels = [
-    {
-      key = "team",
-      value = "ontology"
-    },
-    {
-      value = "customlabel"
-    }
-  ]
+  label {
+    key = "team"
+    value = "ontology"
+  }
 
   chart {
     name = "Chart Number One"
@@ -385,17 +380,16 @@ resource "lightstep_dashboard" "labels" {
 				Config: baseConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "labels.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "labels.0.key", "team"),
-					resource.TestCheckResourceAttr(resourceName, "labels.0.value", "ontology"),
-					resource.TestCheckResourceAttr(resourceName, "labels.1.value", "customlabel"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
 				),
 			},
 			{
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "labels.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "0"),
 				),
 			},
 		},

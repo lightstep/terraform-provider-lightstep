@@ -62,11 +62,22 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					Schema: getChartSchema(chartSchemaType),
 				},
 			},
-			"labels": {
+			"label": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Each label is a map with key and value fields. key is optional for free-form strings that don't use the \"key:value\" syntax.",
-				Elem:        &schema.Schema{Type: schema.TypeMap},
+				Description: "Labels can be key/value pairs or standalone values.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
@@ -213,7 +224,7 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		return nil, err
 	}
 
-	labelSet := d.Get("labels").(*schema.Set)
+	labelSet := d.Get("label").(*schema.Set)
 	labels, err := buildLabels(labelSet.List())
 	if err != nil {
 		return nil, err
@@ -242,7 +253,7 @@ func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
 			continue
 		}
 
-		// label keys can be ommitted for labels without the key:value syntax
+		// label keys can be omitted for labels without the key:value syntax
 		k := label["key"]
 		if k == nil {
 			k = ""
@@ -250,12 +261,12 @@ func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
 
 		key, ok := k.(string)
 		if !ok {
-			return nil, fmt.Errorf("labels: key must be a string, %v", k)
+			return nil, fmt.Errorf("label key must be a string, %v", k)
 		}
 
 		v, ok := label["value"].(string)
 		if !ok {
-			return nil, fmt.Errorf("labels: value is a required field, %v", v)
+			return nil, fmt.Errorf("label value is a required field, %v", v)
 		}
 
 		labels = append(labels, client.Label{
@@ -354,7 +365,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		label["value"] = l.Value
 		labels = append(labels, label)
 	}
-	if err := d.Set("labels", labels); err != nil {
+	if err := d.Set("label", labels); err != nil {
 		return fmt.Errorf("unable to set labels resource field: %v", err)
 	}
 
