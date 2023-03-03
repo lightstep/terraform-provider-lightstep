@@ -148,9 +148,6 @@ type resourceUnifiedDashboardImp struct {
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
 
-	fmt.Println("create")
-	defer fmt.Println("-create")
-
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -190,10 +187,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-
-	fmt.Println("read")
-	defer fmt.Println("-read")
-
 	c := m.(*client.Client)
 
 	// The lightstep_dashboard resource always wants to use query_strings rather than
@@ -378,9 +371,6 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	fmt.Println("update")
-	defer fmt.Println("-update")
-
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
@@ -395,9 +385,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context
 }
 
 func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	fmt.Println("delete")
-	defer fmt.Println("-delete")
-
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)

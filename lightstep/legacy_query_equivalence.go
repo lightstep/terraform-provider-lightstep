@@ -110,7 +110,6 @@ func compareUpdatedLegacyChart(
 		}
 		prior = strings.TrimSpace(prior)
 		updated = strings.TrimSpace(updated)
-		fmt.Printf("---CMD---\n%s\n%s\n", prior, updated)
 		if prior != updated {
 			return false, nil
 		}

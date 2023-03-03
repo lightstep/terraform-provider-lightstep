@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccDashboardLegacyFormatRetained(t *testing.T) {
+func TestAccDashboardLegacyFormat(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
 	dashboardConfig := `
@@ -77,7 +77,7 @@ resource "lightstep_metric_dashboard" "test" {
 				),
 			},
 			{
-				// Updated config will convert this to TQL
+				// Updated config will contain the new metric and chart name
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
@@ -85,8 +85,8 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "miss_ratio"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "something"),
-					//resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", ""),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "cache.miss_ratio"),
 				),
 			},
 		},
