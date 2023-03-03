@@ -133,6 +133,31 @@ resource "lightstep_dashboard" "test" {
 }
 `
 
+	groupedDashboardConfig := `
+	resource "lightstep_metric_dashboard" "test_groups" {
+	project_name          = "terraform-provider-tests"
+	dashboard_name        = "Acceptance Test Dashboard"
+	dashboard_description = "Dashboard to test if the terraform provider works"
+	group {
+		title = "Title"
+		rank = 0
+		visibility_type = "explicit"
+		chart {
+		  name = "Chart Number One"
+		  rank = 1
+		  type = "timeseries"
+	
+		  query {
+		    hidden              = false
+		    query_name          = "a"
+		    display             = "line"
+		    tql                 = "metric m | rate"
+		  }
+		}
+	}
+	}
+	`
+
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
@@ -186,6 +211,20 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.scope", "upstream"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.map_type", "operation"),
+				),
+			},
+			{
+				Config: groupedDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.title", "Title"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.rank", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "explicit"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.tql", "metric m | rate"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.hidden", "false"),
 				),
 			},
 		},

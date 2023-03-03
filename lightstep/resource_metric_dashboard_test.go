@@ -1,10 +1,8 @@
 package lightstep
 
 import (
-	"strings"
-	"context"
-	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
