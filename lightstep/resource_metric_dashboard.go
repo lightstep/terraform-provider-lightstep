@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -156,17 +157,58 @@ func hasLegacyCharts(attrs *client.UnifiedDashboardAttributes) bool {
 	return false
 }
 
+// Checks if the prior dashboard attributes have legacy queries that
+// map to the UQL queries that the API call returns. If so, we can
+// ignore the "false diff" a Terraform plan would otherwise show.
 func hasLegacyQueriesEquivalentToTQL(
-	prior *client.UnifiedDashboardAttributes,
-	updated *client.UnifiedDashboardAttributes,
+	c *client.Client,
+	priorAttrs *client.UnifiedDashboardAttributes,
+	updatedAttrs *client.UnifiedDashboardAttributes,
 ) bool {
-	// Has to have legacy charts or this is not applicable
-	if !hasLegacyCharts(prior) {
+	// Has to have legacy charts or this code is not applicable
+	if !hasLegacyCharts(priorAttrs) {
 		return false
 	}
 
-	// Make some TQL conversion call
-	// Compare the incoming legacy convert to TQL to the received TQL
+	re := regexp.MustCompile(`[()\s]`)
+	simplifyQueryName := func(s string) string {
+		return re.ReplaceAllString(s, "")
+	}
+
+	// Extract the UQL queries for easier comparison
+	updatedUQL := make(map[string]string)
+	for _, chart := range updatedAttrs.Charts {
+		for _, q := range chart.MetricQueries {
+			if q.Type != "tql" {
+				return false
+			}
+			updatedUQL[simplifyQueryName(q.Name)] = q.TQLQuery
+		}
+	}
+
+	//
+	// TODO: call %v/projects/%v/query_translation to convert prior
+	// legacy queries to UQL.
+	//
+	convertedUQL := make(map[string]string)
+	_ = c
+
+	// Now check the the converted UQL queries is the same as the
+	// updated UQL.  If so, our legacy queries are equivalent too.
+	if len(convertedUQL) != len(updatedUQL) {
+		return false
+	}
+	for key, converted := range convertedUQL {
+		updated, ok := updatedUQL[key]
+		if !ok {
+			return false
+		}
+		converted = strings.TrimSpace(converted)
+		updated = strings.TrimSpace(updated)
+		if converted != updated {
+			return false
+		}
+	}
 	return true
 }
 
