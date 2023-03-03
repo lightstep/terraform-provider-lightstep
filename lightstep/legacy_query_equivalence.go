@@ -14,15 +14,19 @@ import (
 //
 // If so, we can ignore the "false diff" a Terraform plan would otherwise show
 // by using the legacy resource data instread of the UQL resource data.
-func hasLegacyQueriesEquivalentToTQL(
+func dashboardHasEquivalentLegacyQueries(
 	c *client.Client,
 	projectName string,
 	priorAttrs *client.UnifiedDashboardAttributes,
 	updatedAttrs *client.UnifiedDashboardAttributes,
 ) (bool, error) {
-	// This code is only applicalbe if there legacy charts
-	if !hasLegacyQueries(priorAttrs) {
-		return false, nil
+	// This code is only applicalbe if there are legacy charts
+	for _, chart := range priorAttrs.Charts {
+		for _, query := range chart.MetricQueries {
+			if query.Type != "tql" {
+				return false, nil
+			}
+		}
 	}
 
 	// Loop through each chart and compare the queries...
@@ -31,36 +35,52 @@ func hasLegacyQueriesEquivalentToTQL(
 		// data structure.  Note that we can't do an Chart.ID look up since the
 		// prior structure doesn't necessarily have an ID at this point.
 		updateChart := updatedAttrs.Charts[index]
-		ok, err := compareUpdatedLegacyChart(c, projectName, priorChart, updateChart)
+		equivalent, err := compareUpdatedLegacyQueries(
+			c, projectName,
+			priorChart.MetricQueries,
+			updateChart.MetricQueries,
+		)
 		if err != nil {
 			return false, err
 		}
-		if !ok {
+		if !equivalent {
 			return false, nil
 		}
 	}
 	return true, nil
-
 }
 
-// Returns true if any of the queries on the dashboard are defined
-// in legacy format.
-func hasLegacyQueries(attrs *client.UnifiedDashboardAttributes) bool {
-	for _, chart := range attrs.Charts {
-		for _, query := range chart.MetricQueries {
-			if query.Type != "tql" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func compareUpdatedLegacyChart(
+// See dashboardHasEquivalentLegacyQueries: this is the metric condition
+// version
+func metricConditionHasEquivalentLegacyQueries(
 	c *client.Client,
 	projectName string,
-	priorChart client.UnifiedChart,
-	updatedChart client.UnifiedChart,
+	priorAttrs *client.UnifiedConditionAttributes,
+	updatedAttrs *client.UnifiedConditionAttributes,
+) (bool, error) {
+	// This code is only applicalbe if there are legacy charts
+	for _, query := range priorAttrs.Queries {
+		if query.Type != "tql" {
+			return false, nil
+		}
+	}
+
+	equivalent, err := compareUpdatedLegacyQueries(
+		c, projectName,
+		priorAttrs.Queries,
+		updatedAttrs.Queries,
+	)
+	if err != nil {
+		return false, err
+	}
+	return equivalent, nil
+}
+
+func compareUpdatedLegacyQueries(
+	c *client.Client,
+	projectName string,
+	priorQueries []client.MetricQueryWithAttributes,
+	updatedQueries []client.MetricQueryWithAttributes,
 ) (bool, error) {
 
 	// Step 1: call the SaaS to translate the legacy queries to UQL
@@ -76,7 +96,7 @@ func compareUpdatedLegacyChart(
 	resp := Response{}
 	req := map[string]interface{}{
 		"data": map[string]interface{}{
-			"queries": priorChart.MetricQueries,
+			"queries": priorQueries,
 		},
 	}
 	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
@@ -91,7 +111,7 @@ func compareUpdatedLegacyChart(
 
 	// Step 2: map the updated quries for comparison
 	updatedUQL := make(map[string]string)
-	for _, q := range updatedChart.MetricQueries {
+	for _, q := range updatedQueries {
 		if q.Type != "tql" {
 			return false, nil
 		}
