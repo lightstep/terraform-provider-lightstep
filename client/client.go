@@ -93,7 +93,6 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 	} else {
 		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
 	}
-	baseURL = "http://localhost:11000"
 
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 
@@ -132,17 +131,12 @@ func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, er
 // CallAPI calls the given API and unmarshals the result to into result.
 func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
 
+	// TEMP LOCAL WORKAROUND
 	suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
 
 	fmt.Println(fmt.Sprintf("%v/%v", c.baseURL, suffix), httpMethod)
 
-	if strings.HasSuffix(suffix, "translation") {
-
-		//b, _ := json.Marshal(data)
-		//fmt.Println("REQUEST BODY  >>>\n", string(b))
-	}
-
-	err := callAPI(
+	return callAPI(
 		ctx,
 		c,
 		fmt.Sprintf("%v/%v", c.baseURL, suffix),
@@ -157,13 +151,6 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 		data,
 		result,
 	)
-
-	if strings.HasSuffix(suffix, "translation") {
-		//b, _ := json.Marshal(result)
-		//fmt.Println("RESP BODY  >>>\n", string(b))
-	}
-
-	return err
 }
 
 func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {

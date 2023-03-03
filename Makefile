@@ -45,7 +45,7 @@ endif
 	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep
 
 tmp-test:
-	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_LOCAL_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep -run TestAccDashboardLegacyFormatRetained
+	@TF_ACC=true LIGHTSTEP_API_BASE_URL=http://localhost:11000 LIGHTSTEP_API_KEY=${LIGHTSTEP_LOCAL_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep -run TestAccDashboardLegacyFormatRetained
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
