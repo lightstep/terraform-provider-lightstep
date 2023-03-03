@@ -17,6 +17,7 @@ import (
 // the query is modified, at which point it needs to be converted to UQL)
 func hasLegacyQueriesEquivalentToTQL(
 	c *client.Client,
+	projectName string,
 	priorAttrs *client.UnifiedDashboardAttributes,
 	updatedAttrs *client.UnifiedDashboardAttributes,
 ) (bool, error) {
@@ -31,7 +32,7 @@ func hasLegacyQueriesEquivalentToTQL(
 		// data structure.  Note that we can't do an Chart.ID look up since the
 		// prior structure doesn't necessarily have an ID at this point.
 		updateChart := updatedAttrs.Charts[index]
-		ok, err := compareUpdatedLegacyChart(c, priorChart, updateChart)
+		ok, err := compareUpdatedLegacyChart(c, projectName, priorChart, updateChart)
 		if err != nil {
 			return false, err
 		}
@@ -58,6 +59,7 @@ func hasLegacyQueries(attrs *client.UnifiedDashboardAttributes) bool {
 
 func compareUpdatedLegacyChart(
 	c *client.Client,
+	projectName string,
 	priorChart client.UnifiedChart,
 	updatedChart client.UnifiedChart,
 ) (bool, error) {
@@ -78,7 +80,7 @@ func compareUpdatedLegacyChart(
 			"queries": priorChart.MetricQueries,
 		},
 	}
-	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", "demo"), req, &resp)
+	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
 	if err != nil {
 		return false, err
 	}
@@ -108,6 +110,7 @@ func compareUpdatedLegacyChart(
 		}
 		prior = strings.TrimSpace(prior)
 		updated = strings.TrimSpace(updated)
+		fmt.Printf("---CMD---\n%s\n%s\n", prior, updated)
 		if prior != updated {
 			return false, nil
 		}

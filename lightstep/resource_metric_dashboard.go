@@ -172,7 +172,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
-	legacy, err := hasLegacyQueriesEquivalentToTQL(c, attrs, &created.Attributes)
+	projectName := d.Get("project_name").(string)
+	legacy, err := hasLegacyQueriesEquivalentToTQL(c, projectName, attrs, &created.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
@@ -227,7 +228,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
 
-	legacy, err := hasLegacyQueriesEquivalentToTQL(c, prevAttrs, &dashboard.Attributes)
+	projectName := d.Get("project_name").(string)
+	legacy, err := hasLegacyQueriesEquivalentToTQL(c, projectName, prevAttrs, &dashboard.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
@@ -376,6 +378,9 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	fmt.Println("update")
+	defer fmt.Println("-update")
+
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {

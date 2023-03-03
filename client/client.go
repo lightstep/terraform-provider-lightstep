@@ -132,7 +132,9 @@ func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, er
 func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
 
 	// TEMP LOCAL WORKAROUND
-	suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
+	if strings.Contains(c.baseURL, "localhost") {
+		suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
+	}
 
 	fmt.Println(fmt.Sprintf("%v/%v", c.baseURL, suffix), httpMethod)
 

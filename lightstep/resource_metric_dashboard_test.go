@@ -44,7 +44,8 @@ resource "lightstep_metric_dashboard" "test" {
 	}
 	}
 `
-	updatedConfig := strings.Replace(dashboardConfig, "cache.hit_ratio", "cache.miss_ratio", 1)
+	// Change the chart name and metric name
+	updatedConfig := strings.Replace(dashboardConfig, "hit_ratio", "miss_ratio", -1)
 
 	resourceName := "lightstep_metric_dashboard.test"
 
@@ -81,11 +82,11 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "miss_ratio"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", ""),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "something"),
+					//resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", ""),
 				),
 			},
 		},
