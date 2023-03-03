@@ -174,8 +174,6 @@ func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Reques
 		return err
 	}
 
-	fmt.Println(resp.StatusCode)
-
 	if resp.StatusCode != http.StatusOK {
 		return APIClientError{
 			Response: resp,
@@ -251,8 +249,7 @@ func callAPI(
 	}
 
 	// Do the request.
-	err = executeAPIRequest(ctx, c, req, result)
-	return err
+	return executeAPIRequest(ctx, c, req, result)
 }
 
 func httpMethodSupportsRequestBody(method string) bool {
