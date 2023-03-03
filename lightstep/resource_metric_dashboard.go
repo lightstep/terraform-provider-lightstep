@@ -214,7 +214,6 @@ func hasLegacyQueriesEquivalentToTQL(
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -294,8 +293,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 }
 
 func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
-	fmt.Println("get")
-
 	chartSet := d.Get("chart").(*schema.Set)
 	charts, err := buildCharts(chartSet.List())
 	if err != nil {
@@ -430,8 +427,6 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	fmt.Println("update")
-
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
@@ -446,7 +441,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context
 }
 
 func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	fmt.Println("delete")
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
