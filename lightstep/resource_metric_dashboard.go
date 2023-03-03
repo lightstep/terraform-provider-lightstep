@@ -146,7 +146,7 @@ type resourceUnifiedDashboardImp struct {
 	chartSchemaType ChartSchemaType
 }
 
-func hasLegacyCharts(attrs *client.UnifiedDashboardAttributes) bool {
+func hasLegacyQueries(attrs *client.UnifiedDashboardAttributes) bool {
 	for _, chart := range attrs.Charts {
 		for _, query := range chart.MetricQueries {
 			if query.Type != "tql" {
@@ -166,7 +166,7 @@ func hasLegacyQueriesEquivalentToTQL(
 	updatedAttrs *client.UnifiedDashboardAttributes,
 ) bool {
 	// Has to have legacy charts or this code is not applicable
-	if !hasLegacyCharts(priorAttrs) {
+	if !hasLegacyQueries(priorAttrs) {
 		return false
 	}
 
@@ -215,9 +215,6 @@ func hasLegacyQueriesEquivalentToTQL(
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
 
-	fmt.Println("create")
-	defer fmt.Println("-create")
-
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -239,7 +236,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
-	if hasLegacyQueriesEquivalentToTQL(attrs, &created.Attributes) {
+	if hasLegacyQueriesEquivalentToTQL(c, attrs, &created.Attributes) {
 		dashboard.Attributes = *attrs
 		if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), dashboard, d); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
@@ -251,9 +248,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	fmt.Println("read")
-	defer fmt.Println("-read")
-
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
@@ -286,7 +280,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
-	if hasLegacyQueriesEquivalentToTQL(prevAttrs, &dashboard.Attributes) {
+	if hasLegacyQueriesEquivalentToTQL(c, prevAttrs, &dashboard.Attributes) {
 		dashboard.Attributes = *prevAttrs
 	}
 
