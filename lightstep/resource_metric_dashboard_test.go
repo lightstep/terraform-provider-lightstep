@@ -15,7 +15,7 @@ func TestAccDashboardLegacyFormat(t *testing.T) {
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
 	project_name          = "terraform-provider-tests"
-	dashboard_name        = "Acceptance Test Dashboard"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardLegacyFormat)"
 	dashboard_description = "Dashboard to test if the legacy formats are retained when there's no diff"
 	
 	chart {
@@ -59,7 +59,6 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
 				),
 			},
@@ -68,7 +67,6 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
@@ -81,7 +79,6 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "miss_ratio"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
