@@ -147,7 +147,6 @@ type resourceUnifiedDashboardImp struct {
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -166,9 +165,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	d.SetId(created.ID)
 
 	// Support for deprecated legacy queries: if we created a new legacy query and the creation
-	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
-	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
-	// format so this likely suffices.
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
+	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
 	legacy, err := hasLegacyQueriesEquivalentToTQL(c, projectName, attrs, &created.Attributes)
 	if err != nil {
@@ -218,9 +216,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 
 	// Support for deprecated legacy queries: if we created a new legacy query and the creation
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
-	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
-	// format so this likely suffices.
-
+	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
 	legacy, err := hasLegacyQueriesEquivalentToTQL(c, projectName, prevAttrs, &dashboard.Attributes)
 	if err != nil {

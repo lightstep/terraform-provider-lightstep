@@ -12,9 +12,8 @@ import (
 // Checks if the prior dashboard attributes have legacy queries that
 // map to the UQL queries that the API call returns.
 //
-// If so, we can ignore the "false diff" a Terraform plan would otherwise show.
-// This provides backwards compatibility for the legacy format (at least until
-// the query is modified, at which point it needs to be converted to UQL)
+// If so, we can ignore the "false diff" a Terraform plan would otherwise show
+// by using the legacy resource data instread of the UQL resource data.
 func hasLegacyQueriesEquivalentToTQL(
 	c *client.Client,
 	projectName string,
