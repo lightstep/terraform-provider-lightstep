@@ -259,7 +259,10 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 		convertToQueryString = true
 	}
 
-	prevAttrs, _ := getUnifiedDashboardAttributesFromResource(d)
+	prevAttrs, err := getUnifiedDashboardAttributesFromResource(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
+	}
 
 	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
 	if err != nil {
