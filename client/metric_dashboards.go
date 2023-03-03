@@ -18,6 +18,7 @@ type UnifiedDashboardAttributes struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
 	Charts      []UnifiedChart `json:"charts"`
+	Labels      []Label        `json:"labels"`
 }
 
 type UnifiedChart struct {
@@ -27,6 +28,11 @@ type UnifiedChart struct {
 	ChartType     string                      `json:"chart-type"`
 	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
+}
+
+type Label struct {
+	Key   string `json:"label_key"`
+	Value string `json:"label_value"`
 }
 
 type YAxis struct {
@@ -74,6 +80,7 @@ func (c *Client) CreateUnifiedDashboard(
 			Name:        dashboard.Attributes.Name,
 			Description: dashboard.Attributes.Description,
 			Charts:      dashboard.Attributes.Charts,
+			Labels:      dashboard.Attributes.Labels,
 		},
 	})
 

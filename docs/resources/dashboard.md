@@ -44,6 +44,15 @@ resource "lightstep_dashboard" "customer_charges" {
       query_string   = "spans latency | rate 10m | group_by [customer_name], max"
     }
   }
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "customlabel"
+  }
 }
 ```
 
@@ -59,6 +68,7 @@ resource "lightstep_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
+- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
 
@@ -114,3 +124,16 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)

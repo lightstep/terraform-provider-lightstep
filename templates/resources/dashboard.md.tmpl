@@ -44,6 +44,15 @@ resource "lightstep_dashboard" "customer_charges" {
       query_string   = "spans latency | rate 10m | group_by [customer_name], max"
     }
   }
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "customlabel"
+  }
 }
 ```
 
