@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -146,74 +145,12 @@ type resourceUnifiedDashboardImp struct {
 	chartSchemaType ChartSchemaType
 }
 
-func hasLegacyQueries(attrs *client.UnifiedDashboardAttributes) bool {
-	for _, chart := range attrs.Charts {
-		for _, query := range chart.MetricQueries {
-			if query.Type != "tql" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// Checks if the prior dashboard attributes have legacy queries that
-// map to the UQL queries that the API call returns. If so, we can
-// ignore the "false diff" a Terraform plan would otherwise show.
-func hasLegacyQueriesEquivalentToTQL(
-	c *client.Client,
-	priorAttrs *client.UnifiedDashboardAttributes,
-	updatedAttrs *client.UnifiedDashboardAttributes,
-) bool {
-	// Has to have legacy charts or this code is not applicable
-	if !hasLegacyQueries(priorAttrs) {
-		return false
-	}
-
-	re := regexp.MustCompile(`[()\s]`)
-	simplifyQueryName := func(s string) string {
-		return re.ReplaceAllString(s, "")
-	}
-
-	// Extract the UQL queries for easier comparison
-	updatedUQL := make(map[string]string)
-	for _, chart := range updatedAttrs.Charts {
-		for _, q := range chart.MetricQueries {
-			if q.Type != "tql" {
-				return false
-			}
-			updatedUQL[simplifyQueryName(q.Name)] = q.TQLQuery
-		}
-	}
-
-	//
-	// TODO: call %v/projects/%v/query_translation to convert prior
-	// legacy queries to UQL.
-	//
-	convertedUQL := make(map[string]string)
-	_ = c
-
-	// Now check the the converted UQL queries is the same as the
-	// updated UQL.  If so, our legacy queries are equivalent too.
-	if len(convertedUQL) != len(updatedUQL) {
-		return false
-	}
-	for key, converted := range convertedUQL {
-		updated, ok := updatedUQL[key]
-		if !ok {
-			return false
-		}
-		converted = strings.TrimSpace(converted)
-		updated = strings.TrimSpace(updated)
-		if converted != updated {
-			return false
-		}
-	}
-	return true
-}
-
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
+
+	fmt.Println("create")
+	defer fmt.Println("-create")
+
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -235,7 +172,11 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
-	if hasLegacyQueriesEquivalentToTQL(c, attrs, &created.Attributes) {
+	legacy, err := hasLegacyQueriesEquivalentToTQL(c, attrs, &created.Attributes)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacy {
 		dashboard.Attributes = *attrs
 		if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), dashboard, d); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
@@ -248,6 +189,9 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
+
+	fmt.Println("read")
+	defer fmt.Println("-read")
 
 	c := m.(*client.Client)
 
@@ -282,7 +226,12 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
 	// format so this likely suffices.
-	if hasLegacyQueriesEquivalentToTQL(c, prevAttrs, &dashboard.Attributes) {
+
+	legacy, err := hasLegacyQueriesEquivalentToTQL(c, prevAttrs, &dashboard.Attributes)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacy {
 		dashboard.Attributes = *prevAttrs
 	}
 
@@ -441,6 +390,9 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context
 }
 
 func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	fmt.Println("delete")
+	defer fmt.Println("-delete")
+
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)

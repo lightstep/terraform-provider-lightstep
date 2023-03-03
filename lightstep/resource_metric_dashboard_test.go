@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -43,6 +44,7 @@ resource "lightstep_metric_dashboard" "test" {
 	}
 	}
 `
+	updatedConfig := strings.Replace(dashboardConfig, "cache.hit_ratio", "cache.miss_ratio", 1)
 
 	resourceName := "lightstep_metric_dashboard.test"
 
@@ -57,6 +59,7 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
 				),
 			},
 			{
@@ -68,7 +71,21 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.metric_query.0.metric", "cache.hit_ratio"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", "cache.hit_ratio"),
+				),
+			},
+			{
+				// Updated config will convert this to TQL
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "hit_ratio"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.rank", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.type", "timeseries"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.metric", ""),
 				),
 			},
 		},

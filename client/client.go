@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -92,6 +93,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 	} else {
 		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
 	}
+	baseURL = "http://localhost:11000"
 
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 
@@ -129,7 +131,18 @@ func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, er
 
 // CallAPI calls the given API and unmarshals the result to into result.
 func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
-	return callAPI(
+
+	suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
+
+	fmt.Println(fmt.Sprintf("%v/%v", c.baseURL, suffix), httpMethod)
+
+	if strings.HasSuffix(suffix, "translation") {
+
+		//b, _ := json.Marshal(data)
+		//fmt.Println("REQUEST BODY  >>>\n", string(b))
+	}
+
+	err := callAPI(
 		ctx,
 		c,
 		fmt.Sprintf("%v/%v", c.baseURL, suffix),
@@ -144,6 +157,13 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 		data,
 		result,
 	)
+
+	if strings.HasSuffix(suffix, "translation") {
+		//b, _ := json.Marshal(result)
+		//fmt.Println("RESP BODY  >>>\n", string(b))
+	}
+
+	return err
 }
 
 func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Request, result interface{}) error {
@@ -166,6 +186,8 @@ func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Reques
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(resp.StatusCode)
 
 	if resp.StatusCode != http.StatusOK {
 		return APIClientError{
@@ -242,7 +264,8 @@ func callAPI(
 	}
 
 	// Do the request.
-	return executeAPIRequest(ctx, c, req, result)
+	err = executeAPIRequest(ctx, c, req, result)
+	return err
 }
 
 func httpMethodSupportsRequestBody(method string) bool {
