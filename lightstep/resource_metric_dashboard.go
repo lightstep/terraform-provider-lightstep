@@ -422,16 +422,8 @@ func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.C
 	return diags
 }
 
-// TODO
-// - If input TF is legacy
-// - Translate that TQL
-// - Get the current dashboard
-// - If the TQL === TQL
-// - Swap in the input legacy format to avoid a diff
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
-
-	fmt.Println("import")
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
