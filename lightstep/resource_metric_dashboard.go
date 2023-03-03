@@ -2,7 +2,6 @@ package lightstep
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -433,9 +432,6 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 		}
 		return []*schema.ResourceData{}, fmt.Errorf("error importing %v. Expecting an  ID formed as '<lightstep_project>.<%v_ID>'", resourceName, resourceName)
 	}
-
-	b, _ := json.MarshalIndent(d, "", "  ")
-	fmt.Println(string(b))
 
 	convertToQueryString := false
 	if p.chartSchemaType == UnifiedChartSchema {
