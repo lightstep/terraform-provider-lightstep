@@ -2,6 +2,7 @@ package lightstep
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -145,8 +146,37 @@ type resourceUnifiedDashboardImp struct {
 	chartSchemaType ChartSchemaType
 }
 
+func hasLegacyCharts(attrs *client.UnifiedDashboardAttributes) bool {
+	for _, chart := range attrs.Charts {
+		for _, query := range chart.MetricQueries {
+			if query.Type != "tql" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasLegacyQueriesEquivalentToTQL(
+	prior *client.UnifiedDashboardAttributes,
+	updated *client.UnifiedDashboardAttributes,
+) bool {
+	// Has to have legacy charts or this is not applicable
+	if !hasLegacyCharts(prior) {
+		return false
+	}
+
+	// Make some TQL conversion call
+	// Compare the incoming legacy convert to TQL to the received TQL
+	return true
+}
+
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
+
+	fmt.Println("create")
+	defer fmt.Println("-create")
+
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
@@ -163,10 +193,26 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	}
 
 	d.SetId(created.ID)
+
+	// Support for deprecated legacy queries: if we created a new legacy query and the creation
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
+	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
+	// format so this likely suffices.
+	if hasLegacyQueriesEquivalentToTQL(attrs, &created.Attributes) {
+		dashboard.Attributes = *attrs
+		if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), dashboard, d); err != nil {
+			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
+		}
+		return nil
+	}
+
 	return p.resourceUnifiedDashboardRead(ctx, d, m)
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	fmt.Println("read")
+	defer fmt.Println("-read")
+
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
@@ -177,6 +223,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	if p.chartSchemaType == UnifiedChartSchema {
 		convertToQueryString = true
 	}
+
+	prevAttrs, _ := getUnifiedDashboardAttributesFromResource(d)
 
 	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
 	if err != nil {
@@ -193,14 +241,23 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to get dashboard: %v", apiErr))
 	}
 
+	// Support for deprecated legacy queries: if we created a new legacy query and the creation
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
+	// diffs in the plan.  There are more robust ways to approach this, but this is a deprecated
+	// format so this likely suffices.
+	if hasLegacyQueriesEquivalentToTQL(prevAttrs, &dashboard.Attributes) {
+		dashboard.Attributes = *prevAttrs
+	}
+
 	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 	}
-
 	return diags
 }
 
 func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
+	fmt.Println("get")
+
 	chartSet := d.Get("chart").(*schema.Set)
 	charts, err := buildCharts(chartSet.List())
 	if err != nil {
@@ -335,6 +392,8 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	fmt.Println("update")
+
 	c := m.(*client.Client)
 	attrs, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
@@ -349,6 +408,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context
 }
 
 func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	fmt.Println("delete")
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
@@ -362,8 +422,16 @@ func (*resourceUnifiedDashboardImp) resourceUnifiedDashboardDelete(ctx context.C
 	return diags
 }
 
+// TODO
+// - If input TF is legacy
+// - Translate that TQL
+// - Get the current dashboard
+// - If the TQL === TQL
+// - Swap in the input legacy format to avoid a diff
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	c := m.(*client.Client)
+
+	fmt.Println("import")
 
 	ids := strings.Split(d.Id(), ".")
 	if len(ids) != 2 {
@@ -373,6 +441,9 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 		}
 		return []*schema.ResourceData{}, fmt.Errorf("error importing %v. Expecting an  ID formed as '<lightstep_project>.<%v_ID>'", resourceName, resourceName)
 	}
+
+	b, _ := json.MarshalIndent(d, "", "  ")
+	fmt.Println(string(b))
 
 	convertToQueryString := false
 	if p.chartSchemaType == UnifiedChartSchema {
