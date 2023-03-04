@@ -361,7 +361,7 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := metricConditionHasEquivalentLegacyQueries(c, projectName, attributes, &created.Attributes)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, attributes, &created.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
@@ -401,7 +401,7 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 	}
 
 	projectName := d.Get("project_name").(string)
-	legacy, err := metricConditionHasEquivalentLegacyQueries(c, projectName, prevAttrs, &cond.Attributes)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &cond.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}

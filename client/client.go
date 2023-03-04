@@ -134,7 +134,6 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 	// TEMP LOCAL WORKAROUND
 	if strings.Contains(c.baseURL, "localhost") {
 		suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
-		//fmt.Println(fmt.Sprintf("%v/%v", c.baseURL, suffix), httpMethod)
 	}
 
 	return callAPI(
@@ -169,6 +168,8 @@ func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Reques
 		}
 	}
 	defer resp.Body.Close() // nolint: errcheck
+
+	fmt.Printf("%v %v %v\n", req.URL.Path, req.Method, resp.StatusCode)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

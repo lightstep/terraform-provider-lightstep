@@ -15,6 +15,7 @@ import (
 // If so, we can ignore the "false diff" a Terraform plan would otherwise show
 // by using the legacy resource data instread of the UQL resource data.
 func dashboardHasEquivalentLegacyQueries(
+	ctx context.Context,
 	c *client.Client,
 	projectName string,
 	priorAttrs *client.UnifiedDashboardAttributes,
@@ -36,7 +37,7 @@ func dashboardHasEquivalentLegacyQueries(
 		// prior structure doesn't necessarily have an ID at this point.
 		updateChart := updatedAttrs.Charts[index]
 		equivalent, err := compareUpdatedLegacyQueries(
-			c, projectName,
+			ctx, c, projectName,
 			priorChart.MetricQueries,
 			updateChart.MetricQueries,
 		)
@@ -53,6 +54,7 @@ func dashboardHasEquivalentLegacyQueries(
 // See dashboardHasEquivalentLegacyQueries: this is the metric condition
 // version
 func metricConditionHasEquivalentLegacyQueries(
+	ctx context.Context,
 	c *client.Client,
 	projectName string,
 	priorAttrs *client.UnifiedConditionAttributes,
@@ -66,7 +68,7 @@ func metricConditionHasEquivalentLegacyQueries(
 	}
 
 	equivalent, err := compareUpdatedLegacyQueries(
-		c, projectName,
+		ctx, c, projectName,
 		priorAttrs.Queries,
 		updatedAttrs.Queries,
 	)
@@ -79,6 +81,7 @@ func metricConditionHasEquivalentLegacyQueries(
 // Check that the prior and updated set of queries are equivalent by
 // checking if the the UQL translations are the same.
 func compareUpdatedLegacyQueries(
+	ctx context.Context,
 	c *client.Client,
 	projectName string,
 	priorQueries []client.MetricQueryWithAttributes,
