@@ -10,7 +10,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -130,12 +129,6 @@ func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, er
 
 // CallAPI calls the given API and unmarshals the result to into result.
 func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, data interface{}, result interface{}) error {
-
-	// TEMP LOCAL WORKAROUND
-	if strings.Contains(c.baseURL, "localhost") {
-		suffix = strings.Replace(suffix, "terraform-provider-tests", "demo", -1)
-	}
-
 	return callAPI(
 		ctx,
 		c,
@@ -168,8 +161,6 @@ func executeAPIRequest(ctx context.Context, c *Client, req *retryablehttp.Reques
 		}
 	}
 	defer resp.Body.Close() // nolint: errcheck
-
-	fmt.Printf("%v %v %v\n", req.URL.Path, req.Method, resp.StatusCode)
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

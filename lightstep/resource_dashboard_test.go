@@ -321,11 +321,6 @@ EOT
 }
 
 func testGetMetricDashboardDestroy(s *terraform.State) error {
-	// TEMP LOCAL WORKAROUND
-	if testAccProvider.Meta() == nil {
-		return nil
-	}
-
 	conn := testAccProvider.Meta().(*client.Client)
 	for _, r := range s.RootModule().Resources {
 		if r.Type != "metric_alert" {
@@ -351,11 +346,6 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Un
 
 		if tfDashboard.Primary.ID == "" {
 			return fmt.Errorf("id is not set")
-		}
-
-		// TEMP LOCAL WORKAROUND
-		if testAccProvider.Meta() == nil {
-			return nil
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
