@@ -174,7 +174,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	}
 	if legacy {
 		dashboard.Attributes = *attrs
-		if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), dashboard, d); err != nil {
+		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 		}
 		return nil

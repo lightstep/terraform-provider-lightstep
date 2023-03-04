@@ -23,7 +23,7 @@ func dashboardHasEquivalentLegacyQueries(
 	// This code is only applicalbe if there are legacy charts
 	for _, chart := range priorAttrs.Charts {
 		for _, query := range chart.MetricQueries {
-			if query.Type != "tql" {
+			if query.Type == "tql" {
 				return false, nil
 			}
 		}
@@ -60,7 +60,7 @@ func metricConditionHasEquivalentLegacyQueries(
 ) (bool, error) {
 	// This code is only applicalbe if there are legacy charts
 	for _, query := range priorAttrs.Queries {
-		if query.Type != "tql" {
+		if query.Type == "tql" {
 			return false, nil
 		}
 	}
@@ -76,6 +76,8 @@ func metricConditionHasEquivalentLegacyQueries(
 	return equivalent, nil
 }
 
+// Check that the prior and updated set of queries are equivalent by
+// checking if the the UQL translations are the same.
 func compareUpdatedLegacyQueries(
 	c *client.Client,
 	projectName string,
