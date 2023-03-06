@@ -141,7 +141,7 @@ resource "lightstep_metric_dashboard" "test" {
 	// Change the chart name and metric name
 	updatedConfig1 := strings.Replace(dashboardConfig, "hit_ratio", "miss_ratio", -1)
 	// Update the TQL query
-	updatedConfig2 := strings.Replace(dashboardConfig, "group_by [], sum", "group_by [], mean", -1)
+	updatedConfig2 := strings.Replace(updatedConfig1, "group_by [], sum", "group_by [], mean", -1)
 
 	resourceName := "lightstep_metric_dashboard.test"
 
