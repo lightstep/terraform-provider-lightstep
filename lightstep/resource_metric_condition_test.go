@@ -216,7 +216,8 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "metric requests | filter ((project_name == \"catlab\") && (service != \"android\")) | rate 1h, 1h | group_by [\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
@@ -226,7 +227,6 @@ resource "lightstep_metric_condition" "test" {
 					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: updatedConditionConfig,
@@ -236,7 +236,6 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -344,18 +343,20 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans latency | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point percentile(value, 50.0) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans latency | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point percentile(value, 95.0) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "95"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -461,18 +462,18 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -578,20 +579,18 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "with\n  errors = spans count | delta 1h, 1h | filter ((service == \"frontend\") && (error == true)) | group_by [], sum;\n  total = spans count | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum;\njoin (errors / total), errors=0, total=0 | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
 				),
-				// This is expected to conver the above query definition to a query string
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span error ratio alert - updated"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "with\n  errors = spans count | delta 1h, 1h | filter ((service == \"frontend\") && (error == true)) | group_by [], sum;\n  total = spans count | delta 1h, 1h | filter (service == \"frontend\") | group_by [], sum;\njoin (errors / total), errors=0, total=0 | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
 				),
-				// This is expected to conver the above query definition to a query string
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -709,17 +708,17 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point (value + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.query_name", "a+a"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", "spans count | rate 1h, 1h | filter (service == \"frontend\") | group_by [], sum | point ((value + value) + value) | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.1.query_name", "a+a+a"),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
