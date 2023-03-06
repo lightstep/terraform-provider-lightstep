@@ -168,7 +168,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, attrs, &created.Attributes)
+	legacy, err := legacyDashboardIsEquivalent(ctx, c, projectName, attrs, &created.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
@@ -218,7 +218,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &dashboard.Attributes)
+	legacy, err := legacyDashboardIsEquivalent(ctx, c, projectName, prevAttrs, &dashboard.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}

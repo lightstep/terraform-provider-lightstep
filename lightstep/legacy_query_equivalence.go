@@ -14,7 +14,7 @@ import (
 //
 // If so, we can ignore the "false diff" a Terraform plan would otherwise show
 // by using the legacy resource data instread of the UQL resource data.
-func dashboardHasEquivalentLegacyQueries(
+func legacyDashboardIsEquivalent(
 	ctx context.Context,
 	c *client.Client,
 	projectName string,
@@ -30,16 +30,35 @@ func dashboardHasEquivalentLegacyQueries(
 		}
 	}
 
-	// Loop through each chart and compare the queries...
+	// Loop through each chart and compare...
 	for index, priorChart := range priorAttrs.Charts {
 		// Assumes the order of charts is _not_ going to change in the internal
 		// data structure.  Note that we can't do an Chart.ID look up since the
 		// prior structure doesn't necessarily have an ID at this point.
-		updateChart := updatedAttrs.Charts[index]
+		updatedChart := updatedAttrs.Charts[index]
+
+		// Check attributes unrelated to the query itself. These need to be
+		// the same or else the dashboards are not equivalent.
+		if priorChart.Rank != updatedChart.Rank ||
+			priorChart.Title != updatedChart.Title ||
+			priorChart.ChartType != updatedChart.ChartType {
+			return false, nil
+		}
+		if (priorChart.YAxis == nil) != (updatedChart.YAxis == nil) {
+			return false, nil
+		}
+		if priorChart.YAxis != nil {
+			if priorChart.YAxis.Max != updatedChart.YAxis.Min ||
+				priorChart.YAxis.Max != updatedChart.YAxis.Max {
+				return false, nil
+			}
+		}
+
+		// Check the converted query
 		equivalent, err := compareUpdatedLegacyQueries(
 			ctx, c, projectName,
 			priorChart.MetricQueries,
-			updateChart.MetricQueries,
+			updatedChart.MetricQueries,
 		)
 		if err != nil {
 			return false, err
@@ -53,7 +72,7 @@ func dashboardHasEquivalentLegacyQueries(
 
 // See dashboardHasEquivalentLegacyQueries: this is the metric condition
 // version
-func metricConditionHasEquivalentLegacyQueries(
+func legacyMetricConditionIsEquivalent(
 	ctx context.Context,
 	c *client.Client,
 	projectName string,
@@ -67,6 +86,30 @@ func metricConditionHasEquivalentLegacyQueries(
 		}
 	}
 
+	// Compare non-query related attributes
+	if priorAttrs.Name != updatedAttrs.Name ||
+		priorAttrs.Description != updatedAttrs.Name ||
+		priorAttrs.Type != updatedAttrs.Type ||
+		priorAttrs.Expression != updatedAttrs.Expression ||
+		len(priorAttrs.AlertingRules) != len(updatedAttrs.AlertingRules) {
+		return false, nil
+	}
+	for i, priorRule := range priorAttrs.AlertingRules {
+		updatedRule := updatedAttrs.AlertingRules[i]
+		if priorRule.MessageDestinationID != updatedRule.MessageDestinationID ||
+			priorRule.UpdateInterval != updatedRule.UpdateInterval ||
+			len(priorRule.MatchOn.GroupBy) != len(updatedRule.MatchOn.GroupBy) {
+			return false, nil
+		}
+		for j, priorGroupBy := range priorRule.MatchOn.GroupBy {
+			updatedGroupBy := updatedRule.MatchOn.GroupBy[j]
+			if priorGroupBy != updatedGroupBy {
+				return false, nil
+			}
+		}
+	}
+
+	// Compare the queries
 	equivalent, err := compareUpdatedLegacyQueries(
 		ctx, c, projectName,
 		priorAttrs.Queries,
