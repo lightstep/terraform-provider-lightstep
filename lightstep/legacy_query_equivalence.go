@@ -105,6 +105,17 @@ func compareUpdatedLegacyQueries(
 	priorQueries []client.MetricQueryWithAttributes,
 	updatedQueries []client.MetricQueryWithAttributes,
 ) (bool, error) {
+	// Step 0: if these are both TQL queries, the strings should match
+	// exactly. (Note that a single query-set with a mix of TQL and
+	// legacy has undefined behavior so we do not check for that case.)
+	if len(priorQueries) == len(updatedQueries) &&
+		hasOnlyTQLQueries(priorQueries) && hasOnlyTQLQueries(updatedQueries) {
+		for i, pq := range priorQueries {
+			if pq.TQLQuery != updatedQueries[i].TQLQuery {
+				return false, nil
+			}
+		}
+	}
 
 	// Step 1: call the SaaS to translate the legacy queries to UQL
 	type Response struct {
