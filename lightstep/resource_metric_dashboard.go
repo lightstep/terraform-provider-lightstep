@@ -302,12 +302,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 
 func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
 	chartSet := d.Get("chart").(*schema.Set)
-	charts, err := buildCharts(chartSet.List())
-	if err != nil {
-		return nil, err
-	}
 	groupSet := d.Get("group").(*schema.Set)
-	groups, err := buildGroups(groupSet.List())
+	groups, err := buildGroups(groupSet.List(), chartSet.List())
 	if err != nil {
 		return nil, err
 	}
@@ -321,7 +317,6 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	attributes := &client.UnifiedDashboardAttributes{
 		Name:        d.Get("dashboard_name").(string),
 		Description: d.Get("dashboard_description").(string),
-		Charts:      charts,
 		Groups:      groups,
 		Labels:      labels,
 	}
@@ -329,15 +324,27 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	return attributes, nil
 }
 
-func buildGroups(groupsIn []interface{}) ([]client.UnifiedGroup, error) {
+func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client.UnifiedGroup, error) {
 	var (
 		groups    []map[string]interface{}
 		newGroups []client.UnifiedGroup
-		charts    []client.UnifiedChart
 	)
 
+	if legacyChartsIn != nil {
+		c, err := buildCharts(legacyChartsIn)
+		if err != nil {
+			return nil, err
+		}
+		newGroups = append(newGroups, client.UnifiedGroup{
+			Rank:           0,
+			Title:          "",
+			VisibilityType: "implicit",
+			Charts:         c,
+		})
+	}
+
 	for _, group := range groupsIn {
-		group = append(groups, group.(map[string]interface{}))
+		groups = append(groups, group.(map[string]interface{}))
 	}
 
 	for _, group := range groups {
@@ -345,13 +352,12 @@ func buildGroups(groupsIn []interface{}) ([]client.UnifiedGroup, error) {
 		if err != nil {
 			return nil, err
 		}
-		charts = append(charts, c...)
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
 			Rank:           group["rank"].(int),
 			Title:          group["title"].(string),
 			VisibilityType: group["visibility_type"].(string),
-			Charts:         charts,
+			Charts:         c,
 		}
 		newGroups = append(newGroups, g)
 	}
