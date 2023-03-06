@@ -62,6 +62,23 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					Schema: getChartSchema(chartSchemaType),
 				},
 			},
+			"label": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Labels can be key/value pairs or standalone values.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -245,13 +262,58 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		return nil, err
 	}
 
+	labelSet := d.Get("label").(*schema.Set)
+	labels, err := buildLabels(labelSet.List())
+	if err != nil {
+		return nil, err
+	}
+
 	attributes := &client.UnifiedDashboardAttributes{
 		Name:        d.Get("dashboard_name").(string),
 		Description: d.Get("dashboard_description").(string),
 		Charts:      charts,
+		Labels:      labels,
 	}
 
 	return attributes, nil
+}
+
+func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
+	var labels []client.Label
+
+	for _, l := range labelsIn {
+		label, ok := l.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("bad format, %v", l)
+		}
+
+		if len(label) == 0 {
+			continue
+		}
+
+		// label keys can be omitted for labels without the key:value syntax
+		k := label["key"]
+		if k == nil {
+			k = ""
+		}
+
+		key, ok := k.(string)
+		if !ok {
+			return nil, fmt.Errorf("label key must be a string, %v", k)
+		}
+
+		v, ok := label["value"].(string)
+		if !ok {
+			return nil, fmt.Errorf("label value is a required field, %v", v)
+		}
+
+		labels = append(labels, client.Label{
+			Key:   key,
+			Value: v,
+		})
+	}
+
+	return labels, nil
 }
 
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
@@ -330,6 +392,19 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 
 	if err := d.Set("type", dash.Type); err != nil {
 		return fmt.Errorf("unable to set type resource field: %v", err)
+	}
+
+	var labels []interface{}
+	for _, l := range dash.Attributes.Labels {
+		label := map[string]interface{}{}
+		if l.Key != "" {
+			label["key"] = l.Key
+		}
+		label["value"] = l.Value
+		labels = append(labels, label)
+	}
+	if err := d.Set("label", labels); err != nil {
+		return fmt.Errorf("unable to set labels resource field: %v", err)
 	}
 
 	var charts []interface{}

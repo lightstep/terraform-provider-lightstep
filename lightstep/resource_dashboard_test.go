@@ -141,6 +141,7 @@ resource "lightstep_dashboard" "test" {
 		CheckDestroy:      testGetMetricDashboardDestroy,
 		Steps: []resource.TestStep{
 			{
+
 				Config: badDashboard,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
@@ -314,6 +315,81 @@ EOT
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard Updated"),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider still works"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDashboardLabels(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	baseConfig := `
+resource "lightstep_dashboard" "labels" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "Acceptance Test Dashboard"
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "bar"
+      query_string        = "metric requests | rate 10m"
+    }
+  }
+}
+`
+
+	updatedConfig := `
+resource "lightstep_dashboard" "labels" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "Acceptance Test Dashboard"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "bar"
+      query_string        = "metric requests | rate 10m"
+    }
+  }
+}
+	`
+
+	resourceName := "lightstep_dashboard.labels"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: baseConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
+				),
+			},
+			{
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "0"),
 				),
 			},
 		},
