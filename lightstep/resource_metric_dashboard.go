@@ -168,12 +168,15 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := legacyDashboardIsEquivalent(ctx, c, projectName, attrs, &created.Attributes)
+	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, attrs, &created.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
 	if legacy {
-		dashboard.Attributes = *attrs
+		// Only copy the query attributes
+		for i, chart := range attrs.Charts {
+			dashboard.Attributes.Charts[i].MetricQueries = chart.MetricQueries
+		}
 		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 		}
@@ -218,12 +221,15 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := legacyDashboardIsEquivalent(ctx, c, projectName, prevAttrs, &dashboard.Attributes)
+	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &dashboard.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
 	if legacy {
-		dashboard.Attributes = *prevAttrs
+		// Only copy the query attributes
+		for i, chart := range prevAttrs.Charts {
+			dashboard.Attributes.Charts[i].MetricQueries = chart.MetricQueries
+		}
 	}
 
 	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {

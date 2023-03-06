@@ -14,20 +14,25 @@ import (
 //
 // If so, we can ignore the "false diff" a Terraform plan would otherwise show
 // by using the legacy resource data instread of the UQL resource data.
-func legacyDashboardIsEquivalent(
+//
+// By design, this checks *only* the query equivalence, not other attributes.
+func dashboardHasEquivalentLegacyQueries(
 	ctx context.Context,
 	c *client.Client,
 	projectName string,
 	priorAttrs *client.UnifiedDashboardAttributes,
 	updatedAttrs *client.UnifiedDashboardAttributes,
 ) (bool, error) {
-	// This code is only applicalbe if there are legacy charts
+	// This code is only applicable if there are legacy charts
+	allTQL := true
 	for _, chart := range priorAttrs.Charts {
-		for _, query := range chart.MetricQueries {
-			if query.Type == "tql" {
-				return false, nil
-			}
+		if !hasOnlyTQLQueries(chart.MetricQueries) {
+			allTQL = false
+			break
 		}
+	}
+	if allTQL {
+		return false, nil
 	}
 
 	// Loop through each chart and compare...
@@ -36,23 +41,6 @@ func legacyDashboardIsEquivalent(
 		// data structure.  Note that we can't do an Chart.ID look up since the
 		// prior structure doesn't necessarily have an ID at this point.
 		updatedChart := updatedAttrs.Charts[index]
-
-		// Check attributes unrelated to the query itself. These need to be
-		// the same or else the dashboards are not equivalent.
-		if priorChart.Rank != updatedChart.Rank ||
-			priorChart.Title != updatedChart.Title ||
-			priorChart.ChartType != updatedChart.ChartType {
-			return false, nil
-		}
-		if (priorChart.YAxis == nil) != (updatedChart.YAxis == nil) {
-			return false, nil
-		}
-		if priorChart.YAxis != nil {
-			if priorChart.YAxis.Max != updatedChart.YAxis.Min ||
-				priorChart.YAxis.Max != updatedChart.YAxis.Max {
-				return false, nil
-			}
-		}
 
 		// Check the converted query
 		equivalent, err := compareUpdatedLegacyQueries(
@@ -72,41 +60,19 @@ func legacyDashboardIsEquivalent(
 
 // See dashboardHasEquivalentLegacyQueries: this is the metric condition
 // version
-func legacyMetricConditionIsEquivalent(
+//
+// By design, this checks *only* the query equivalence, not other attributes.
+func metricConditionHasEquivalentLegacyQueries(
 	ctx context.Context,
 	c *client.Client,
 	projectName string,
 	priorAttrs *client.UnifiedConditionAttributes,
 	updatedAttrs *client.UnifiedConditionAttributes,
 ) (bool, error) {
-	// This code is only applicalbe if there are legacy charts
-	for _, query := range priorAttrs.Queries {
-		if query.Type == "tql" {
-			return false, nil
-		}
-	}
-
-	// Compare non-query related attributes
-	if priorAttrs.Name != updatedAttrs.Name ||
-		priorAttrs.Description != updatedAttrs.Name ||
-		priorAttrs.Type != updatedAttrs.Type ||
-		priorAttrs.Expression != updatedAttrs.Expression ||
-		len(priorAttrs.AlertingRules) != len(updatedAttrs.AlertingRules) {
+	// This code is only applicable if there are legacy charts. If it's
+	// all TQL, return false to default to the normal code path
+	if hasOnlyTQLQueries(priorAttrs.Queries) {
 		return false, nil
-	}
-	for i, priorRule := range priorAttrs.AlertingRules {
-		updatedRule := updatedAttrs.AlertingRules[i]
-		if priorRule.MessageDestinationID != updatedRule.MessageDestinationID ||
-			priorRule.UpdateInterval != updatedRule.UpdateInterval ||
-			len(priorRule.MatchOn.GroupBy) != len(updatedRule.MatchOn.GroupBy) {
-			return false, nil
-		}
-		for j, priorGroupBy := range priorRule.MatchOn.GroupBy {
-			updatedGroupBy := updatedRule.MatchOn.GroupBy[j]
-			if priorGroupBy != updatedGroupBy {
-				return false, nil
-			}
-		}
 	}
 
 	// Compare the queries
@@ -119,6 +85,15 @@ func legacyMetricConditionIsEquivalent(
 		return false, err
 	}
 	return equivalent, nil
+}
+
+func hasOnlyTQLQueries(queries []client.MetricQueryWithAttributes) bool {
+	for _, query := range queries {
+		if query.Type != "tql" {
+			return false
+		}
+	}
+	return true
 }
 
 // Check that the prior and updated set of queries are equivalent by

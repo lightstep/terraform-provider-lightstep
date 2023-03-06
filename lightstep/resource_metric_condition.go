@@ -361,12 +361,12 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := legacyMetricConditionIsEquivalent(ctx, c, projectName, attributes, &created.Attributes)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, attributes, &created.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
 	if legacy {
-		created.Attributes = *attributes
+		created.Attributes.Queries = attributes.Queries
 		if err := setResourceDataFromUnifiedCondition(projectName, created, d, p.conditionSchemaType); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set condition from API response to terraform state: %v", err))
 		}
@@ -401,12 +401,12 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 	}
 
 	projectName := d.Get("project_name").(string)
-	legacy, err := legacyMetricConditionIsEquivalent(ctx, c, projectName, prevAttrs, &cond.Attributes)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &cond.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
 	if legacy {
-		cond.Attributes = *prevAttrs
+		cond.Attributes.Queries = prevAttrs.Queries
 	}
 
 	if err := setResourceDataFromUnifiedCondition(d.Get("project_name").(string), *cond, d, p.conditionSchemaType); err != nil {
