@@ -191,8 +191,12 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	}
 	if legacy {
 		// Only copy the query attributes
-		for i, chart := range attrs.Charts {
-			dashboard.Attributes.Charts[i].MetricQueries = chart.MetricQueries
+		for _, chart := range attrs.Charts {
+			for j, d := range dashboard.Attributes.Charts {
+				if d.Rank == chart.Rank {
+					dashboard.Attributes.Charts[j].MetricQueries = chart.MetricQueries
+				}
+			}
 		}
 		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
@@ -244,8 +248,12 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	}
 	if legacy {
 		// Only copy the query attributes
-		for i, chart := range prevAttrs.Charts {
-			dashboard.Attributes.Charts[i].MetricQueries = chart.MetricQueries
+		for _, chart := range prevAttrs.Charts {
+			for j, d := range dashboard.Attributes.Charts {
+				if d.Rank == chart.Rank {
+					dashboard.Attributes.Charts[j].MetricQueries = chart.MetricQueries
+				}
+			}
 		}
 	}
 
