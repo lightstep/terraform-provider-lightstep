@@ -212,7 +212,6 @@ resource "lightstep_metric_dashboard" "test" {
 						},
 					),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 			{
 				// Updated config will the TQL query of chart 1
@@ -232,7 +231,6 @@ resource "lightstep_metric_dashboard" "test" {
 						},
 					),
 				),
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
