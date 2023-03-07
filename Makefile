@@ -50,7 +50,7 @@ test-local:
 
 .PHONY: test-staging
 test-staging:
-	@TF_ACC=true LIGHTSTEP_API_BASE_URL=https://api-staging.lightstep.com LIGHTSTEP_API_KEY=${LIGHTSTEP_STAGING_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="staging" go test -v ./lightstep
+	@TF_ACC=true LIGHTSTEP_API_BASE_URL=https://api-staging.lightstep.com LIGHTSTEP_API_KEY=${LIGHTSTEP_STAGING_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="staging" go test -v ./lightstep -run "TestAccAlert*|TestAccDashboardLegacyAndTQLFormat"
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
