@@ -196,14 +196,13 @@ resource "lightstep_metric_dashboard" "test" {
 			},
 			{
 				// Updated config will contain the new metric and chart name in chart 0
-				// The update triggers a conversion to UQL
 				Config: updatedConfig1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
 							"name":        "miss_ratio",
-							"query.0.tql": "metric cache.miss_ratio | latest | group_by [\"cache_type\", \"cache_name\", \"service\"], mean",
+							"query.0.tql": "", // Should still be legacy
 						},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
