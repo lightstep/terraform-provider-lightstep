@@ -35,12 +35,25 @@ func dashboardHasEquivalentLegacyQueries(
 		return false, nil
 	}
 
+	if len(priorAttrs.Charts) != len(updatedAttrs.Charts) {
+		// if there's a different number of charts, the queries can't possibly be equivalent
+		return false, nil
+	}
+
 	// Loop through each chart and compare...
-	for index, priorChart := range priorAttrs.Charts {
-		// Assumes the order of charts is _not_ going to change in the internal
-		// data structure.  Note that we can't do an Chart.ID look up since the
-		// prior structure doesn't necessarily have an ID at this point.
-		updatedChart := updatedAttrs.Charts[index]
+	for _, priorChart := range priorAttrs.Charts {
+		var updatedChart *client.UnifiedChart
+		for _, chart := range updatedAttrs.Charts {
+			// use rank as a unique identifier as IDs may not yet be known
+			if priorChart.Rank == chart.Rank {
+				updatedChart = &chart
+				break
+			}
+		}
+		if updatedChart == nil {
+			// this chart doesnt exist anymore, do an update
+			return false, nil
+		}
 
 		// Check the converted query
 		equivalent, err := compareUpdatedLegacyQueries(
