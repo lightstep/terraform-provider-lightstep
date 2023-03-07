@@ -217,3 +217,167 @@ resource "lightstep_metric_dashboard" "test" {
 		},
 	})
 }
+
+func TestAccDashboardVPADashTest(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+ project_name   = "terraform-provider-tests"
+ dashboard_name = "VPA (VerticalPodAutoscaler) - TimeSeries (terraform)"
+
+ chart {
+   name = "CPU: Capped Target"
+   rank = "0"
+   type = "timeseries"
+
+   query {
+     query_name = "a"
+     display    = "line"
+     hidden     = false
+
+     metric              = "kubernetes_state.vpa.target"
+     timeseries_operator = "last"
+
+     include_filters = [
+       {
+         key   = "resource"
+         value = "cpu"
+       },
+     ]
+
+
+     group_by {
+       aggregation_method = "sum"
+       keys               = []
+     }
+
+   }
+
+ }
+
+ chart {
+   name = "Memory: Capped Target"
+   rank = "1"
+   type = "timeseries"
+
+   query {
+     query_name = "a"
+     display    = "line"
+     hidden     = false
+
+     metric              = "kubernetes_state.vpa.target"
+     timeseries_operator = "last"
+
+     include_filters = [
+       {
+         key   = "resource"
+         value = "memory"
+       },
+     ]
+
+
+     group_by {
+       aggregation_method = "sum"
+       keys               = []
+     }
+
+   }
+
+ }
+
+ chart {
+   name = "CPU: Uncapped Target"
+   rank = "3"
+   type = "timeseries"
+
+   query {
+     query_name = "a"
+     display    = "line"
+     hidden     = false
+
+     metric              = "kubernetes_state.vpa.uncapped_target"
+     timeseries_operator = "last"
+
+     include_filters = [
+       {
+         key   = "resource"
+         value = "cpu"
+       },
+     ]
+
+
+     group_by {
+       aggregation_method = "sum"
+       keys               = []
+     }
+
+   }
+
+ }
+
+ chart {
+   name = "Memory: Uncapped Target"
+   rank = "4"
+   type = "timeseries"
+
+   query {
+     query_name = "a"
+     display    = "line"
+     hidden     = false
+
+     metric              = "kubernetes_state.vpa.uncapped_target"
+     timeseries_operator = "last"
+
+     include_filters = [
+       {
+         key   = "resource"
+         value = "memory"
+       },
+     ]
+
+
+     group_by {
+       aggregation_method = "sum"
+       keys               = []
+     }
+
+   }
+
+ }
+
+}
+`
+	// Change the chart name and metric name
+	//updatedConfig := strings.Replace(dashboardConfig, "hit_ratio", "miss_ratio", -1)
+
+	resourceName := "lightstep_metric_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial legacy dashboard
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*", map[string]string{
+						"name": "CPU: Capped Target",
+					}),
+				),
+			},
+			{
+				// Update with no differences. Ensure the legacy format is retained.
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*", map[string]string{
+						"name": "CPU: Capped Target",
+					}),
+				),
+			},
+		},
+	})
+}
