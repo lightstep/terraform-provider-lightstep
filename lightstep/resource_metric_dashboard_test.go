@@ -369,8 +369,6 @@ resource "lightstep_metric_dashboard" "test" {
 
 }
 `
-	// Change the chart name and metric name
-	//updatedConfig := strings.Replace(dashboardConfig, "hit_ratio", "miss_ratio", -1)
 
 	resourceName := "lightstep_metric_dashboard.test"
 
