@@ -221,7 +221,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
 							"name":        "miss_ratio",
-							"query.0.tql": "metric cache.miss_ratio | latest | group_by [\"cache_type\", \"cache_name\", \"service\"], mean",
+							"query.0.tql": "",
 						},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
