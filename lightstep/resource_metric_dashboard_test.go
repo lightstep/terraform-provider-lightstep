@@ -91,8 +91,6 @@ resource "lightstep_metric_dashboard" "test" {
 }
 
 func TestAccDashboardLegacyAndTQLFormat(t *testing.T) {
-	t.Skip("Known issue with chart order not being consistent")
-
 	var dashboard client.UnifiedDashboard
 
 	dashboardConfig := `
@@ -157,14 +155,21 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.name", "hit_ratio"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.rank", "0"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.metric", "cache.hit_ratio"),
-
-					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "cpu"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric cpu.utilization | latest | group_by [], sum"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":           "hit_ratio",
+							"query.0.metric": "cache.hit_ratio",
+							"query.0.tql":    "",
+							"rank":           "0",
+							"type":           "timeseries",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+						},
+					),
 				),
 			},
 			{
@@ -172,45 +177,61 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.name", "hit_ratio"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.rank", "0"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.metric", "cache.hit_ratio"),
-
-					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "cpu"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric cpu.utilization | latest | group_by [], sum"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":           "hit_ratio",
+							"query.0.metric": "cache.hit_ratio",
+							"query.0.tql":    "",
+							"rank":           "0",
+							"type":           "timeseries",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+						},
+					),
 				),
 			},
 			{
 				// Updated config will contain the new metric and chart name in chart 0
+				// The update triggers a conversion to UQL
 				Config: updatedConfig1,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.name", "miss_ratio"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.rank", "0"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.metric", "cache.miss_ratio"),
-
-					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "cpu"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric cpu.utilization | latest | group_by [], sum"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "miss_ratio",
+							"query.0.tql": "metric cache.miss_ratio | latest | group_by [\"cache_type\", \"cache_name\", \"service\"], mean",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
 			{
-				// Updated config will update only the TQL query of chart 1
+				// Updated config will the TQL query of chart 1
 				Config: updatedConfig2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.name", "miss_ratio"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.rank", "0"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.type", "timeseries"),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "chart.1.query.0.metric", "cache.miss_ratio"),
-
-					resource.TestCheckResourceAttr(resourceName, "chart.0.name", "cpu"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.tql", "metric cpu.utilization | latest | group_by [], mean"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "miss_ratio",
+							"query.0.tql": "metric cache.miss_ratio | latest | group_by [\"cache_type\", \"cache_name\", \"service\"], mean",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], mean",
+						},
+					),
 				),
 				ExpectNonEmptyPlan: true,
 			},
