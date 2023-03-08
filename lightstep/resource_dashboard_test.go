@@ -161,9 +161,9 @@ resource "lightstep_dashboard" "test" {
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testGetMetricDashboardDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
 		Steps: []resource.TestStep{
 			{
 
