@@ -103,7 +103,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		},
 		"title": {
 			Type:     schema.TypeString,
-			Required: true,
+			Optional: true,
 		},
 		"visibility_type": {
 			Type:         schema.TypeString,
@@ -330,7 +330,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		newGroups []client.UnifiedGroup
 	)
 
-	if legacyChartsIn != nil {
+	if len(legacyChartsIn) != 0 {
 		c, err := buildCharts(legacyChartsIn)
 		if err != nil {
 			return nil, err
@@ -348,7 +348,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 	}
 
 	for _, group := range groups {
-		c, err := buildCharts(group["chart"].([]interface{}))
+		c, err := buildCharts(group["chart"].(*schema.Set).List())
 		if err != nil {
 			return nil, err
 		}
@@ -515,31 +515,34 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 		return charts, nil
 	}
-	charts, err := assembleCharts(dash.Attributes.Charts)
-	if err != nil {
-		return err
-	}
-	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("unable to set chart resource field: %v", err)
-	}
-
-	var groups []interface{}
-	for _, g := range dash.Attributes.Groups {
-		group := map[string]interface{}{}
-		group["title"] = g.Title
-		group["id"] = g.ID
-		group["visibility_type"] = g.VisibilityType
-		group["rank"] = g.Rank
-
-		groupCharts, err := assembleCharts(g.Charts)
+	if len(dash.Attributes.Groups) == 1 &&
+		dash.Attributes.Groups[0].VisibilityType == "implicit" {
+		charts, err := assembleCharts(dash.Attributes.Groups[0].Charts)
 		if err != nil {
 			return err
 		}
-		group["chart"] = groupCharts
-		groups = append(groups, group)
-	}
-	if err := d.Set("group", groups); err != nil {
-		return fmt.Errorf("unable to set group resource field: %v", err)
+		if err := d.Set("chart", charts); err != nil {
+			return err
+		}
+	} else {
+		var groups []interface{}
+		for _, g := range dash.Attributes.Groups {
+			group := map[string]interface{}{}
+			group["title"] = g.Title
+			group["id"] = g.ID
+			group["visibility_type"] = g.VisibilityType
+			group["rank"] = g.Rank
+
+			groupCharts, err := assembleCharts(g.Charts)
+			if err != nil {
+				return err
+			}
+			group["chart"] = groupCharts
+			groups = append(groups, group)
+		}
+		if err := d.Set("group", groups); err != nil {
+			return fmt.Errorf("unable to set group resource field: %v", err)
+		}
 	}
 
 	var labels []interface{}

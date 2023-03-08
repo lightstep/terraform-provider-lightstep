@@ -134,7 +134,7 @@ resource "lightstep_dashboard" "test" {
 `
 
 	groupedDashboardConfig := `
-	resource "lightstep_metric_dashboard" "test_groups" {
+resource "lightstep_dashboard" "test" {
 	project_name          = "terraform-provider-tests"
 	dashboard_name        = "Acceptance Test Dashboard"
 	dashboard_description = "Dashboard to test if the terraform provider works"
@@ -148,22 +148,22 @@ resource "lightstep_dashboard" "test" {
 		  type = "timeseries"
 	
 		  query {
-		    hidden              = false
-		    query_name          = "a"
-		    display             = "line"
-		    tql                 = "metric m | rate"
+			hidden              = false
+			query_name          = "a"
+			display             = "line"
+			query_string        = "metric m | rate"
 		  }
 		}
 	}
-	}
-	`
+}
+`
 
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testGetMetricDashboardDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
 		Steps: []resource.TestStep{
 			{
 
@@ -222,7 +222,7 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "group.0.title", "Title"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.rank", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "explicit"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.tql", "metric m | rate"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.query_string", "metric m | rate"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.hidden", "false"),
 				),

@@ -26,7 +26,7 @@ type UnifiedGroup struct {
 	ID             string         `json:"id"`
 	Rank           int            `json:"rank"`
 	Title          string         `json:"title"`
-	VisibilityType string         `json:"visibility-type"`
+	VisibilityType string         `json:"visibility_type"`
 	Charts         []UnifiedChart `json:"charts"`
 	Labels         []Label        `json:"labels"`
 }
@@ -89,7 +89,6 @@ func (c *Client) CreateUnifiedDashboard(
 		Attributes: UnifiedDashboardAttributes{
 			Name:        dashboard.Attributes.Name,
 			Description: dashboard.Attributes.Description,
-			Charts:      dashboard.Attributes.Charts,
 			Groups:      dashboard.Attributes.Groups,
 			Labels:      dashboard.Attributes.Labels,
 		},
