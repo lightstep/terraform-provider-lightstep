@@ -222,7 +222,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, attrs, &created.Attributes)
+	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, attrs.Charts, created.Attributes.Charts)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
@@ -279,16 +279,41 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
 	// diffs in the plan.
 	projectName := d.Get("project_name").(string)
-	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &dashboard.Attributes)
+	legacyCharts, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs.Charts, dashboard.Attributes.Charts)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
 	}
-	if legacy {
+	if legacyCharts {
 		// Only copy the query attributes
 		for _, chart := range prevAttrs.Charts {
 			for j, d := range dashboard.Attributes.Charts {
 				if d.Rank == chart.Rank {
 					dashboard.Attributes.Charts[j].MetricQueries = chart.MetricQueries
+				}
+			}
+		}
+	}
+
+	for i, group := range prevAttrs.Groups {
+		for j, g := range dashboard.Attributes.Groups {
+			if g.Rank == group.Rank {
+				previousGroup := prevAttrs.Groups[i]
+				updatedGroup := dashboard.Attributes.Groups[j]
+				legacyGroupedCharts, err := dashboardHasEquivalentLegacyQueries(
+					ctx, c, projectName,
+					previousGroup.Charts, updatedGroup.Charts)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("failed to compare legacy queries in groups: %v", err))
+				}
+				if legacyGroupedCharts {
+					// Only copy the query attributes
+					for _, chart := range previousGroup.Charts {
+						for j, d := range updatedGroup.Charts {
+							if d.Rank == chart.Rank {
+								updatedGroup.Charts[j].MetricQueries = chart.MetricQueries
+							}
+						}
+					}
 				}
 			}
 		}
