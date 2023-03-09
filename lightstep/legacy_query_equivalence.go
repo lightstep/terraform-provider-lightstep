@@ -20,12 +20,12 @@ func dashboardHasEquivalentLegacyQueries(
 	ctx context.Context,
 	c *client.Client,
 	projectName string,
-	priorAttrs *client.UnifiedDashboardAttributes,
-	updatedAttrs *client.UnifiedDashboardAttributes,
+	priorCharts []client.UnifiedChart,
+	updatedCharts []client.UnifiedChart,
 ) (bool, error) {
 	// This code is only applicable if there are legacy charts
 	allTQL := true
-	for _, chart := range priorAttrs.Charts {
+	for _, chart := range priorCharts {
 		if !hasOnlyTQLQueries(chart.MetricQueries) {
 			allTQL = false
 			break
@@ -35,15 +35,15 @@ func dashboardHasEquivalentLegacyQueries(
 		return false, nil
 	}
 
-	if len(priorAttrs.Charts) != len(updatedAttrs.Charts) {
+	if len(priorCharts) != len(updatedCharts) {
 		// if there's a different number of charts, the queries can't possibly be equivalent
 		return false, nil
 	}
 
 	// Loop through each chart and compare...
-	for _, priorChart := range priorAttrs.Charts {
+	for _, priorChart := range priorCharts {
 		var updatedChart *client.UnifiedChart
-		for _, chart := range updatedAttrs.Charts {
+		for _, chart := range updatedCharts {
 			// use rank as a unique identifier as IDs may not yet be known
 			if priorChart.Rank == chart.Rank {
 				updatedChart = &chart

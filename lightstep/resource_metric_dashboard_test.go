@@ -50,9 +50,9 @@ resource "lightstep_metric_dashboard" "test" {
 	resourceName := "lightstep_metric_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testGetMetricDashboardDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
 		Steps: []resource.TestStep{
 			{
 				// Create the initial legacy dashboard

@@ -68,6 +68,7 @@ resource "lightstep_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
+- `group` (Block Set) (see [below for nested schema](#nestedblock--group))
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
@@ -124,6 +125,76 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--group"></a>
+### Nested Schema for `group`
+
+Required:
+
+- `rank` (Number)
+- `visibility_type` (String)
+
+Optional:
+
+- `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
+- `title` (String)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--chart"></a>
+### Nested Schema for `group.chart`
+
+Required:
+
+- `name` (String)
+- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--group--chart--query))
+- `rank` (Number)
+- `type` (String)
+
+Optional:
+
+- `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--chart--query"></a>
+### Nested Schema for `group.chart.query`
+
+Required:
+
+- `hidden` (Boolean)
+- `query_name` (String)
+- `query_string` (String)
+
+Optional:
+
+- `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--dependency_map_options))
+- `display` (String)
+
+<a id="nestedblock--group--chart--query--dependency_map_options"></a>
+### Nested Schema for `group.chart.query.dependency_map_options`
+
+Optional:
+
+- `map_type` (String)
+- `scope` (String)
+
+
+
+<a id="nestedblock--group--chart--y_axis"></a>
+### Nested Schema for `group.chart.y_axis`
+
+Required:
+
+- `max` (Number)
+- `min` (Number)
+
 
 
 
