@@ -110,7 +110,11 @@ Required:
 
 Optional:
 
+- `height` (Number)
+- `width` (Number)
+- `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
+- `y_pos` (Number)
 
 Read-Only:
 
@@ -211,7 +215,11 @@ Required:
 
 Optional:
 
+- `height` (Number)
+- `width` (Number)
+- `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
+- `y_pos` (Number)
 
 Read-Only:
 
