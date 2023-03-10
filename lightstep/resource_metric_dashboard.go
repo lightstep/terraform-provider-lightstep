@@ -158,6 +158,30 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			ValidateFunc: validation.IntAtLeast(0),
 			Required:     true,
 		},
+		"x_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"y_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"width": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"height": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
 		"type": {
 			Type:         schema.TypeString,
 			Required:     true,
@@ -438,9 +462,16 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	}
 
 	for _, chart := range charts {
+		p := client.UnifiedPosition{
+			XPos:   chart["x_pos"].(int),
+			YPos:   chart["y_pos"].(int),
+			Width:  chart["width"].(int),
+			Height: chart["height"].(int),
+		}
 		c := client.UnifiedChart{
 			Title:     chart["name"].(string),
 			Rank:      chart["rank"].(int),
+			Position:  p,
 			ID:        chart["id"].(string),
 			ChartType: chart["type"].(string),
 		}
@@ -533,6 +564,10 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			}
 			chart["name"] = c.Title
 			chart["rank"] = c.Rank
+			chart["x_pos"] = c.Position.XPos
+			chart["y_pos"] = c.Position.YPos
+			chart["width"] = c.Position.Width
+			chart["height"] = c.Position.Height
 			chart["type"] = c.ChartType
 			chart["id"] = c.ID
 

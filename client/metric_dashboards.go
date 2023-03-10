@@ -31,8 +31,16 @@ type UnifiedGroup struct {
 	Labels         []Label        `json:"labels"`
 }
 
+type UnifiedPosition struct {
+	XPos   int `json:"x_pos"`
+	YPos   int `json:"y_pos"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
+}
+
 type UnifiedChart struct {
 	Rank          int                         `json:"rank"`
+	Position      UnifiedPosition             `json:"position"`
 	ID            string                      `json:"id"`
 	Title         string                      `json:"title"`
 	ChartType     string                      `json:"chart-type"`
