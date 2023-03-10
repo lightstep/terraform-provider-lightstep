@@ -17,123 +17,148 @@ func TestAccDashboard(t *testing.T) {
 
 	// missing required field 'type'
 	badDashboard := `
-resource "lightstep_dashboard" "test" {
-  project_name   = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-
-    y_axis {
-      min = 0.4
-      max = 5.0
-    }
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "bar"
-      query_string        = "metric requests | rate 10m"
-    }
-  }
-}
-`
+	resource "lightstep_dashboard" "test" {
+	 project_name   = "terraform-provider-tests"
+	 dashboard_name = "Acceptance Test Dashboard"
+	
+	 chart {
+	   name = "Chart Number One"
+	   rank = 1
+	
+	   y_axis {
+	     min = 0.4
+	     max = 5.0
+	   }
+	
+	   query {
+	     hidden              = false
+	     query_name          = "a"
+	     display             = "bar"
+	     query_string        = "metric requests | rate 10m"
+	   }
+	 }
+	}
+	`
 
 	queryDashboardConfig := `
-resource "lightstep_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-      query_string        = "metric m | rate"
-    }
-  }
-}
-`
+	resource "lightstep_dashboard" "test" {
+	 project_name = "terraform-provider-tests"
+	 dashboard_name = "Acceptance Test Dashboard"
+	
+	 chart {
+	   name = "Chart Number One"
+	   rank = 1
+	   type = "timeseries"
+	
+	   query {
+	     hidden              = false
+	     query_name          = "a"
+	     display             = "line"
+	     query_string        = "metric m | rate"
+	   }
+	 }
+	}
+	`
 
 	dashboardConfig := `
-resource "lightstep_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    y_axis {
-      min = 0.4
-      max = 5.0
-    }
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "bar"
-      query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
-    }
-  }
-}
-`
+	resource "lightstep_dashboard" "test" {
+	 project_name = "terraform-provider-tests"
+	 dashboard_name = "Acceptance Test Dashboard"
+	
+	 chart {
+	   name = "Chart Number One"
+	   rank = 1
+	   type = "timeseries"
+	
+	   y_axis {
+	     min = 0.4
+	     max = 5.0
+	   }
+	
+	   query {
+	     hidden              = false
+	     query_name          = "a"
+	     display             = "bar"
+	     query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
+	   }
+	 }
+	}
+	`
 	updatedTitleDashboardConfig := `
-resource "lightstep_dashboard" "test" {
-  project_name = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard Updated"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    y_axis {
-      min = 0.4
-      max = 5.0
-    }
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "bar"
-      query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
-    }
-  }
-}
-`
+	resource "lightstep_dashboard" "test" {
+	 project_name = "terraform-provider-tests"
+	 dashboard_name = "Acceptance Test Dashboard Updated"
+	
+	 chart {
+	   name = "Chart Number One"
+	   rank = 1
+	   type = "timeseries"
+	
+	   y_axis {
+	     min = 0.4
+	     max = 5.0
+	   }
+	
+	   query {
+	     hidden              = false
+	     query_name          = "a"
+	     display             = "bar"
+	     query_string        = "metric pagerduty.task.success | rate 10m | filter kube_app = \"pagerduty\" | group_by[\"cluster-name\"], max"
+	   }
+	 }
+	}
+	`
 
 	dependencyMapDashboard := `
-resource "lightstep_dashboard" "test" {
-  project_name   = "terraform-provider-tests"
-  dashboard_name = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden       = false
-      query_name   = "a"
-      display      = "dependency_map"
-      query_string = "spans_sample service = apache | assemble"
-      dependency_map_options {
-        scope    = "upstream"
-        map_type = "operation"
-      }
-    }
-  }
-}
-`
+	resource "lightstep_dashboard" "test" {
+	 project_name   = "terraform-provider-tests"
+	 dashboard_name = "Acceptance Test Dashboard"
+	
+	 chart {
+	   name = "Chart Number One"
+	   rank = 1
+	   type = "timeseries"
+	
+	   query {
+	     hidden       = false
+	     query_name   = "a"
+	     display      = "dependency_map"
+	     query_string = "spans_sample service = apache | assemble"
+	     dependency_map_options {
+	       scope    = "upstream"
+	       map_type = "operation"
+	     }
+	   }
+	 }
+	}
+	`
 
 	groupedDashboardConfig := `
+	resource "lightstep_dashboard" "test" {
+		project_name          = "terraform-provider-tests"
+		dashboard_name        = "Acceptance Test Dashboard"
+		dashboard_description = "Dashboard to test if the terraform provider works"
+		group {
+			title = "Title"
+			rank = 0
+			visibility_type = "explicit"
+			chart {
+			  name = "Chart Number One"
+			  rank = 1
+			  type = "timeseries"
+	
+			  query {
+				hidden              = false
+				query_name          = "a"
+				display             = "line"
+				query_string        = "metric m | rate"
+			  }
+			}
+		}
+	}
+	`
+
+	positionallyGroupedDashboardConfig := `
 resource "lightstep_dashboard" "test" {
 	project_name          = "terraform-provider-tests"
 	dashboard_name        = "Acceptance Test Dashboard"
@@ -145,6 +170,11 @@ resource "lightstep_dashboard" "test" {
 		chart {
 		  name = "Chart Number One"
 		  rank = 1
+		  x_pos = 0
+ 		  y_pos = 0
+		  width = 16
+		  height = 10
+		  
 		  type = "timeseries"
 	
 		  query {
@@ -161,12 +191,11 @@ resource "lightstep_dashboard" "test" {
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { testAccPreCheck(t) },
-		ProviderFactories: testAccProviderFactories,
-		CheckDestroy:      testGetMetricDashboardDestroy,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
 		Steps: []resource.TestStep{
 			{
-
 				Config: badDashboard,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
@@ -225,6 +254,21 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.query_string", "metric m | rate"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.hidden", "false"),
+				),
+			},
+			{
+				Config: positionallyGroupedDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.title", "Title"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.rank", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "explicit"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.x_pos", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.y_pos", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.width", "16"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.height", "10"),
 				),
 			},
 		},
