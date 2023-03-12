@@ -133,31 +133,6 @@ resource "lightstep_dashboard" "test" {
 }
 `
 
-	templateVariableDashboardConfig := `
-resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
-  dashboard_name        = "Acceptance Test Dashboard"
-
-  chart {
-    name = "Chart Number One"
-    rank = 1
-    type = "timeseries"
-
-    query {
-      hidden              = false
-      query_name          = "a"
-      display             = "line"
-      query_string        = "metric m | filter (service == $service) | rate | group_by [], sum"
-    }
-  }
-  template_variable {
-	name = "service"
-	default_values = ["myService"]
-    suggestion_attribute_key = "service_name"
-  }
-}
-`
-
 	resourceName := "lightstep_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
@@ -210,19 +185,6 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.scope", "upstream"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.dependency_map_options.0.map_type", "operation"),
-				),
-			},
-			{
-				Config: templateVariableDashboardConfig,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", "metric m | filter (service == $service) | rate | group_by [], sum"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
-					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
-					resource.TestCheckResourceAttr(resourceName, "template_variable.0.name", "service"),
-					resource.TestCheckResourceAttr(resourceName, "template_variable.0.default_values.0", "myService"),
-					resource.TestCheckResourceAttr(resourceName, "template_variable.0.suggestion_attribute_key", "service_name"),
 				),
 			},
 		},
@@ -353,6 +315,88 @@ EOT
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard Updated"),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider still works"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccDashboardWithTemplateVariables(t *testing.T) {
+	validDashboardConfigWithTemplateVariables := `
+resource "lightstep_dashboard" "test" {
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard with Template Variables"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+      query_string        = "metric m | filter (service == $service) | rate | group_by [], sum"
+    }
+  }
+  template_variable {
+	name = "service"
+	default_values = ["myService"]
+    suggestion_attribute_key = "service_name"
+  }
+}
+`
+
+	invalidDashboardConfigWithInvalidTemplateVariableName := `
+resource "lightstep_dashboard" "test" {
+  project_name          = "terraform-provider-tests"
+  dashboard_name        = "Acceptance Test Dashboard"
+
+  chart {
+    name = "Chart Number One"
+    rank = 1
+    type = "timeseries"
+
+    query {
+      hidden              = false
+      query_name          = "a"
+      display             = "line"
+      query_string        = "metric m | filter (service == $invalid-name) | rate | group_by [], sum"
+    }
+  }
+  template_variable {
+	name = "invalid-name"
+	default_values = ["myService"]
+    suggestion_attribute_key = "service_name"
+  }
+}
+`
+
+	var dashboard client.UnifiedDashboard
+	resourceName := "lightstep_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: validDashboardConfigWithTemplateVariables,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard with Template Variables"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", "metric m | filter (service == $service) | rate | group_by [], sum"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.name", "service"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.default_values.0", "myService"),
+					resource.TestCheckResourceAttr(resourceName, "template_variable.0.suggestion_attribute_key", "service_name"),
+				),
+			},
+			{
+				Config: invalidDashboardConfigWithInvalidTemplateVariableName,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
+				ExpectError: regexp.MustCompile("InvalidArgument"),
 			},
 		},
 	})
