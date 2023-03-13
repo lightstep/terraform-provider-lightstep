@@ -269,7 +269,7 @@ func buildTemplateVariables(templateVariablesIn []interface{}) []client.Template
 }
 
 func buildDefaultValues(valuesIn []interface{}) []string {
-	var defaultValues []string
+	defaultValues := make([]string, 0, len(valuesIn))
 	for _, v := range valuesIn {
 		defaultValues = append(defaultValues, v.(string))
 	}
