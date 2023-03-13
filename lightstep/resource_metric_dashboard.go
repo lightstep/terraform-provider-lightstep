@@ -86,6 +86,14 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					},
 				},
 			},
+			"template_variable": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getTemplateVariableSchema(),
+				},
+				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
+			},
 		},
 	}
 }
@@ -215,6 +223,29 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				Schema: querySchema,
 			},
+		},
+	}
+}
+
+func getTemplateVariableSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores",
+		},
+		"suggestion_attribute_key": {
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Attribute key used as source for suggested template variable values appearing in Lightstep UI",
+		},
+		"default_values": {
+			Type:     schema.TypeList,
+			Required: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Description: "One or more values to set the template variable to by default (if none are provided, defaults to all possible values)",
 		},
 	}
 }
@@ -367,10 +398,11 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	templateVariables := buildTemplateVariables(templateVariableSet.List())
 
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:        d.Get("dashboard_name").(string),
-		Description: d.Get("dashboard_description").(string),
-		Groups:      groups,
-		Labels:      labels,
+		Name:              d.Get("dashboard_name").(string),
+		Description:       d.Get("dashboard_description").(string),
+		Groups:            groups,
+		Labels:            labels,
+		TemplateVariables: templateVariables,
 	}
 
 	return attributes, nil
@@ -520,6 +552,31 @@ func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
 	}
 
 	return yAxis, nil
+}
+
+func buildTemplateVariables(templateVariablesIn []interface{}) []client.TemplateVariable {
+	var newTemplateVariables []client.TemplateVariable
+	for _, tv := range templateVariablesIn {
+		tvMap := tv.(map[string]interface{})
+		name := tvMap["name"].(string)
+		suggestionAttributeKey := tvMap["suggestion_attribute_key"].(string)
+		defaultValues := buildDefaultValues(tvMap["default_values"].([]interface{}))
+
+		newTemplateVariables = append(newTemplateVariables, client.TemplateVariable{
+			Name:                   name,
+			DefaultValues:          defaultValues,
+			SuggestionAttributeKey: suggestionAttributeKey,
+		})
+	}
+	return newTemplateVariables
+}
+
+func buildDefaultValues(valuesIn []interface{}) []string {
+	defaultValues := make([]string, 0, len(valuesIn))
+	for _, v := range valuesIn {
+		defaultValues = append(defaultValues, v.(string))
+	}
+	return defaultValues
 }
 
 func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData) error {

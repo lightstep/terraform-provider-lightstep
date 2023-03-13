@@ -15,11 +15,12 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	Charts      []UnifiedChart `json:"charts"`
-	Groups      []UnifiedGroup `json:"groups"`
-	Labels      []Label        `json:"labels"`
+	Name              string             `json:"name"`
+	Description       string             `json:"description"`
+	Charts            []UnifiedChart     `json:"charts"`
+	Groups            []UnifiedGroup     `json:"groups"`
+	Labels            []Label            `json:"labels"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
 }
 
 type UnifiedGroup struct {
@@ -101,10 +102,11 @@ func (c *Client) CreateUnifiedDashboard(
 	bytes, err := json.Marshal(UnifiedDashboard{
 		Type: dashboard.Type,
 		Attributes: UnifiedDashboardAttributes{
-			Name:        dashboard.Attributes.Name,
-			Description: dashboard.Attributes.Description,
-			Groups:      dashboard.Attributes.Groups,
-			Labels:      dashboard.Attributes.Labels,
+			Name:              dashboard.Attributes.Name,
+			Description:       dashboard.Attributes.Description,
+			Groups:            dashboard.Attributes.Groups,
+			Labels:            dashboard.Attributes.Labels,
+			TemplateVariables: dashboard.Attributes.TemplateVariables,
 		},
 	})
 

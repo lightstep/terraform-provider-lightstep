@@ -53,6 +53,12 @@ resource "lightstep_dashboard" "customer_charges" {
   label {
     value = "customlabel"
   }
+
+  template_variable {
+    name = "service"
+    default_values = ["adservice"]
+    suggestion_attribute_key = "service_name"
+  }
 }
 ```
 
