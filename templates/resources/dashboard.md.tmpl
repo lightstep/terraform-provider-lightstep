@@ -45,10 +45,13 @@ resource "lightstep_dashboard" "customer_charges" {
     }
   }
 
-  template_variable {
-    name = "service"
-    default_values = ["adservice"]
-    suggestion_attribute_key = "service_name"
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "customlabel"
   }
 }
 ```

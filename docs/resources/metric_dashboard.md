@@ -90,7 +90,8 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
 - `dashboard_description` (String)
-- `template_variable` (Block Set) Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable))
+- `group` (Block Set) (see [below for nested schema](#nestedblock--group))
+- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
 
@@ -109,7 +110,11 @@ Required:
 
 Optional:
 
+- `height` (Number)
+- `width` (Number)
+- `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
+- `y_pos` (Number)
 
 Read-Only:
 
@@ -181,11 +186,119 @@ Required:
 
 
 
-<a id="nestedblock--template_variable"></a>
-### Nested Schema for `template_variable`
+<a id="nestedblock--group"></a>
+### Nested Schema for `group`
 
 Required:
 
-- `default_values` (List of String) One or more values to set the template variable to by default (if none are provided, defaults to all possible values)
-- `name` (String) Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores
-- `suggestion_attribute_key` (String) Attribute key used as source for suggested template variable values appearing in Lightstep UI
+- `rank` (Number)
+- `visibility_type` (String)
+
+Optional:
+
+- `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
+- `title` (String)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--chart"></a>
+### Nested Schema for `group.chart`
+
+Required:
+
+- `name` (String)
+- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--group--chart--query))
+- `rank` (Number)
+- `type` (String)
+
+Optional:
+
+- `height` (Number)
+- `width` (Number)
+- `x_pos` (Number)
+- `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
+- `y_pos` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--chart--query"></a>
+### Nested Schema for `group.chart.query`
+
+Required:
+
+- `hidden` (Boolean)
+- `query_name` (String)
+
+Optional:
+
+- `display` (String)
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
+- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--final_window_operation))
+- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--group_by))
+- `include_filters` (List of Map of String) Equality filters (operand: eq)
+- `metric` (String)
+- `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--spans))
+- `timeseries_operator` (String)
+- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
+
+<a id="nestedblock--group--chart--query--final_window_operation"></a>
+### Nested Schema for `group.chart.query.final_window_operation`
+
+Optional:
+
+- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `operator` (String)
+
+
+<a id="nestedblock--group--chart--query--group_by"></a>
+### Nested Schema for `group.chart.query.group_by`
+
+Optional:
+
+- `aggregation_method` (String)
+- `keys` (List of String)
+
+
+<a id="nestedblock--group--chart--query--spans"></a>
+### Nested Schema for `group.chart.query.spans`
+
+Required:
+
+- `operator` (String)
+- `query` (String)
+
+Optional:
+
+- `group_by_keys` (List of String)
+- `latency_percentiles` (List of Number)
+- `operator_input_window_ms` (Number)
+
+
+
+<a id="nestedblock--group--chart--y_axis"></a>
+### Nested Schema for `group.chart.y_axis`
+
+Required:
+
+- `max` (Number)
+- `min` (Number)
+
+
+
+
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)

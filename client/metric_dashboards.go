@@ -15,19 +15,42 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name              string             `json:"name"`
-	Description       string             `json:"description"`
-	Charts            []UnifiedChart     `json:"charts"`
-	TemplateVariables []TemplateVariable `json:"template_variables"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Charts      []UnifiedChart `json:"charts"`
+	Groups      []UnifiedGroup `json:"groups"`
+	Labels      []Label        `json:"labels"`
+}
+
+type UnifiedGroup struct {
+	ID             string         `json:"id"`
+	Rank           int            `json:"rank"`
+	Title          string         `json:"title"`
+	VisibilityType string         `json:"visibility_type"`
+	Charts         []UnifiedChart `json:"charts"`
+	Labels         []Label        `json:"labels"`
+}
+
+type UnifiedPosition struct {
+	XPos   int `json:"x_pos"`
+	YPos   int `json:"y_pos"`
+	Width  int `json:"width"`
+	Height int `json:"height"`
 }
 
 type UnifiedChart struct {
 	Rank          int                         `json:"rank"`
+	Position      UnifiedPosition             `json:"position"`
 	ID            string                      `json:"id"`
 	Title         string                      `json:"title"`
 	ChartType     string                      `json:"chart-type"`
 	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
+}
+
+type Label struct {
+	Key   string `json:"label_key"`
+	Value string `json:"label_value"`
 }
 
 type YAxis struct {
@@ -78,10 +101,10 @@ func (c *Client) CreateUnifiedDashboard(
 	bytes, err := json.Marshal(UnifiedDashboard{
 		Type: dashboard.Type,
 		Attributes: UnifiedDashboardAttributes{
-			Name:              dashboard.Attributes.Name,
-			Description:       dashboard.Attributes.Description,
-			Charts:            dashboard.Attributes.Charts,
-			TemplateVariables: dashboard.Attributes.TemplateVariables,
+			Name:        dashboard.Attributes.Name,
+			Description: dashboard.Attributes.Description,
+			Groups:      dashboard.Attributes.Groups,
+			Labels:      dashboard.Attributes.Labels,
 		},
 	})
 

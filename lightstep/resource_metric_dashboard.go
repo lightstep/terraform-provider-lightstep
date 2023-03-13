@@ -62,37 +62,60 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 					Schema: getChartSchema(chartSchemaType),
 				},
 			},
-			"template_variable": {
+			"group": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
-					Schema: getTemplateVariableSchema(),
+					Schema: getGroupSchema(chartSchemaType),
 				},
-				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
+			},
+			"label": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Labels can be key/value pairs or standalone values.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	}
 }
 
-func getTemplateVariableSchema() map[string]*schema.Schema {
+func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
-		"name": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores",
+		"id": {
+			Type:     schema.TypeString,
+			Computed: true,
 		},
-		"suggestion_attribute_key": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "Attribute key used as source for suggested template variable values appearing in Lightstep UI",
+		"rank": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Required:     true,
 		},
-		"default_values": {
-			Type:     schema.TypeList,
-			Required: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
+		"title": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"visibility_type": {
+			Type:         schema.TypeString,
+			ValidateFunc: validation.StringInSlice([]string{"implicit", "explicit"}, false),
+			Required:     true,
+		},
+		"chart": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: getChartSchema(chartSchemaType),
 			},
-			Description: "One or more values to set the template variable to by default (if none are provided, defaults to all possible values)",
 		},
 	}
 }
@@ -134,6 +157,30 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			Type:         schema.TypeInt,
 			ValidateFunc: validation.IntAtLeast(0),
 			Required:     true,
+		},
+		"x_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"y_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"width": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"height": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
 		},
 		"type": {
 			Type:         schema.TypeString,
@@ -194,12 +241,35 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 	}
 
 	d.SetId(created.ID)
+
+	// Support for deprecated legacy queries: if we created a new legacy query and the creation
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
+	// diffs in the plan.
+	projectName := d.Get("project_name").(string)
+	legacy, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, attrs.Charts, created.Attributes.Charts)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacy {
+		// Only copy the query attributes
+		for _, chart := range attrs.Charts {
+			for j, d := range dashboard.Attributes.Charts {
+				if d.Rank == chart.Rank {
+					dashboard.Attributes.Charts[j].MetricQueries = chart.MetricQueries
+				}
+			}
+		}
+		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d); err != nil {
+			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
+		}
+		return nil
+	}
+
 	return p.resourceUnifiedDashboardRead(ctx, d, m)
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-
 	c := m.(*client.Client)
 
 	// The lightstep_dashboard resource always wants to use query_strings rather than
@@ -207,6 +277,11 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	convertToQueryString := false
 	if p.chartSchemaType == UnifiedChartSchema {
 		convertToQueryString = true
+	}
+
+	prevAttrs, err := getUnifiedDashboardAttributesFromResource(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
 	}
 
 	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
@@ -224,16 +299,66 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to get dashboard: %v", apiErr))
 	}
 
+	// Support for deprecated legacy queries: if we created a new legacy query and the creation
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids false
+	// diffs in the plan.
+	projectName := d.Get("project_name").(string)
+	legacyCharts, err := dashboardHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs.Charts, dashboard.Attributes.Charts)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacyCharts {
+		// Only copy the query attributes
+		for _, chart := range prevAttrs.Charts {
+			for j, d := range dashboard.Attributes.Charts {
+				if d.Rank == chart.Rank {
+					dashboard.Attributes.Charts[j].MetricQueries = chart.MetricQueries
+				}
+			}
+		}
+	}
+
+	for i, group := range prevAttrs.Groups {
+		for j, g := range dashboard.Attributes.Groups {
+			if g.Rank == group.Rank {
+				previousGroup := prevAttrs.Groups[i]
+				updatedGroup := dashboard.Attributes.Groups[j]
+				legacyGroupedCharts, err := dashboardHasEquivalentLegacyQueries(
+					ctx, c, projectName,
+					previousGroup.Charts, updatedGroup.Charts)
+				if err != nil {
+					return diag.FromErr(fmt.Errorf("failed to compare legacy queries in groups: %v", err))
+				}
+				if legacyGroupedCharts {
+					// Only copy the query attributes
+					for _, chart := range previousGroup.Charts {
+						for j, d := range updatedGroup.Charts {
+							if d.Rank == chart.Rank {
+								updatedGroup.Charts[j].MetricQueries = chart.MetricQueries
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 	}
-
 	return diags
 }
 
 func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
 	chartSet := d.Get("chart").(*schema.Set)
-	charts, err := buildCharts(chartSet.List())
+	groupSet := d.Get("group").(*schema.Set)
+	groups, err := buildGroups(groupSet.List(), chartSet.List())
+	if err != nil {
+		return nil, err
+	}
+
+	labelSet := d.Get("label").(*schema.Set)
+	labels, err := buildLabels(labelSet.List())
 	if err != nil {
 		return nil, err
 	}
@@ -242,38 +367,91 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	templateVariables := buildTemplateVariables(templateVariableSet.List())
 
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:              d.Get("dashboard_name").(string),
-		Description:       d.Get("dashboard_description").(string),
-		Charts:            charts,
-		TemplateVariables: templateVariables,
+		Name:        d.Get("dashboard_name").(string),
+		Description: d.Get("dashboard_description").(string),
+		Groups:      groups,
+		Labels:      labels,
 	}
 
 	return attributes, nil
 }
 
-func buildTemplateVariables(templateVariablesIn []interface{}) []client.TemplateVariable {
-	var newTemplateVariables []client.TemplateVariable
-	for _, tv := range templateVariablesIn {
-		tvMap := tv.(map[string]interface{})
-		name := tvMap["name"].(string)
-		suggestionAttributeKey := tvMap["suggestion_attribute_key"].(string)
-		defaultValues := buildDefaultValues(tvMap["default_values"].([]interface{}))
+func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client.UnifiedGroup, error) {
+	var (
+		groups    []map[string]interface{}
+		newGroups []client.UnifiedGroup
+	)
 
-		newTemplateVariables = append(newTemplateVariables, client.TemplateVariable{
-			Name:                   name,
-			DefaultValues:          defaultValues,
-			SuggestionAttributeKey: suggestionAttributeKey,
+	if len(legacyChartsIn) != 0 {
+		c, err := buildCharts(legacyChartsIn)
+		if err != nil {
+			return nil, err
+		}
+		newGroups = append(newGroups, client.UnifiedGroup{
+			Rank:           0,
+			Title:          "",
+			VisibilityType: "implicit",
+			Charts:         c,
 		})
 	}
-	return newTemplateVariables
+
+	for _, group := range groupsIn {
+		groups = append(groups, group.(map[string]interface{}))
+	}
+
+	for _, group := range groups {
+		c, err := buildCharts(group["chart"].(*schema.Set).List())
+		if err != nil {
+			return nil, err
+		}
+		g := client.UnifiedGroup{
+			ID:             group["id"].(string),
+			Rank:           group["rank"].(int),
+			Title:          group["title"].(string),
+			VisibilityType: group["visibility_type"].(string),
+			Charts:         c,
+		}
+		newGroups = append(newGroups, g)
+	}
+	return newGroups, nil
 }
 
-func buildDefaultValues(valuesIn []interface{}) []string {
-	defaultValues := make([]string, 0, len(valuesIn))
-	for _, v := range valuesIn {
-		defaultValues = append(defaultValues, v.(string))
+func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
+	var labels []client.Label
+
+	for _, l := range labelsIn {
+		label, ok := l.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("bad format, %v", l)
+		}
+
+		if len(label) == 0 {
+			continue
+		}
+
+		// label keys can be omitted for labels without the key:value syntax
+		k := label["key"]
+		if k == nil {
+			k = ""
+		}
+
+		key, ok := k.(string)
+		if !ok {
+			return nil, fmt.Errorf("label key must be a string, %v", k)
+		}
+
+		v, ok := label["value"].(string)
+		if !ok {
+			return nil, fmt.Errorf("label value is a required field, %v", v)
+		}
+
+		labels = append(labels, client.Label{
+			Key:   key,
+			Value: v,
+		})
 	}
-	return defaultValues
+
+	return labels, nil
 }
 
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
@@ -287,9 +465,16 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	}
 
 	for _, chart := range charts {
+		p := client.UnifiedPosition{
+			XPos:   chart["x_pos"].(int),
+			YPos:   chart["y_pos"].(int),
+			Width:  chart["width"].(int),
+			Height: chart["height"].(int),
+		}
 		c := client.UnifiedChart{
 			Title:     chart["name"].(string),
 			Rank:      chart["rank"].(int),
+			Position:  p,
 			ID:        chart["id"].(string),
 			ChartType: chart["type"].(string),
 		}
@@ -354,41 +539,86 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
-	var charts []interface{}
-	for _, c := range dash.Attributes.Charts {
-		chart := map[string]interface{}{}
+	assembleCharts := func(chartsIn []client.UnifiedChart) ([]interface{}, error) {
+		var charts []interface{}
+		for _, c := range chartsIn {
+			chart := map[string]interface{}{}
 
-		yMap := map[string]interface{}{}
+			yMap := map[string]interface{}{}
 
-		if c.YAxis != nil {
-			yMap["max"] = c.YAxis.Max
-			yMap["min"] = c.YAxis.Min
-			chart["y_axis"] = []map[string]interface{}{yMap}
+			if c.YAxis != nil {
+				yMap["max"] = c.YAxis.Max
+				yMap["min"] = c.YAxis.Min
+				chart["y_axis"] = []map[string]interface{}{yMap}
+			}
+
+			if p.chartSchemaType == MetricChartSchema {
+				chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
+			} else {
+				queries, err := getQueriesFromUnifiedDashboardResourceData(
+					c.MetricQueries,
+					dash.ID,
+					c.ID,
+				)
+				if err != nil {
+					return nil, err
+				}
+				chart["query"] = queries
+			}
+			chart["name"] = c.Title
+			chart["rank"] = c.Rank
+			chart["x_pos"] = c.Position.XPos
+			chart["y_pos"] = c.Position.YPos
+			chart["width"] = c.Position.Width
+			chart["height"] = c.Position.Height
+			chart["type"] = c.ChartType
+			chart["id"] = c.ID
+
+			charts = append(charts, chart)
 		}
+		return charts, nil
+	}
+	if len(dash.Attributes.Groups) == 1 &&
+		dash.Attributes.Groups[0].VisibilityType == "implicit" {
+		charts, err := assembleCharts(dash.Attributes.Groups[0].Charts)
+		if err != nil {
+			return err
+		}
+		if err := d.Set("chart", charts); err != nil {
+			return err
+		}
+	} else {
+		var groups []interface{}
+		for _, g := range dash.Attributes.Groups {
+			group := map[string]interface{}{}
+			group["title"] = g.Title
+			group["id"] = g.ID
+			group["visibility_type"] = g.VisibilityType
+			group["rank"] = g.Rank
 
-		if p.chartSchemaType == MetricChartSchema {
-			chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
-		} else {
-			queries, err := getQueriesFromUnifiedDashboardResourceData(
-				c.MetricQueries,
-				dash.ID,
-				c.ID,
-			)
+			groupCharts, err := assembleCharts(g.Charts)
 			if err != nil {
 				return err
 			}
-			chart["query"] = queries
+			group["chart"] = groupCharts
+			groups = append(groups, group)
 		}
-		chart["name"] = c.Title
-		chart["rank"] = c.Rank
-		chart["type"] = c.ChartType
-		chart["id"] = c.ID
-
-		charts = append(charts, chart)
+		if err := d.Set("group", groups); err != nil {
+			return fmt.Errorf("unable to set group resource field: %v", err)
+		}
 	}
 
-	if err := d.Set("chart", charts); err != nil {
-		return fmt.Errorf("unable to set chart resource field: %v", err)
+	var labels []interface{}
+	for _, l := range dash.Attributes.Labels {
+		label := map[string]interface{}{}
+		if l.Key != "" {
+			label["key"] = l.Key
+		}
+		label["value"] = l.Value
+		labels = append(labels, label)
+	}
+	if err := d.Set("label", labels); err != nil {
+		return fmt.Errorf("unable to set labels resource field: %v", err)
 	}
 
 	var templateVariables []interface{}

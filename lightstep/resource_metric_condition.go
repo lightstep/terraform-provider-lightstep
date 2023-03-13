@@ -356,6 +356,23 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionCreate(ctx context
 	}
 
 	d.SetId(created.ID)
+
+	// Support for deprecated legacy queries: if we created a new legacy query and the creation
+	// succeeded, return the ResourceData "as-is" from what was passed in. This avoids meaningless
+	// diffs in the plan.
+	projectName := d.Get("project_name").(string)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, attributes, &created.Attributes)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacy {
+		created.Attributes.Queries = attributes.Queries
+		if err := setResourceDataFromUnifiedCondition(projectName, created, d, p.conditionSchemaType); err != nil {
+			return diag.FromErr(fmt.Errorf("failed to set condition from API response to terraform state: %v", err))
+		}
+		return nil
+	}
+
 	return p.resourceUnifiedConditionRead(ctx, d, m)
 }
 
@@ -363,6 +380,11 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 	var diags diag.Diagnostics
 
 	c := m.(*client.Client)
+	prevAttrs, err := getUnifiedConditionAttributesFromResource(d, p.conditionSchemaType)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
+	}
+
 	cond, err := c.GetUnifiedCondition(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr, ok := err.(client.APIResponseCarrier)
@@ -376,6 +398,15 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		}
 
 		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
+	}
+
+	projectName := d.Get("project_name").(string)
+	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &cond.Attributes)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
+	}
+	if legacy {
+		cond.Attributes.Queries = prevAttrs.Queries
 	}
 
 	if err := setResourceDataFromUnifiedCondition(d.Get("project_name").(string), *cond, d, p.conditionSchemaType); err != nil {
