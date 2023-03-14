@@ -160,31 +160,32 @@ func TestAccDashboard(t *testing.T) {
 
 	positionallyGroupedDashboardConfig := `
 resource "lightstep_dashboard" "test" {
-	project_name          = "terraform-provider-tests"
-	dashboard_name        = "Acceptance Test Dashboard"
-	dashboard_description = "Dashboard to test if the terraform provider works"
-	group {
-		title = "Title"
-		rank = 0
-		visibility_type = "explicit"
-		chart {
-		  name = "Chart Number One"
-		  rank = 1
-		  x_pos = 0
- 		  y_pos = 0
-		  width = 16
-		  height = 10
-		  
-		  type = "timeseries"
-	
-		  query {
-			hidden              = false
-			query_name          = "a"
-			display             = "line"
-			query_string        = "metric m | rate"
-		  }
-		}
-	}
+  dashboard_name = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
+  project_name   = "terraform-provider-tests"
+
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+
+    chart {
+      name   = "responses"
+      type   = "timeseries"
+      rank   = 0
+      x_pos  = 0
+      y_pos  = 0
+      width  = 32
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric responses | rate | group_by [], sum"
+      }
+    }
+  }
 }
 `
 
@@ -262,12 +263,12 @@ resource "lightstep_dashboard" "test" {
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "Acceptance Test Dashboard"),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_description", "Dashboard to test if the terraform provider works"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.title", "Title"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.title", ""),
 					resource.TestCheckResourceAttr(resourceName, "group.0.rank", "0"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "explicit"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "implicit"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.x_pos", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.y_pos", "0"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.width", "16"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.width", "32"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.height", "10"),
 				),
 			},
