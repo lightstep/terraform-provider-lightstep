@@ -635,8 +635,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 		return charts, nil
 	}
-	if len(dash.Attributes.Groups) == 1 &&
-		dash.Attributes.Groups[0].VisibilityType == "implicit" {
+	if isLegacyImplicitGroup(dash.Attributes.Groups) {
 		charts, err := assembleCharts(dash.Attributes.Groups[0].Charts)
 		if err != nil {
 			return err
@@ -692,6 +691,24 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 
 	return nil
+}
+
+// isLegacyImplicitGroup defines the logic for determining if the charts in this dashboard need to be unwrapped to
+// maintain backwards compatibility with the pre group definition
+func isLegacyImplicitGroup(groups []client.UnifiedGroup) bool {
+	if len(groups) != 1 {
+		return false
+	}
+	if groups[0].VisibilityType != "implicit" {
+		return false
+	}
+	for _, c := range groups[0].Charts {
+		pos := c.Position
+		if pos.XPos != 0 || pos.YPos != 0 || pos.Width != 0 || pos.Height != 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
