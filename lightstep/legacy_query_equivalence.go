@@ -22,6 +22,7 @@ func dashboardHasEquivalentLegacyQueries(
 	projectName string,
 	priorCharts []client.UnifiedChart,
 	updatedCharts []client.UnifiedChart,
+	priorTemplateVariables []client.TemplateVariable,
 ) (bool, error) {
 	// This code is only applicable if there are legacy charts
 	allTQL := true
@@ -57,9 +58,12 @@ func dashboardHasEquivalentLegacyQueries(
 
 		// Check the converted query
 		equivalent, err := compareUpdatedLegacyQueries(
-			ctx, c, projectName,
+			ctx,
+			c,
+			projectName,
 			priorChart.MetricQueries,
 			updatedChart.MetricQueries,
+			priorTemplateVariables,
 		)
 		if err != nil {
 			return false, err
@@ -90,9 +94,12 @@ func metricConditionHasEquivalentLegacyQueries(
 
 	// Compare the queries
 	equivalent, err := compareUpdatedLegacyQueries(
-		ctx, c, projectName,
+		ctx,
+		c,
+		projectName,
 		priorAttrs.Queries,
 		updatedAttrs.Queries,
+		nil, // Conditions doesn't support template variables.
 	)
 	if err != nil {
 		return false, err
@@ -117,6 +124,7 @@ func compareUpdatedLegacyQueries(
 	projectName string,
 	priorQueries []client.MetricQueryWithAttributes,
 	updatedQueries []client.MetricQueryWithAttributes,
+	priorTemplateVariables []client.TemplateVariable,
 ) (bool, error) {
 	// Step 0: if these are both TQL queries, the strings should match
 	// exactly. (Note that a single query-set with a mix of TQL and
@@ -143,10 +151,11 @@ func compareUpdatedLegacyQueries(
 	resp := Response{}
 	req := map[string]interface{}{
 		"data": map[string]interface{}{
-			"queries": priorQueries,
+			"queries":            priorQueries,
+			"template_variables": priorTemplateVariables,
 		},
 	}
-	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
+	err := c.CallAPI(ctx, "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
 	if err != nil {
 		return false, err
 	}
