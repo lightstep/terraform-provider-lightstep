@@ -236,6 +236,116 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
+func TestAccDashboardLegacyAndTQLFormatWithTemplateVariables(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "terraform-provider-tests"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardLegacyFormat)"
+	dashboard_description = "Dashboard to test if the legacy formats are retained when there's no diff"
+	
+	template_variable { 
+		name = "service"
+		default_values = ["web"]
+		suggestion_attribute_key = "service"
+	}
+
+
+	chart {
+		name = "hit_ratio"
+		rank = 0
+		type = "timeseries"
+	
+		query {
+			display             = "line"
+			exclude_filters     = []
+			hidden              = false
+			include_filters     = []
+			metric              = "cache.hit_ratio"
+			query_name          = "a"
+			timeseries_operator = "last"
+		
+			group_by {
+				aggregation_method = "avg"
+				keys = [
+				"cache_type",
+				"cache_name",
+				"service",
+				]
+			}
+		}
+	}
+
+	chart {
+		name = "cpu"
+		rank = 1
+		type = "timeseries"
+	
+		query {
+			display             = "line"
+			hidden              = false
+			query_name          = "a"		
+			tql					= "metric cpu.utilization | filter service == $service | latest | group_by [], sum"
+		}
+	}
+}
+`
+	resourceName := "lightstep_metric_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial legacy dashboard
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":           "hit_ratio",
+							"query.0.metric": "cache.hit_ratio",
+							"query.0.tql":    "",
+							"rank":           "0",
+							"type":           "timeseries",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+						},
+					),
+				),
+			},
+			{
+				// Update with no differences. Ensure that we can compare queries even if there are template variables.
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":           "hit_ratio",
+							"query.0.metric": "cache.hit_ratio",
+							"query.0.tql":    "",
+							"rank":           "0",
+							"type":           "timeseries",
+						},
+					),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
+						map[string]string{
+							"name":        "cpu",
+							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+						},
+					),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDashboardVPADashTest(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
