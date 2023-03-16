@@ -261,7 +261,12 @@ resource "lightstep_metric_dashboard" "test" {
 			display             = "line"
 			exclude_filters     = []
 			hidden              = false
-			include_filters     = []
+			include_filters     = [
+				{
+				  key     = "service"
+				  value   = "$service"
+				}
+			]
 			metric              = "cache.hit_ratio"
 			query_name          = "a"
 			timeseries_operator = "last"
@@ -308,11 +313,13 @@ resource "lightstep_metric_dashboard" "test" {
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
-							"name":           "hit_ratio",
-							"query.0.metric": "cache.hit_ratio",
-							"query.0.tql":    "",
-							"rank":           "0",
-							"type":           "timeseries",
+							"name":                            "hit_ratio",
+							"query.0.metric":                  "cache.hit_ratio",
+							"query.0.include_filters.0.key":   "service",
+							"query.0.include_filters.0.value": "$service",
+							"query.0.tql":                     "",
+							"rank":                            "0",
+							"type":                            "timeseries",
 						},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
@@ -330,11 +337,13 @@ resource "lightstep_metric_dashboard" "test" {
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
-							"name":           "hit_ratio",
-							"query.0.metric": "cache.hit_ratio",
-							"query.0.tql":    "",
-							"rank":           "0",
-							"type":           "timeseries",
+							"name":                            "hit_ratio",
+							"query.0.metric":                  "cache.hit_ratio",
+							"query.0.include_filters.0.key":   "service",
+							"query.0.include_filters.0.value": "$service",
+							"query.0.tql":                     "",
+							"rank":                            "0",
+							"type":                            "timeseries",
 						},
 					),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
