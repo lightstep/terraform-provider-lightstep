@@ -293,6 +293,9 @@ resource "lightstep_metric_dashboard" "test" {
 `
 	resourceName := "lightstep_metric_dashboard.test"
 
+	// Update the TQL query
+	dashboardConfig2 := strings.Replace(dashboardConfig, "group_by [], sum", "group_by [], mean", -1)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviderFactories,
@@ -322,7 +325,7 @@ resource "lightstep_metric_dashboard" "test" {
 			},
 			{
 				// Update with no differences. Ensure that we can compare queries even if there are template variables.
-				Config: dashboardConfig,
+				Config: dashboardConfig2,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
@@ -337,7 +340,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
 							"name":        "cpu",
-							"query.0.tql": "metric cpu.utilization | filter service == $service | latest | group_by [], sum",
+							"query.0.tql": "metric cpu.utilization | filter service == $service | latest | group_by [], mean",
 						},
 					),
 				),
