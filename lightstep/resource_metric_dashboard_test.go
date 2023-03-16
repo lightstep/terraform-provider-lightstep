@@ -315,7 +315,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
 							"name":        "cpu",
-							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+							"query.0.tql": "metric cpu.utilization | filter service == $service | latest | group_by [], sum",
 						},
 					),
 				),
@@ -337,7 +337,7 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*",
 						map[string]string{
 							"name":        "cpu",
-							"query.0.tql": "metric cpu.utilization | latest | group_by [], sum",
+							"query.0.tql": "metric cpu.utilization | filter service == $service | latest | group_by [], sum",
 						},
 					),
 				),
