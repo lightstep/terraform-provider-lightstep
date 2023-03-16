@@ -92,7 +92,7 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Elem: &schema.Resource{
 					Schema: getTemplateVariableSchema(),
 				},
-				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
+				Description: "[Do not use - this field is not yet supported by the Lightstep SaaS] Variable to be used in dashboard queries for dynamically filtering telemetry data",
 			},
 		},
 	}
@@ -232,12 +232,12 @@ func getTemplateVariableSchema() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores",
+			Description: "[Do not use - this field is not yet supported by the Lightstep SaaS] Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores",
 		},
 		"suggestion_attribute_key": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Attribute key used as source for suggested template variable values appearing in Lightstep UI",
+			Description: "[Do not use - this field is not yet supported by the Lightstep SaaS] Attribute key used as source for suggested template variable values appearing in Lightstep UI",
 		},
 		"default_values": {
 			Type:     schema.TypeList,
@@ -245,7 +245,7 @@ func getTemplateVariableSchema() map[string]*schema.Schema {
 			Elem: &schema.Schema{
 				Type: schema.TypeString,
 			},
-			Description: "One or more values to set the template variable to by default (if none are provided, defaults to all possible values)",
+			Description: "[Do not use - this field is not yet supported by the Lightstep SaaS] One or more values to set the template variable to by default (if none are provided, defaults to all possible values)",
 		},
 	}
 }
