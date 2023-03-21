@@ -144,6 +144,11 @@ resource "lightstep_metric_condition" "test" {
   name = "updated"
   description = "A link to a fresh playbook"
 
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
   expression {
 	  is_multi   = true
 	  is_no_data = false
@@ -216,6 +221,7 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
+					resource.TestCheckNoResourceAttr(resourceName, "labels"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
@@ -233,6 +239,8 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "labels.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceName, "labels.0.value", "ontology"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
 				),
