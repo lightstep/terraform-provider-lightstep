@@ -33,8 +33,8 @@ type UnifiedGroup struct {
 }
 
 type UnifiedPosition struct {
-	XPos   int `json:"x_pos"`
-	YPos   int `json:"y_pos"`
+	XPos   int `json:"x-pos"`
+	YPos   int `json:"y-pos"`
 	Width  int `json:"width"`
 	Height int `json:"height"`
 }
