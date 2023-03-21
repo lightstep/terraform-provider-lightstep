@@ -616,7 +616,7 @@ join b + c, b = 0, c = 0
 	config := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
 	project_name          = "terraform-provider-tests"
-	dashboard_name        = "Acceptance Test Dashboard with Template Variables"
+	dashboard_name        = "Acceptance Test Dashboard with Hidden Queries"
 	chart {
 	  name = "Chart Number One"
 	  rank = 1
@@ -627,7 +627,7 @@ resource "lightstep_dashboard" "test" {
 		display             = "line"
 		query_string        = <<EOT
 %v
-		EOT
+EOT
 
 		hidden_queries = {
 			b = "false"
@@ -655,6 +655,8 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", queryString+"\n"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
 					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden_queries.b", "false"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden_queries.c", "true"),
 				),
 			},
 		},
