@@ -112,6 +112,7 @@ Optional:
 
 - `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--dependency_map_options))
 - `display` (String)
+- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--chart--query--dependency_map_options"></a>
 ### Nested Schema for `chart.query.dependency_map_options`
@@ -185,6 +186,7 @@ Optional:
 
 - `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--dependency_map_options))
 - `display` (String)
+- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--group--chart--query--dependency_map_options"></a>
 ### Nested Schema for `group.chart.query.dependency_map_options`

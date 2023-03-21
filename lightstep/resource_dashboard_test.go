@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -598,6 +599,63 @@ resource "lightstep_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
 				ExpectError: regexp.MustCompile("InvalidArgument"),
+			},
+		},
+	})
+}
+
+func TestAccDashboardHiddenQueries(t *testing.T) {
+
+	queryString := strings.TrimSpace(`
+with
+	b = metric m | filter (service == "cats") | rate | group_by [], sum;
+	c = metric m | filter (service == "dogs") | rate | group_by [], sum;
+join b + c, b = 0, c = 0
+`)
+
+	config := fmt.Sprintf(`
+resource "lightstep_dashboard" "test" {
+	project_name          = "terraform-provider-tests"
+	dashboard_name        = "Acceptance Test Dashboard with Template Variables"
+	chart {
+	  name = "Chart Number One"
+	  rank = 1
+	  type = "timeseries"
+	  query {
+		hidden              = false
+		query_name          = "a"
+		display             = "line"
+		query_string        = <<EOT
+%v
+		EOT
+
+		hidden_queries = {
+			b = "false"
+			c = "true"
+		}
+	  }
+	}
+  }
+`, queryString)
+
+	_ = `	   `
+
+	var dashboard client.UnifiedDashboard
+	resourceName := "lightstep_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.query_string", queryString+"\n"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+				),
 			},
 		},
 	})

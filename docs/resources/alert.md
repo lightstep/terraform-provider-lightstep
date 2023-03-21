@@ -96,6 +96,7 @@ Required:
 Optional:
 
 - `display` (String)
+- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 
 <a id="nestedblock--alerting_rule"></a>
