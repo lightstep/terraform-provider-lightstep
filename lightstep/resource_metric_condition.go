@@ -496,7 +496,7 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 	}
 
 	labelSet := d.Get("label").(*schema.Set)
-	labels, err := BuildLabels(labelSet.List())
+	labels, err := buildLabels(labelSet.List())
 	if err != nil {
 		return nil, err
 	}

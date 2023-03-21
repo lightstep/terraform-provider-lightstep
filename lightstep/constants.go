@@ -1,10 +1,5 @@
 package lightstep
 
-import (
-	"fmt"
-	"github.com/lightstep/terraform-provider-lightstep/client"
-)
-
 var (
 	validUpdateInterval = map[string]int{
 		"2m":  120000,
@@ -44,57 +39,4 @@ func GetUpdateIntervalValue(in int) string {
 		}
 	}
 	return ""
-}
-
-//extractLabels transforms labels from the API call into TF resource labels
-func extractLabels(incomingLabels []client.Label) []interface{} {
-	var labels []interface{}
-	for _, l := range incomingLabels {
-		label := map[string]interface{}{}
-		if l.Key != "" {
-			label["key"] = l.Key
-		}
-		label["value"] = l.Value
-		labels = append(labels, label)
-	}
-	return labels
-}
-
-//BuildLabels transforms labels from the TF resource into labels for the API request
-func BuildLabels(labelsIn []interface{}) ([]client.Label, error) {
-	var labels []client.Label
-
-	for _, l := range labelsIn {
-		label, ok := l.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("bad format, %v", l)
-		}
-
-		if len(label) == 0 {
-			continue
-		}
-
-		// label keys can be omitted for labels without the key:value syntax
-		k := label["key"]
-		if k == nil {
-			k = ""
-		}
-
-		key, ok := k.(string)
-		if !ok {
-			return nil, fmt.Errorf("label key must be a string, %v", k)
-		}
-
-		v, ok := label["value"].(string)
-		if !ok {
-			return nil, fmt.Errorf("label value is a required field, %v", v)
-		}
-
-		labels = append(labels, client.Label{
-			Key:   key,
-			Value: v,
-		})
-	}
-
-	return labels, nil
 }
