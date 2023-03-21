@@ -764,9 +764,9 @@ func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
 }
 
 // extractLabels transforms labels from the API call into TF resource labels
-func extractLabels(incomingLabels []client.Label) []interface{} {
+func extractLabels(apiLabels []client.Label) []interface{} {
 	var labels []interface{}
-	for _, l := range incomingLabels {
+	for _, l := range apiLabels {
 		label := map[string]interface{}{}
 		if l.Key != "" {
 			label["key"] = l.Key

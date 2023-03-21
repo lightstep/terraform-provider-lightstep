@@ -408,11 +408,10 @@ func Test_buildLabels(t *testing.T) {
 		lengthCheck bool
 	}{
 		{
-			name:        "empty label",
-			in:          []interface{}{map[string]interface{}{}},
-			want:        []client.Label{},
-			wantErr:     false,
-			lengthCheck: true,
+			name:    "empty label",
+			in:      []interface{}{map[string]interface{}{}},
+			want:    nil,
+			wantErr: false,
 		},
 		{
 			name: "basic label",
@@ -471,10 +470,53 @@ func Test_buildLabels(t *testing.T) {
 				t.Errorf("buildLabels() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !tt.lengthCheck && !reflect.DeepEqual(got, tt.want) {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("buildLabels() got = %v, want %v", got, tt.want)
-			} else if len(got) != len(tt.want) {
-				t.Errorf("buildLabels() got length = %v, want length = %v", len(got), len(tt.want))
+			}
+		})
+	}
+}
+
+func Test_extractLabels(t *testing.T) {
+	tests := []struct {
+		name      string
+		apiLabels []client.Label
+		want      []interface{}
+	}{
+		{
+			name:      "empty labels",
+			apiLabels: []client.Label{},
+			want:      nil,
+		},
+		{
+			name:      "basic label",
+			apiLabels: []client.Label{{Key: "team", Value: "ontology"}},
+			want: []interface{}{map[string]interface{}{
+				"key":   "team",
+				"value": "ontology",
+			}},
+		},
+		{
+			name:      "basic label without key",
+			apiLabels: []client.Label{{Value: "ontology"}},
+			want: []interface{}{map[string]interface{}{
+				"value": "ontology",
+			}},
+		},
+		{
+			name:      "basic labels",
+			apiLabels: []client.Label{{Value: "ontology"}, {Value: "meta"}},
+			want: []interface{}{map[string]interface{}{
+				"value": "ontology",
+			}, map[string]interface{}{
+				"value": "meta",
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extractLabels(tt.apiLabels); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extractLabels() = %v, want %v", got, tt.want)
 			}
 		})
 	}
