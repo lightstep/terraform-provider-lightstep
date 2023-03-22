@@ -239,8 +239,8 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
-					resource.TestCheckResourceAttr(resourceName, "labels.0.key", "team"),
-					resource.TestCheckResourceAttr(resourceName, "labels.0.value", "ontology"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
 				),
