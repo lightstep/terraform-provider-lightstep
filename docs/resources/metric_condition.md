@@ -57,15 +57,6 @@ resource "lightstep_metric_condition" "beemo-requests" {
   project_name = var.project
   name         = "Frontend latency"
 
-  label {
-    key = "team"
-    value = "ontology"
-  }
-
-  label {
-    value = "custom-label"
-  }
-
   expression {
     is_multi   = true
     is_no_data = true
