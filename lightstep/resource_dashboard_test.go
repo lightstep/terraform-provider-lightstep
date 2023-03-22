@@ -203,8 +203,8 @@ resource "lightstep_dashboard" "test" {
       name   = "responses"
       type   = "timeseries"
       rank   = 0
-      x_pos  = 0
-      y_pos  = 0
+      x_pos  = 16
+      y_pos  = 6
       width  = 32
       height = 10
 
@@ -311,8 +311,8 @@ resource "lightstep_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "group.0.title", "Title"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.rank", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.visibility_type", "explicit"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.x_pos", "0"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.y_pos", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.x_pos", "16"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.y_pos", "6"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.width", "32"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.height", "10"),
 				),
