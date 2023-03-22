@@ -61,7 +61,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
     key = "team"
     value = "ontology"
   }
-  
+
   label {
     value = "custom-label"
   }
@@ -110,17 +110,6 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 - `id` (String) The ID of this resource.
 - `type` (String)
-
-<a id="nestedblock--label"></a>
-### Nested Schema for `label`
-
-Required:
-
-- `value` (String)
-
-Optional:
-
-- `key` (String)
 
 <a id="nestedblock--expression"></a>
 ### Nested Schema for `expression`
@@ -217,3 +206,15 @@ Optional:
 Read-Only:
 
 - `id` (String) The ID of this resource.
+
+
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)
