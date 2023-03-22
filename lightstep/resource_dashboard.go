@@ -28,6 +28,17 @@ func getUnifiedQuerySchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Required: true,
 		},
+		"hidden_queries": {
+			Type: schema.TypeMap,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+			Optional: true,
+			Description: "An optional map of sub-query names in the query_string to a boolean string to hide/show that query. " +
+				"If specified, the map must have an entry for all named sub-queries in the query_string. A value " +
+				"of \"true\" indicates the query should be hidden. " +
+				"Example: `hidden_queries = {  \"a\" = \"true\",  \"b\" = \"false\" }`.",
+		},
 	}
 	return sma
 }
@@ -66,6 +77,20 @@ func getQueriesFromUnifiedDashboardResourceData(
 			"query_string":           q.TQLQuery,
 			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
 		}
+		if len(q.HiddenQueries) > 0 {
+			// Note due to Terraform's issues with TypeMap having TypeBool elements, we
+			// need to use boolean strings
+			hq := make(map[string]interface{}, len(q.HiddenQueries)+1)
+			for k, v := range q.HiddenQueries {
+				// Don't include the top-level query in the TF resource data
+				if k == q.Name {
+					continue
+				}
+				hq[k] = fmt.Sprintf("%t", v)
+			}
+			qs["hidden_queries"] = hq
+		}
+
 		queries = append(queries, qs)
 	}
 	return queries, nil

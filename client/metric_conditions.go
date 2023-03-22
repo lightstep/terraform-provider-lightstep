@@ -56,6 +56,7 @@ type MetricQueryWithAttributes struct {
 	CompositeQuery       CompositeQuery        `json:"composite-query,omitempty"`
 	TQLQuery             string                `json:"tql-query"`
 	DependencyMapOptions *DependencyMapOptions `json:"dependency-map-options,omitempty"`
+	HiddenQueries        map[string]bool       `json:"hidden-queries,omitempty"`
 }
 
 type MetricQuery struct {

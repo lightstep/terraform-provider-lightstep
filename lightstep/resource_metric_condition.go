@@ -668,6 +668,25 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 				TQLQuery:             queryString,
 				DependencyMapOptions: buildDependencyMapOptions(query["dependency_map_options"]),
 			}
+
+			// "hidden_queries" is only applicable to "tql"/ "query_string" queries.
+			// Due to Terraform's issues with TypeMap of TypeBool, we're forced to use strings
+			if hiddenQueries, ok := query["hidden_queries"].(map[string]interface{}); ok && len(hiddenQueries) > 0 {
+				hq := make(map[string]bool, len(hiddenQueries))
+				for k, v := range hiddenQueries {
+					s, ok := v.(string)
+					if ok && s == "true" {
+						hq[k] = true
+					} else {
+						hq[k] = false
+					}
+				}
+				// Ensure the outer query is always included for the API call.
+				// Don't make the user do this explicitly.
+				hq[newQuery.Name] = newQuery.Hidden
+				newQuery.HiddenQueries = hq
+			}
+
 			newQueries = append(newQueries, newQuery)
 			continue
 		}
