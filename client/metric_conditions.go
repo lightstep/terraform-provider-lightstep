@@ -16,6 +16,7 @@ type UnifiedCondition struct {
 type UnifiedConditionAttributes struct {
 	Name          string                      `json:"name"`
 	Description   string                      `json:"description"`
+	Labels        []Label                     `json:"labels"`
 	Type          string                      `json:"condition_type"`
 	Expression    Expression                  `json:"expression"`
 	Queries       []MetricQueryWithAttributes `json:"metric-queries"`
@@ -127,6 +128,7 @@ func (c *Client) CreateUnifiedCondition(
 			Queries:       condition.Attributes.Queries,
 			AlertingRules: condition.Attributes.AlertingRules,
 			Description:   condition.Attributes.Description,
+			Labels:        condition.Attributes.Labels,
 		},
 	})
 

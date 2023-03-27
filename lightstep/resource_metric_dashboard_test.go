@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 
@@ -396,4 +397,127 @@ resource "lightstep_metric_dashboard" "test" {
 			},
 		},
 	})
+}
+
+func Test_buildLabels(t *testing.T) {
+	tests := []struct {
+		name        string
+		in          []interface{}
+		want        []client.Label
+		wantErr     bool
+		lengthCheck bool
+	}{
+		{
+			name:    "empty label",
+			in:      []interface{}{map[string]interface{}{}},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "basic label",
+			in: []interface{}{map[string]interface{}{
+				"key":   "team",
+				"value": "ontology",
+			}},
+			want:    []client.Label{{Key: "team", Value: "ontology"}},
+			wantErr: false,
+		},
+		{
+			name: "two basic labels",
+			in: []interface{}{map[string]interface{}{
+				"key":   "team",
+				"value": "ontology",
+			}, map[string]interface{}{
+				"key":   "env",
+				"value": "meta",
+			}},
+			want: []client.Label{
+				{Key: "team", Value: "ontology"},
+				{Key: "env", Value: "meta"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "label without key returns just the value",
+			in: []interface{}{map[string]interface{}{
+				"value": "ontology",
+			}},
+			want:    []client.Label{{Key: "", Value: "ontology"}},
+			wantErr: false,
+		},
+		{
+			name: "label key must be string",
+			in: []interface{}{map[string]interface{}{
+				"key":   2,
+				"value": "ontology",
+			}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "label value required",
+			in: []interface{}{map[string]interface{}{
+				"key": "test",
+			}},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := buildLabels(tt.in)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("buildLabels() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("buildLabels() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_extractLabels(t *testing.T) {
+	tests := []struct {
+		name      string
+		apiLabels []client.Label
+		want      []interface{}
+	}{
+		{
+			name:      "empty labels",
+			apiLabels: []client.Label{},
+			want:      nil,
+		},
+		{
+			name:      "basic label",
+			apiLabels: []client.Label{{Key: "team", Value: "ontology"}},
+			want: []interface{}{map[string]interface{}{
+				"key":   "team",
+				"value": "ontology",
+			}},
+		},
+		{
+			name:      "basic label without key",
+			apiLabels: []client.Label{{Value: "ontology"}},
+			want: []interface{}{map[string]interface{}{
+				"value": "ontology",
+			}},
+		},
+		{
+			name:      "basic labels",
+			apiLabels: []client.Label{{Value: "ontology"}, {Value: "meta"}},
+			want: []interface{}{map[string]interface{}{
+				"value": "ontology",
+			}, map[string]interface{}{
+				"value": "meta",
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := extractLabels(tt.apiLabels); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("extractLabels() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

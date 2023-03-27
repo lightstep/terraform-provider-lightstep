@@ -448,44 +448,6 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 	return newGroups, nil
 }
 
-func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
-	var labels []client.Label
-
-	for _, l := range labelsIn {
-		label, ok := l.(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("bad format, %v", l)
-		}
-
-		if len(label) == 0 {
-			continue
-		}
-
-		// label keys can be omitted for labels without the key:value syntax
-		k := label["key"]
-		if k == nil {
-			k = ""
-		}
-
-		key, ok := k.(string)
-		if !ok {
-			return nil, fmt.Errorf("label key must be a string, %v", k)
-		}
-
-		v, ok := label["value"].(string)
-		if !ok {
-			return nil, fmt.Errorf("label value is a required field, %v", v)
-		}
-
-		labels = append(labels, client.Label{
-			Key:   key,
-			Value: v,
-		})
-	}
-
-	return labels, nil
-}
-
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	var (
 		charts    []map[string]interface{}
@@ -664,15 +626,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 	}
 
-	var labels []interface{}
-	for _, l := range dash.Attributes.Labels {
-		label := map[string]interface{}{}
-		if l.Key != "" {
-			label["key"] = l.Key
-		}
-		label["value"] = l.Value
-		labels = append(labels, label)
-	}
+	labels := extractLabels(dash.Attributes.Labels)
 	if err := d.Set("label", labels); err != nil {
 		return fmt.Errorf("unable to set labels resource field: %v", err)
 	}
@@ -768,4 +722,57 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 
 	return []*schema.ResourceData{d}, nil
 
+}
+
+// buildLabels transforms labels from the TF resource into labels for the API request
+func buildLabels(labelsIn []interface{}) ([]client.Label, error) {
+	var labels []client.Label
+
+	for _, l := range labelsIn {
+		label, ok := l.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("bad format, %v", l)
+		}
+
+		if len(label) == 0 {
+			continue
+		}
+
+		// label keys can be omitted for labels without the key:value syntax
+		k := label["key"]
+		if k == nil {
+			k = ""
+		}
+
+		key, ok := k.(string)
+		if !ok {
+			return nil, fmt.Errorf("label key must be a string, %v", k)
+		}
+
+		v, ok := label["value"].(string)
+		if !ok {
+			return nil, fmt.Errorf("label value is a required field, %v", v)
+		}
+
+		labels = append(labels, client.Label{
+			Key:   key,
+			Value: v,
+		})
+	}
+
+	return labels, nil
+}
+
+// extractLabels transforms labels from the API call into TF resource labels
+func extractLabels(apiLabels []client.Label) []interface{} {
+	var labels []interface{}
+	for _, l := range apiLabels {
+		label := map[string]interface{}{}
+		if l.Key != "" {
+			label["key"] = l.Key
+		}
+		label["value"] = l.Value
+		labels = append(labels, label)
+	}
+	return labels
 }

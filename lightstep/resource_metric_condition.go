@@ -51,6 +51,23 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"label": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Labels can be key/value pairs or standalone values.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 			"expression": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -478,6 +495,12 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		return nil, err
 	}
 
+	labelSet := d.Get("label").(*schema.Set)
+	labels, err := buildLabels(labelSet.List())
+	if err != nil {
+		return nil, err
+	}
+
 	attributes := &client.UnifiedConditionAttributes{
 		Type:        "metrics",
 		Name:        d.Get("name").(string),
@@ -488,6 +511,7 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 			Operand:    expression["operand"].(string),
 			Thresholds: thresholds,
 		},
+		Labels: labels,
 	}
 
 	schemaQuery := d.Get("metric_query")
@@ -978,6 +1002,11 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 
 	if err := d.Set("description", c.Attributes.Description); err != nil {
 		return fmt.Errorf("unable to set description resource field: %v", err)
+	}
+
+	labels := extractLabels(c.Attributes.Labels)
+	if err := d.Set("label", labels); err != nil {
+		return fmt.Errorf("unable to set labels resource field: %v", err)
 	}
 
 	if err := d.Set("type", "metric_alert"); err != nil {

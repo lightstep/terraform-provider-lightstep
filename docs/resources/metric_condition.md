@@ -18,6 +18,15 @@ resource "lightstep_metric_condition" "beemo-requests" {
   project_name = var.project
   name         = "Beemo Low Requests"
 
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  label {
+    value = "custom-label"
+  }
+
   expression {
     is_multi   = true
     is_no_data = true
@@ -95,6 +104,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 - `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
 - `description` (String)
+- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
 
@@ -196,3 +206,15 @@ Optional:
 Read-Only:
 
 - `id` (String) The ID of this resource.
+
+
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)
