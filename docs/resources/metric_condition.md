@@ -6,6 +6,8 @@ description: |-
 
 ---
 
+# NOTE: this resource will be deprecated in v2+. Use `lightstep_alert` instead.
+
 # lightstep_metric_condition (Resource)
 
 Provides a Lightstep Metric Condition. This can be used to create and manage Lightstep Metric Conditions that can contain either
