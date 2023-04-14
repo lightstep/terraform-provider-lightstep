@@ -96,7 +96,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 							MaxItems: 1,
 							MinItems: 1,
 							Elem: &schema.Resource{
-								Schema: getThresholdSchema(),
+								Schema: getThresholdSchemaMap(),
 							},
 						},
 					},
@@ -106,7 +106,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
-					Schema: getAlertingRuleSchema(),
+					Schema: getAlertingRuleSchemaMap(),
 				},
 			},
 		},
@@ -117,7 +117,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getUnifiedQuerySchema(),
+				Schema: getUnifiedQuerySchemaMap(),
 			},
 		}
 	} else {
@@ -125,14 +125,14 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getMetricQuerySchema(),
+				Schema: getMetricQuerySchemaMap(),
 			},
 		}
 	}
 	return resource
 }
 
-func getAlertingRuleSchema() map[string]*schema.Schema {
+func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"update_interval": {
 			Type:         schema.TypeString,
@@ -218,7 +218,7 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getMetricQuerySchema() map[string]*schema.Schema {
+func getMetricQuerySchemaMap() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
@@ -329,7 +329,7 @@ func getFinalWindowOperationSchema() *schema.Schema {
 	}
 }
 
-func getThresholdSchema() map[string]*schema.Schema {
+func getThresholdSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"critical": {
 			Type:     schema.TypeString,
@@ -1070,7 +1070,7 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 
 	alertingRuleSet := schema.NewSet(
 		schema.HashResource(&schema.Resource{
-			Schema: getAlertingRuleSchema(),
+			Schema: getAlertingRuleSchemaMap(),
 		}),
 		alertingRules,
 	)

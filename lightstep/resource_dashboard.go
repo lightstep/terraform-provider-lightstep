@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func getUnifiedQuerySchema() map[string]*schema.Schema {
+func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"hidden": {
 			Type:     schema.TypeBool,

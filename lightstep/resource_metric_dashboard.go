@@ -132,7 +132,7 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 
 	var querySchema map[string]*schema.Schema
 	if chartSchemaType == UnifiedChartSchema {
-		querySchema = getUnifiedQuerySchema()
+		querySchema = getUnifiedQuerySchemaMap()
 		querySchema["dependency_map_options"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Optional: true,
@@ -153,7 +153,7 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			},
 		}
 	} else {
-		querySchema = getMetricQuerySchema()
+		querySchema = getMetricQuerySchemaMap()
 	}
 
 	return map[string]*schema.Schema{
