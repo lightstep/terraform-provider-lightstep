@@ -318,8 +318,9 @@ func getUnifiedAlertExpressionSchema() *schema.Schema {
 	resource.Schema["is_multi"] = getIsMultiSchema()
 	return &schema.Schema{
 		Type:     schema.TypeList,
-		Optional: true,
+		Required: true,
 		MaxItems: 1,
+		MinItems: 1,
 		Elem:     resource,
 	}
 }
@@ -545,7 +546,7 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		Type:          "metrics",
 		Name:          d.Get("name").(string),
 		Description:   d.Get("description").(string),
-		Expression:    expression,
+		Expression:    *expression,
 		Labels:        labels,
 		AlertingRules: alertingRules,
 		Queries:       queries,
