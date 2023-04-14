@@ -30,9 +30,13 @@ type AlertingRule struct {
 }
 
 type Expression struct {
+	SubAlertExpression
+	IsMulti bool `json:"is-multi-alert,omitempty"`
+}
+
+type SubAlertExpression struct {
 	Thresholds Thresholds `json:"thresholds"`
 	Operand    string     `json:"operand"`
-	IsMulti    bool       `json:"is-multi-alert,omitempty"`
 	IsNoData   bool       `json:"enable-no-data-alert,omitempty"`
 }
 

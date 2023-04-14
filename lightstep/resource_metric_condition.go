@@ -506,10 +506,12 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Expression: client.Expression{
-			IsMulti:    expression["is_multi"].(bool),
-			IsNoData:   expression["is_no_data"].(bool),
-			Operand:    expression["operand"].(string),
-			Thresholds: thresholds,
+			IsMulti: expression["is_multi"].(bool),
+			SubAlertExpression: client.SubAlertExpression{
+				IsNoData:   expression["is_no_data"].(bool),
+				Operand:    expression["operand"].(string),
+				Thresholds: thresholds,
+			},
 		},
 		Labels: labels,
 	}
