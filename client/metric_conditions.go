@@ -18,7 +18,7 @@ type UnifiedConditionAttributes struct {
 	Description   string                      `json:"description"`
 	Labels        []Label                     `json:"labels"`
 	Type          string                      `json:"condition_type"`
-	Expression    *Expression                 `json:"expression,omitempty"`
+	Expression    Expression                  `json:"expression"`
 	Queries       []MetricQueryWithAttributes `json:"metric-queries"`
 	AlertingRules []AlertingRule              `json:"alerting-rules,omitempty"`
 }
