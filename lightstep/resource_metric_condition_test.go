@@ -1025,7 +1025,7 @@ func TestBuildAlertingRules(t *testing.T) {
 	for _, c := range cases {
 		alertingRuleSet := schema.NewSet(
 			schema.HashResource(&schema.Resource{
-				Schema: getAlertingRuleSchema(),
+				Schema: getAlertingRuleSchemaMap(),
 			}),
 			c.rules,
 		)

@@ -68,71 +68,39 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 					},
 				},
 			},
-			"expression": {
-				Type:     schema.TypeList,
-				Required: true,
-				MaxItems: 1,
-				MinItems: 1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"is_multi": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
-						},
-						"is_no_data": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
-						},
-						"operand": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
-						},
-						"thresholds": {
-							Type:     schema.TypeList,
-							Required: true,
-							MaxItems: 1,
-							MinItems: 1,
-							Elem: &schema.Resource{
-								Schema: getThresholdSchema(),
-							},
-						},
-					},
-				},
-			},
 			"alerting_rule": {
 				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
-					Schema: getAlertingRuleSchema(),
+					Schema: getAlertingRuleSchemaMap(),
 				},
 			},
 		},
 	}
 
 	if conditionSchemaType == UnifiedConditionSchema {
+		resource.Schema["expression"] = getUnifiedAlertExpressionSchema()
 		resource.Schema["query"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getUnifiedQuerySchema(),
+				Schema: getUnifiedQuerySchemaMap(),
 			},
 		}
 	} else {
+		resource.Schema["expression"] = getMetricConditionExpressionSchema()
 		resource.Schema["metric_query"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Required: true,
 			Elem: &schema.Resource{
-				Schema: getMetricQuerySchema(),
+				Schema: getMetricQuerySchemaMap(),
 			},
 		}
 	}
 	return resource
 }
 
-func getAlertingRuleSchema() map[string]*schema.Schema {
+func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"update_interval": {
 			Type:         schema.TypeString,
@@ -218,7 +186,7 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getMetricQuerySchema() map[string]*schema.Schema {
+func getMetricQuerySchemaMap() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"metric": {
 			Type:     schema.TypeString,
@@ -329,7 +297,7 @@ func getFinalWindowOperationSchema() *schema.Schema {
 	}
 }
 
-func getThresholdSchema() map[string]*schema.Schema {
+func getThresholdSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"critical": {
 			Type:     schema.TypeString,
@@ -341,6 +309,67 @@ func getThresholdSchema() map[string]*schema.Schema {
 			Optional: true,
 			Default:  "",
 		},
+	}
+}
+
+// expression is optional because it cannot be included in composite alerts but is otherwise required
+func getUnifiedAlertExpressionSchema() *schema.Schema {
+	resource := getCompositeSubAlertExpressionResource()
+	resource.Schema["is_multi"] = getIsMultiSchema()
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Required: true,
+		MaxItems: 1,
+		MinItems: 1,
+		Elem:     resource,
+	}
+}
+
+// expression is required in legacy metric conditions
+func getMetricConditionExpressionSchema() *schema.Schema {
+	resource := getCompositeSubAlertExpressionResource()
+	resource.Schema["is_multi"] = getIsMultiSchema()
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Required: true,
+		MaxItems: 1,
+		MinItems: 1,
+		Elem:     resource,
+	}
+}
+
+// composite sub alerts do not offer multi alerting
+func getCompositeSubAlertExpressionResource() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"is_no_data": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
+			"operand": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
+			},
+			"thresholds": {
+				Type:     schema.TypeList,
+				Required: true,
+				MaxItems: 1,
+				MinItems: 1,
+				Elem: &schema.Resource{
+					Schema: getThresholdSchemaMap(),
+				},
+			},
+		},
+	}
+}
+
+func getIsMultiSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeBool,
+		Optional: true,
+		Default:  false,
 	}
 }
 
@@ -488,9 +517,7 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionImport(ctx context
 }
 
 func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaType ConditionSchemaType) (*client.UnifiedConditionAttributes, error) {
-	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
-
-	thresholds, err := buildThresholds(d)
+	expression, err := buildExpression(d)
 	if err != nil {
 		return nil, err
 	}
@@ -499,19 +526,6 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 	labels, err := buildLabels(labelSet.List())
 	if err != nil {
 		return nil, err
-	}
-
-	attributes := &client.UnifiedConditionAttributes{
-		Type:        "metrics",
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Expression: client.Expression{
-			IsMulti:    expression["is_multi"].(bool),
-			IsNoData:   expression["is_no_data"].(bool),
-			Operand:    expression["operand"].(string),
-			Thresholds: thresholds,
-		},
-		Labels: labels,
 	}
 
 	schemaQuery := d.Get("metric_query")
@@ -523,15 +537,38 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		return nil, err
 	}
 
-	attributes.Queries = queries
-
 	alertingRules, err := buildAlertingRules(d.Get("alerting_rule").(*schema.Set))
 	if err != nil {
 		return nil, err
 	}
 
-	attributes.AlertingRules = alertingRules
-	return attributes, nil
+	return &client.UnifiedConditionAttributes{
+		Type:          "metrics",
+		Name:          d.Get("name").(string),
+		Description:   d.Get("description").(string),
+		Expression:    *expression,
+		Labels:        labels,
+		AlertingRules: alertingRules,
+		Queries:       queries,
+	}, nil
+}
+
+func buildExpression(d *schema.ResourceData) (*client.Expression, error) {
+	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
+
+	thresholds, err := buildThresholds(d)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client.Expression{
+		IsMulti: expression["is_multi"].(bool),
+		SubAlertExpression: client.SubAlertExpression{
+			IsNoData:   expression["is_no_data"].(bool),
+			Operand:    expression["operand"].(string),
+			Thresholds: thresholds,
+		},
+	}, nil
 }
 
 func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, error) {
@@ -1068,7 +1105,7 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 
 	alertingRuleSet := schema.NewSet(
 		schema.HashResource(&schema.Resource{
-			Schema: getAlertingRuleSchema(),
+			Schema: getAlertingRuleSchemaMap(),
 		}),
 		alertingRules,
 	)
