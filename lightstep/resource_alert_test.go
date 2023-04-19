@@ -607,6 +607,202 @@ EOT
 	})
 }
 
+func TestAccCompositeAlert(t *testing.T) {
+	var compositeCondition client.UnifiedCondition
+
+	badCompositeCondition := `
+resource "lightstep_alert" "errors" {
+ project_name = "terraform-provider-tests"
+ name = "no expression or query or composite alert"
+ description = "elucidation..."
+}
+`
+
+	compositeConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+ project_name = "terraform-provider-tests"
+ channel = "#emergency-room"
+}
+
+resource "lightstep_alert" "test" {
+ project_name = "terraform-provider-tests"
+ name = "Too many requests & customers"
+ description = "A link to a playbook"
+
+ composite_alert {
+   alerts = [
+     {
+       name = "A"
+       title = "Too many requests"
+       expression {
+	      is_no_data = false
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+     {
+       name = "B"
+       title = "Too many customers"
+       expression {
+	      is_no_data = false
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+   ]
+ }
+
+ alerting_rule {
+   id          = lightstep_slack_destination.slack.id
+   update_interval = "1h"
+
+   include_filters = [
+     {
+       key   = "project_name"
+       value = "catlab"
+     }
+   ]
+
+	filters = [
+		{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+		}
+	  ]
+ }
+}
+`
+
+	updatedCompositeConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+ project_name = "terraform-provider-tests"
+ channel = "#emergency-room"
+}
+
+resource "lightstep_alert" "test" {
+ project_name = "terraform-provider-tests"
+ name = "updated too many requests & customers"
+ description = "A link to a playbook"
+
+ composite_alert {
+   alerts = [
+     {
+       name = "A"
+       title = "updated too many requests"
+       expression {
+	      is_no_data = true
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+     {
+       name = "B"
+       title = "updated too many customers"
+       expression {
+	      is_no_data = true
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+   ]
+ }
+
+ alerting_rule {
+   id          = lightstep_slack_destination.slack.id
+   update_interval = "1h"
+
+   include_filters = [
+     {
+       key   = "project_name"
+       value = "catlab"
+     }
+   ]
+
+	filters = [
+		{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+		}
+	  ]
+ }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: badCompositeCondition,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+				),
+				ExpectError: regexp.MustCompile("at least one query is required"),
+			},
+			{
+				Config: compositeConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.expression.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.expression.is_no_data", "true"),
+				),
+			},
+			{
+				Config: updatedCompositeConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "updated too many requests & customers"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.expression.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.expression.is_no_data", "false"),
+				),
+			},
+		},
+	})
+}
+
 func testAccChecLightstepAlertExists(resourceName string, condition *client.UnifiedCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]

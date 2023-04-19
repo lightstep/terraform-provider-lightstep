@@ -21,8 +21,8 @@ import (
 // (1) The legacy lightstep_metric_condition
 // (2) The unified lightstep_alert
 //
-// The resources are largely the same with the primary difference being the
-// query format.
+// The resources are largely the same with the primary differences being the
+// query format and composite alert support.
 func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.Resource {
 	p := resourceUnifiedConditionImp{conditionSchemaType: conditionSchemaType}
 
@@ -82,9 +82,26 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 		resource.Schema["expression"] = getUnifiedAlertExpressionSchema()
 		resource.Schema["query"] = &schema.Schema{
 			Type:     schema.TypeList,
-			Required: true,
+			Optional: true,
 			Elem: &schema.Resource{
 				Schema: getUnifiedQuerySchemaMap(),
+			},
+		}
+		resource.Schema["composite_alert"] = &schema.Schema{
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"alerts": {
+						Type:     schema.TypeList,
+						Required: true,
+						MinItems: 1,
+						MaxItems: 10,
+						Elem: &schema.Resource{
+							Schema: getCompositeSubAlertSchemaMap(),
+						},
+					},
+				},
 			},
 		}
 	} else {
@@ -318,9 +335,8 @@ func getUnifiedAlertExpressionSchema() *schema.Schema {
 	resource.Schema["is_multi"] = getIsMultiSchema()
 	return &schema.Schema{
 		Type:     schema.TypeList,
-		Required: true,
+		Optional: true,
 		MaxItems: 1,
-		MinItems: 1,
 		Elem:     resource,
 	}
 }
@@ -335,6 +351,40 @@ func getMetricConditionExpressionSchema() *schema.Schema {
 		MaxItems: 1,
 		MinItems: 1,
 		Elem:     resource,
+	}
+}
+
+func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"title": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
+		"expression": getCompositeSubAlertExpressionSchema(),
+		"queries": {
+			Type:     schema.TypeList,
+			Required: true,
+			MaxItems: 1,
+			MinItems: 1,
+			Elem: &schema.Resource{
+				Schema: getUnifiedQuerySchemaMap(),
+			},
+		},
+	}
+}
+
+func getCompositeSubAlertExpressionSchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeList,
+		Required: true,
+		MaxItems: 1,
+		MinItems: 1,
+		Elem:     getCompositeSubAlertExpressionResource(),
 	}
 }
 
@@ -517,9 +567,16 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionImport(ctx context
 }
 
 func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaType ConditionSchemaType) (*client.UnifiedConditionAttributes, error) {
-	expression, err := buildExpression(d)
-	if err != nil {
-		return nil, err
+	var (
+		expression *client.Expression
+		err        error
+	)
+	expressionList := d.Get("expression").([]interface{})
+	if len(expressionList) > 0 {
+		expression, err = buildExpression(expressionList[0].(map[string]interface{}))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	labelSet := d.Get("label").(*schema.Set)
@@ -542,32 +599,45 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		return nil, err
 	}
 
+	compositeAlert, err := buildCompositeAlert(d)
+	if err != nil {
+		return nil, err
+	}
+
 	return &client.UnifiedConditionAttributes{
-		Type:          "metrics",
-		Name:          d.Get("name").(string),
-		Description:   d.Get("description").(string),
-		Expression:    *expression,
-		Labels:        labels,
-		AlertingRules: alertingRules,
-		Queries:       queries,
+		Type:           "metrics",
+		Name:           d.Get("name").(string),
+		Description:    d.Get("description").(string),
+		Expression:     expression,
+		Labels:         labels,
+		AlertingRules:  alertingRules,
+		Queries:        queries,
+		CompositeAlert: compositeAlert,
 	}, nil
 }
 
-func buildExpression(d *schema.ResourceData) (*client.Expression, error) {
-	expression := d.Get("expression").([]interface{})[0].(map[string]interface{})
-
-	thresholds, err := buildThresholds(d)
+func buildExpression(singleExpression map[string]interface{}) (*client.Expression, error) {
+	subalertExpression, err := buildSubAlertExpression(singleExpression)
 	if err != nil {
 		return nil, err
 	}
 
 	return &client.Expression{
-		IsMulti: expression["is_multi"].(bool),
-		SubAlertExpression: client.SubAlertExpression{
-			IsNoData:   expression["is_no_data"].(bool),
-			Operand:    expression["operand"].(string),
-			Thresholds: thresholds,
-		},
+		IsMulti:            singleExpression["is_multi"].(bool),
+		SubAlertExpression: *subalertExpression,
+	}, nil
+}
+
+func buildSubAlertExpression(singleExpression map[string]interface{}) (*client.SubAlertExpression, error) {
+	thresholds, err := buildThresholds(singleExpression)
+	if err != nil {
+		return nil, err
+	}
+
+	return &client.SubAlertExpression{
+		IsNoData:   singleExpression["is_no_data"].(bool),
+		Operand:    singleExpression["operand"].(string),
+		Thresholds: thresholds,
 	}, nil
 }
 
@@ -870,10 +940,12 @@ func buildKeys(keysIn []interface{}) []string {
 	return keys
 }
 
-func buildThresholds(d *schema.ResourceData) (client.Thresholds, error) {
+func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds, error) {
 	t := client.Thresholds{}
 
-	critical := d.Get("expression.0.thresholds.0.critical")
+	thresholdsObj := singleExpression["thresholds"].([]interface{})[0].(map[string]interface{})
+
+	critical := thresholdsObj["critical"]
 	if critical != "" {
 		c, err := strconv.ParseFloat(critical.(string), 64)
 		if err != nil {
@@ -882,7 +954,7 @@ func buildThresholds(d *schema.ResourceData) (client.Thresholds, error) {
 		t.Critical = &c
 	}
 
-	warning := d.Get("expression.0.thresholds.0.warning")
+	warning := thresholdsObj["warning"]
 	if warning != "" {
 		w, err := strconv.ParseFloat(warning.(string), 64)
 		if err != nil {
@@ -935,6 +1007,43 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}, all []int
 		}
 	}
 	return filters
+}
+
+func buildCompositeAlert(d *schema.ResourceData) (*client.CompositeAlert, error) {
+	compositeAlertIn := d.Get("composite-alert")
+	if compositeAlertIn == nil {
+		return nil, nil // return error?
+	}
+
+	subAlertsIn := compositeAlertIn.([]interface{})[0].(map[string][]map[string]interface{})["alerts"]
+	subAlerts := make([]client.CompositeSubAlert, 0, len(subAlertsIn))
+
+	for _, subAlertIn := range subAlertsIn {
+		subAlertExpression, err := buildSubAlertExpression(subAlertIn["expression"].(map[string]interface{}))
+		if err != nil {
+			return nil, err
+		}
+
+		subAlertQueries, err := buildQueries(subAlertIn["query"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		if len(subAlertQueries) != 1 {
+			return nil, fmt.Errorf("each sub alert requires exactly one query")
+		}
+
+		subAlert := client.CompositeSubAlert{
+			Name:       subAlertIn["name"].(string),
+			Title:      subAlertIn["title"].(string),
+			Expression: *subAlertExpression,
+			Queries:    subAlertQueries,
+		}
+		subAlerts = append(subAlerts, subAlert)
+	}
+
+	return &client.CompositeAlert{
+		Alerts: subAlerts,
+	}, nil
 }
 
 func validateSpansQuery(spansQuery interface{}) error {
