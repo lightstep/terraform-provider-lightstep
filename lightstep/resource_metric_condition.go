@@ -90,10 +90,13 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 		resource.Schema["composite_alert"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Optional: true,
+			MinItems: 1,
+			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"alerts": {
-						Type:     schema.TypeList,
+					"alert": {
+						// TODO this should be type SET
+						Type:     schema.TypeSet,
 						Required: true,
 						MinItems: 1,
 						MaxItems: 10,
@@ -366,7 +369,7 @@ func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 			Default:  "",
 		},
 		"expression": getCompositeSubAlertExpressionSchema(),
-		"queries": {
+		"query": {
 			Type:     schema.TypeList,
 			Required: true,
 			MaxItems: 1,
@@ -1010,16 +1013,27 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}, all []int
 }
 
 func buildCompositeAlert(d *schema.ResourceData) (*client.CompositeAlert, error) {
-	compositeAlertIn := d.Get("composite-alert")
-	if compositeAlertIn == nil {
-		return nil, nil // return error?
+	compositeAlertIn := d.Get("composite_alert").([]interface{})
+	if len(compositeAlertIn) == 0 {
+		return nil, nil
 	}
 
-	subAlertsIn := compositeAlertIn.([]interface{})[0].(map[string][]map[string]interface{})["alerts"]
+	subAlertsInUntyped, ok := compositeAlertIn[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("could not parse composite_alert")
+	}
+
+	subAlertsIn := subAlertsInUntyped["alert"].(*schema.Set).List()
 	subAlerts := make([]client.CompositeSubAlert, 0, len(subAlertsIn))
 
-	for _, subAlertIn := range subAlertsIn {
-		subAlertExpression, err := buildSubAlertExpression(subAlertIn["expression"].(map[string]interface{}))
+	for _, subAlertInUntyped := range subAlertsIn {
+
+		subAlertIn, ok := subAlertInUntyped.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("could not parse alert")
+		}
+
+		subAlertExpression, err := buildSubAlertExpression(subAlertIn["expression"].([]interface{})[0].(map[string]interface{}))
 		if err != nil {
 			return nil, err
 		}

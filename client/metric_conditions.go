@@ -135,18 +135,7 @@ func (c *Client) CreateUnifiedCondition(
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(UnifiedCondition{
-		Type: condition.Type,
-		Attributes: UnifiedConditionAttributes{
-			Name:          condition.Attributes.Name,
-			Type:          condition.Type,
-			Expression:    condition.Attributes.Expression,
-			Queries:       condition.Attributes.Queries,
-			AlertingRules: condition.Attributes.AlertingRules,
-			Description:   condition.Attributes.Description,
-			Labels:        condition.Attributes.Labels,
-		},
-	})
+	bytes, err := json.Marshal(condition)
 
 	if err != nil {
 		return cond, err

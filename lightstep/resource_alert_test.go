@@ -133,7 +133,8 @@ resource "lightstep_alert" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("(Missing required argument|Insufficient query blocks)"),
+				// TODO I think Matt fixed this locally yesterday
+				ExpectError: regexp.MustCompile("(Missing required argument|Insufficient query blocks|at least on query is required)"),
 			},
 			{
 				Config: conditionConfig,
@@ -630,8 +631,7 @@ resource "lightstep_alert" "test" {
  description = "A link to a playbook"
 
  composite_alert {
-   alerts = [
-     {
+     alert {
        name = "A"
        title = "Too many requests"
        expression {
@@ -648,7 +648,8 @@ resource "lightstep_alert" "test" {
 	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
        }
      }
-     {
+     
+     alert {
        name = "B"
        title = "Too many customers"
        expression {
@@ -665,7 +666,6 @@ resource "lightstep_alert" "test" {
 	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
        }
      }
-   ]
  }
 
  alerting_rule {
@@ -702,8 +702,7 @@ resource "lightstep_alert" "test" {
  description = "A link to a playbook"
 
  composite_alert {
-   alerts = [
-     {
+   alert {
        name = "A"
        title = "updated too many requests"
        expression {
@@ -719,8 +718,9 @@ resource "lightstep_alert" "test" {
          hidden              = false
 	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
        }
-     }
-     {
+   }
+
+   alert {
        name = "B"
        title = "updated too many customers"
        expression {
@@ -736,8 +736,7 @@ resource "lightstep_alert" "test" {
          hidden              = false
 	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
        }
-     }
-   ]
+   }
  }
 
  alerting_rule {
