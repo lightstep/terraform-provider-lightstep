@@ -701,3 +701,70 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Un
 		return nil
 	}
 }
+
+func TestLegacyImplicitGroup(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	baseConfig := `
+resource "lightstep_dashboard" "test_implicit_group" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "test implicit groups"
+
+  label {
+    key   = "type"
+    value = "service"
+  }
+
+  chart {
+      name   = "cool chart"
+      type   = "timeseries"
+      rank   = 0
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "bar"
+        hidden       = false
+        query_string = "metric cpu.utilization | delta 1h | group_by [], sum"
+      }
+    }
+    chart {
+      name   = "other cool chart"
+      type   = "timeseries"
+      rank   = 1
+      x_pos  = 0
+      y_pos  = 0
+      width  = 16
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "spans count | delta | group_by[], sum"
+      }
+    }
+}
+`
+
+	resourceName := "lightstep_dashboard.test_implicit_group"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: baseConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test implicit groups"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "0"),
+				),
+			},
+		},
+	})
+}

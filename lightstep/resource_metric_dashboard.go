@@ -658,7 +658,7 @@ func isLegacyImplicitGroup(groups []client.UnifiedGroup) bool {
 	}
 	for _, c := range groups[0].Charts {
 		pos := c.Position
-		if pos.XPos != 0 || pos.YPos != 0 || pos.Width != 0 || pos.Height != 0 {
+		if pos.XPos != 0 || pos.YPos != 0 {
 			return false
 		}
 	}
