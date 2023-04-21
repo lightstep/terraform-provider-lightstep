@@ -121,8 +121,6 @@ resource "lightstep_metric_condition" "beemo_requests" {
   name         = "Beemo Low Requests"
 
   expression {
-    evaluation_window   = "2m"
-    evaluation_criteria = "on_average"
     is_multi            = true
     is_no_data          = true
     operand             = "below"
