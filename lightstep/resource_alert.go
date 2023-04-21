@@ -2,8 +2,6 @@ package lightstep
 
 import (
 	"fmt"
-	"strconv"
-
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -13,18 +11,24 @@ import (
 func getQueriesFromUnifiedConditionResourceData(
 	queriesIn []client.MetricQueryWithAttributes,
 	conditionID string,
+	subAlertName string,
 ) ([]interface{}, error) {
 	var queries []interface{}
 	for _, q := range queriesIn {
 		if q.Type != "tql" {
+			var subAlertStr string
+			if len(subAlertName) > 0 {
+				subAlertStr = fmt.Sprintf(" sub alert %s", subAlertName)
+			}
 			return nil, fmt.Errorf(
-				"cannot convert query from condition %v\n\n"+
+				"cannot convert query from condition %v%v\n\n"+
 					"Query is of type '%v' but must be of type 'tql' for use with the resource\n"+
 					"type lightstep_alert.\n"+
 					"\n"+
 					"Try using the lightstep_metrics_condition resource type for this condition\n"+
 					"or convert all queries in the condition to query string format. ",
 				conditionID,
+				subAlertStr,
 				q.Type,
 			)
 		}
@@ -43,17 +47,7 @@ func getQueriesFromUnifiedConditionResourceData(
 func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.CompositeAlert) (interface{}, error) {
 	subAlerts := make([]map[string]interface{}, 0)
 	for _, subAlertIn := range compositeAlertIn.Alerts {
-		// TODO: refactor me
-		thresholdEntries := map[string]interface{}{}
-		if subAlertIn.Expression.Thresholds.Critical != nil {
-			thresholdEntries["critical"] = strconv.FormatFloat(*subAlertIn.Expression.Thresholds.Critical, 'f', -1, 64)
-		}
-
-		if subAlertIn.Expression.Thresholds.Warning != nil {
-			thresholdEntries["warning"] = strconv.FormatFloat(*subAlertIn.Expression.Thresholds.Warning, 'f', -1, 64)
-		}
-
-		queries, err := getQueriesFromUnifiedConditionResourceData(subAlertIn.Queries, subAlertIn.Name) // TODO: pass ID & name
+		queries, err := getQueriesFromUnifiedConditionResourceData(subAlertIn.Queries, subAlertIn.Name, subAlertIn.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -66,7 +60,7 @@ func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.
 					"is_no_data": subAlertIn.Expression.IsNoData,
 					"operand":    subAlertIn.Expression.Operand,
 					"thresholds": []interface{}{
-						thresholdEntries,
+						buildUntypedThresholdsMap(subAlertIn.Expression.Thresholds),
 					},
 				},
 			},

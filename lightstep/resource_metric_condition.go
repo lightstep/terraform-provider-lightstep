@@ -1178,22 +1178,13 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	}
 
 	if c.Attributes.Expression != nil {
-		thresholdEntries := map[string]interface{}{}
-		if c.Attributes.Expression.Thresholds.Critical != nil {
-			thresholdEntries["critical"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Critical, 'f', -1, 64)
-		}
-
-		if c.Attributes.Expression.Thresholds.Warning != nil {
-			thresholdEntries["warning"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Warning, 'f', -1, 64)
-		}
-
 		if err := d.Set("expression", []map[string]interface{}{
 			{
 				"is_multi":   c.Attributes.Expression.IsMulti,
 				"is_no_data": c.Attributes.Expression.IsNoData,
 				"operand":    c.Attributes.Expression.Operand,
 				"thresholds": []interface{}{
-					thresholdEntries,
+					buildUntypedThresholdsMap(c.Attributes.Expression.Thresholds),
 				},
 			},
 		}); err != nil {
@@ -1209,6 +1200,7 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 		queries, err := getQueriesFromUnifiedConditionResourceData(
 			c.Attributes.Queries,
 			c.ID,
+			"",
 		)
 		if err != nil {
 			return err
@@ -1253,6 +1245,18 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	}
 
 	return nil
+}
+
+func buildUntypedThresholdsMap(thresholds client.Thresholds) map[string]interface{} {
+	outputMap := map[string]interface{}{}
+	if thresholds.Critical != nil {
+		outputMap["critical"] = strconv.FormatFloat(*thresholds.Critical, 'f', -1, 64)
+	}
+
+	if thresholds.Warning != nil {
+		outputMap["warning"] = strconv.FormatFloat(*thresholds.Warning, 'f', -1, 64)
+	}
+	return outputMap
 }
 
 func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}, []interface{}) {
