@@ -701,3 +701,57 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Un
 		return nil
 	}
 }
+
+func TestLegacyImplicitGroup(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	baseConfig := `
+resource "lightstep_dashboard" "test_implicit_group" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "test legacy implicit groups"
+
+  # we declare this implicit group explicitly; it is thus _not_ a legacy implicit group
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+
+    chart {
+      name   = "Kool Khart"
+      type   = "timeseries"
+      rank   = 0
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric cpu.utilization | delta | group_by[], sum"
+      }
+    }
+  }
+}
+`
+
+	resourceName := "lightstep_dashboard.test_implicit_group"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: baseConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test legacy implicit groups"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+				),
+			},
+		},
+	})
+}

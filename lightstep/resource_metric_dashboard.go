@@ -18,6 +18,10 @@ type ChartSchemaType int
 const (
 	MetricChartSchema ChartSchemaType = iota
 	UnifiedChartSchema
+
+	// if the incoming HCL contains loose charts, we will put them in an implicit group
+	// this group should have a unique name, so we can distinguish it from an _explicit_ implicit group with no title
+	legacyImplicitGroupName = "legacy implicit group"
 )
 
 // resourceUnifiedDashboard creates a resource for either:
@@ -421,7 +425,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		}
 		newGroups = append(newGroups, client.UnifiedGroup{
 			Rank:           0,
-			Title:          "",
+			Title:          legacyImplicitGroupName,
 			VisibilityType: "implicit",
 			Charts:         c,
 		})
@@ -654,6 +658,9 @@ func isLegacyImplicitGroup(groups []client.UnifiedGroup) bool {
 		return false
 	}
 	if groups[0].VisibilityType != "implicit" {
+		return false
+	}
+	if groups[0].Title != legacyImplicitGroupName {
 		return false
 	}
 	for _, c := range groups[0].Charts {
