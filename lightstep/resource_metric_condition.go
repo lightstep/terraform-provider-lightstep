@@ -95,7 +95,6 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
-						// TODO this should be type SET
 						Type:     schema.TypeSet,
 						Required: true,
 						MinItems: 1,
@@ -1173,27 +1172,28 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
-	thresholdEntries := map[string]interface{}{}
+	if c.Attributes.Expression != nil {
+		thresholdEntries := map[string]interface{}{}
+		if c.Attributes.Expression.Thresholds.Critical != nil {
+			thresholdEntries["critical"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Critical, 'f', -1, 64)
+		}
 
-	if c.Attributes.Expression.Thresholds.Critical != nil {
-		thresholdEntries["critical"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Critical, 'f', -1, 64)
-	}
+		if c.Attributes.Expression.Thresholds.Warning != nil {
+			thresholdEntries["warning"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Warning, 'f', -1, 64)
+		}
 
-	if c.Attributes.Expression.Thresholds.Warning != nil {
-		thresholdEntries["warning"] = strconv.FormatFloat(*c.Attributes.Expression.Thresholds.Warning, 'f', -1, 64)
-	}
-
-	if err := d.Set("expression", []map[string]interface{}{
-		{
-			"is_multi":   c.Attributes.Expression.IsMulti,
-			"is_no_data": c.Attributes.Expression.IsNoData,
-			"operand":    c.Attributes.Expression.Operand,
-			"thresholds": []interface{}{
-				thresholdEntries,
+		if err := d.Set("expression", []map[string]interface{}{
+			{
+				"is_multi":   c.Attributes.Expression.IsMulti,
+				"is_no_data": c.Attributes.Expression.IsNoData,
+				"operand":    c.Attributes.Expression.Operand,
+				"thresholds": []interface{}{
+					thresholdEntries,
+				},
 			},
-		},
-	}); err != nil {
-		return fmt.Errorf("unable to set expression resource field: %v", err)
+		}); err != nil {
+			return fmt.Errorf("unable to set expression resource field: %v", err)
+		}
 	}
 
 	if schemaType == MetricConditionSchema {
@@ -1210,6 +1210,17 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 		}
 		if err := d.Set("query", queries); err != nil {
 			return fmt.Errorf("unable to set query resource field: %v", err)
+		}
+
+		if c.Attributes.CompositeAlert != nil {
+			compositeAlert, err := getCompositeAlertFromUnifiedConditionResourceData(c.Attributes.CompositeAlert)
+			if err != nil {
+				return err
+			}
+
+			if err = d.Set("composite_alert", compositeAlert); err != nil {
+				return fmt.Errorf("unable to set composite_alert field: %s", err)
+			}
 		}
 	}
 

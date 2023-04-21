@@ -2,6 +2,8 @@ package lightstep
 
 import (
 	"fmt"
+	"strconv"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -36,4 +38,43 @@ func getQueriesFromUnifiedConditionResourceData(
 		queries = append(queries, qs)
 	}
 	return queries, nil
+}
+
+func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.CompositeAlert) (interface{}, error) {
+	subAlerts := make([]map[string]interface{}, 0)
+	for _, subAlertIn := range compositeAlertIn.Alerts {
+		// TODO: refactor me
+		thresholdEntries := map[string]interface{}{}
+		if subAlertIn.Expression.Thresholds.Critical != nil {
+			thresholdEntries["critical"] = strconv.FormatFloat(*subAlertIn.Expression.Thresholds.Critical, 'f', -1, 64)
+		}
+
+		if subAlertIn.Expression.Thresholds.Warning != nil {
+			thresholdEntries["warning"] = strconv.FormatFloat(*subAlertIn.Expression.Thresholds.Warning, 'f', -1, 64)
+		}
+
+		queries, err := getQueriesFromUnifiedConditionResourceData(subAlertIn.Queries, subAlertIn.Name) // TODO: pass ID & name
+		if err != nil {
+			return nil, err
+		}
+
+		subAlerts = append(subAlerts, map[string]interface{}{
+			"name":  subAlertIn.Name,
+			"title": subAlertIn.Title,
+			"expression": []map[string]interface{}{
+				{
+					"is_no_data": subAlertIn.Expression.IsNoData,
+					"operand":    subAlertIn.Expression.Operand,
+					"thresholds": []interface{}{
+						thresholdEntries,
+					},
+				},
+			},
+			"query": queries,
+		})
+	}
+
+	return []map[string][]map[string]interface{}{{
+		"alert": subAlerts,
+	}}, nil
 }

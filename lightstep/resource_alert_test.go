@@ -611,11 +611,74 @@ EOT
 func TestAccCompositeAlert(t *testing.T) {
 	var compositeCondition client.UnifiedCondition
 
-	badCompositeCondition := `
+	missingBothSingleAndCompositeFieldsCondition := `
 resource "lightstep_alert" "errors" {
  project_name = "terraform-provider-tests"
  name = "no expression or query or composite alert"
  description = "elucidation..."
+}
+`
+
+	includesBothSingleAndCompositeFieldsCondition := `
+resource "lightstep_alert" "errors" {
+ project_name = "terraform-provider-tests"
+ name = "no expression or query or composite alert"
+ description = "elucidation..."
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  query {
+    query_name          = "a"
+    hidden              = false
+	query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+  }
+
+ composite_alert {
+     alert {
+       name = "A"
+       title = "Too many requests"
+       expression {
+	      is_no_data = false
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+     
+     alert {
+       name = "B"
+       title = "Too many customers"
+       expression {
+	      is_no_data = false
+         operand  = "above"
+         thresholds {
+	    	critical  = 10
+	    	warning = 5
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+     }
+ }
+
 }
 `
 
@@ -716,7 +779,7 @@ resource "lightstep_alert" "test" {
        query {
          query_name          = "a"
          hidden              = false
-	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
        }
    }
 
@@ -734,7 +797,7 @@ resource "lightstep_alert" "test" {
        query {
          query_name          = "a"
          hidden              = false
-	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
        }
    }
  }
@@ -768,11 +831,18 @@ resource "lightstep_alert" "test" {
 		CheckDestroy: testAccMetricConditionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: badCompositeCondition,
+				Config: missingBothSingleAndCompositeFieldsCondition,
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
 				),
 				ExpectError: regexp.MustCompile("at least one query is required"),
+			},
+			{
+				Config: includesBothSingleAndCompositeFieldsCondition,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+				),
+				ExpectError: regexp.MustCompile("single alert queries must not be set"),
 			},
 			{
 				Config: compositeConditionConfig,
@@ -780,10 +850,10 @@ resource "lightstep_alert" "test" {
 					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.expression.is_no_data", "true"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.expression.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.is_no_data", "false"),
 				),
 			},
 			{
@@ -791,11 +861,11 @@ resource "lightstep_alert" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated too many requests & customers"),
-					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.0.expression.is_no_data", "false"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
-					resource.TestCheckResourceAttr(resourceName, "composite_alert.alerts.1.expression.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.is_no_data", "true"),
 				),
 			},
 		},
