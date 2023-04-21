@@ -184,47 +184,49 @@ resource "lightstep_metric_condition" "beemo_requests" {
 }
 
 # Composite alert
+
 resource "lightstep_alert" "beemo_composite_alert" {
  project_name = var.project
  name = "Beemo Too many requests & failures"
  description = "A link to a playbook"
 
  composite_alert {
-     alert {
-       name = "A"
-       title = "Too many requests"
-       expression {
-	     is_no_data = false
-         operand  = "above"
-         thresholds {
-	    	critical  = 10
-	    	warning = 5
-	      }
-       }
-       query {
-         query_name          = "a"
-         hidden              = false
-	     query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+   alert {
+     name = "A"
+     title = "Too many requests"
+     expression {
+       is_no_data = false
+       operand  = "above"
+       thresholds {
+         critical  = 10
+         warning = 5
        }
      }
 
-     alert {
-       name = "B"
-       title = "Too many failures"
-       expression {
-	      is_no_data = false
-         operand  = "above"
-         thresholds {
-	    	critical  = 10
-	    	warning = 5
-	      }
-       }
-       query {
-         query_name          = "a"
-         hidden              = false
-	      query_string        = "metric failures | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-       }
+     query {
+       query_name          = "a"
+       hidden              = false
+       query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
      }
+   }
+
+   alert {
+     name = "B"
+     title = "Too many failures"
+     expression {
+       is_no_data = false
+       operand  = "above"
+       thresholds {
+          critical  = 10
+          warning = 5
+        }
+     }
+     query {
+       query_name          = "a"
+       hidden              = false
+       query_string        = "metric failures | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+     }
+   }
  }
 
  alerting_rule {
