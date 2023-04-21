@@ -240,13 +240,13 @@ resource "lightstep_alert" "beemo_composite_alert" {
      }
    ]
 
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
+   filters = [
+     {
+       key   = "service_name"
+       value = "frontend"
+       operand = "contains"
+     }
+   ]
  }
 }
 
