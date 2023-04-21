@@ -15,7 +15,7 @@ import (
 func TestAccAlert(t *testing.T) {
 	var condition client.UnifiedCondition
 
-	badCondition := `
+	badAlertMissingQueryAndCompositeFields := `
 resource "lightstep_alert" "errors" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
@@ -129,12 +129,11 @@ resource "lightstep_alert" "test" {
 		CheckDestroy: testAccMetricConditionDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: badCondition,
+				Config: badAlertMissingQueryAndCompositeFields,
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &condition),
 				),
-				// TODO I think Matt fixed this locally yesterday
-				ExpectError: regexp.MustCompile("(Missing required argument|Insufficient query blocks|at least on query is required)"),
+				ExpectError: regexp.MustCompile("at least one query is required"),
 			},
 			{
 				Config: conditionConfig,
