@@ -1012,7 +1012,12 @@ func buildLabelFilters(includes []interface{}, excludes []interface{}, all []int
 }
 
 func buildCompositeAlert(d *schema.ResourceData) (*client.CompositeAlert, error) {
-	compositeAlertIn := d.Get("composite_alert").([]interface{})
+	compositeAlertInUntyped := d.Get("composite_alert")
+	if compositeAlertInUntyped == nil {
+		return nil, nil
+	}
+
+	compositeAlertIn := compositeAlertInUntyped.([]interface{})
 	if len(compositeAlertIn) == 0 {
 		return nil, nil
 	}
