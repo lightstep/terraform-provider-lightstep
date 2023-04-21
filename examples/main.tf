@@ -121,9 +121,9 @@ resource "lightstep_metric_condition" "beemo_requests" {
   name         = "Beemo Low Requests"
 
   expression {
-    is_multi            = true
-    is_no_data          = true
-    operand             = "below"
+    is_multi   = true
+    is_no_data = true
+    operand    = "below"
     thresholds {
       warning  = 10.0
       critical = 5.0
@@ -184,68 +184,68 @@ resource "lightstep_metric_condition" "beemo_requests" {
 # Composite alert
 
 resource "lightstep_alert" "beemo_composite_alert" {
- project_name = var.project
- name = "Beemo Too many requests & failures"
- description = "A link to a playbook"
+  project_name = var.project
+  name         = "Beemo Too many requests & failures"
+  description  = "A link to a playbook"
 
- composite_alert {
-   alert {
-     name = "A"
-     title = "Too many requests"
-     expression {
-       is_no_data = false
-       operand  = "above"
-       thresholds {
-         critical  = 10
-         warning = 5
-       }
-     }
-
-     query {
-       query_name          = "a"
-       hidden              = false
-       query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-     }
-   }
-
-   alert {
-     name = "B"
-     title = "Too many failures"
-     expression {
-       is_no_data = false
-       operand  = "above"
-       thresholds {
-          critical  = 10
-          warning = 5
+  composite_alert {
+    alert {
+      name  = "A"
+      title = "Too many requests"
+      expression {
+        is_no_data = false
+        operand    = "above"
+        thresholds {
+          critical = 10
+          warning  = 5
         }
-     }
-     query {
-       query_name          = "a"
-       hidden              = false
-       query_string        = "metric failures | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-     }
-   }
- }
+      }
 
- alerting_rule {
-   id          = lightstep_slack_destination.slack.id
-   update_interval = "1h"
+      query {
+        query_name   = "a"
+        hidden       = false
+        query_string = "metric requests | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+      }
+    }
 
-   include_filters = [
-     {
-       key   = "project_name"
-       value = "BEEMO"
-     }
-   ]
+    alert {
+      name  = "B"
+      title = "Too many failures"
+      expression {
+        is_no_data = false
+        operand    = "above"
+        thresholds {
+          critical = 10
+          warning  = 5
+        }
+      }
+      query {
+        query_name   = "a"
+        hidden       = false
+        query_string = "metric failures | rate 1h, 30s | filter \"project_name\" == \"BEEMO\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+      }
+    }
+  }
 
-   filters = [
-     {
-       key   = "service_name"
-       value = "frontend"
-       operand = "contains"
-     }
-   ]
- }
+  alerting_rule {
+    id              = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+
+    include_filters = [
+      {
+        key   = "project_name"
+        value = "BEEMO"
+      }
+    ]
+
+    filters = [
+      {
+        key     = "service_name"
+        value   = "frontend"
+        operand = "contains"
+      }
+    ]
+  }
 }
 
 ##############################################################
