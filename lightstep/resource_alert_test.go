@@ -170,8 +170,6 @@ resource "lightstep_metric_condition" "errors" {
   project_name = "terraform-provider-tests"
   name = "Too many requests"
   expression {
-	  evaluation_window   = "2m"
-	  evaluation_criteria = "on_average"
 	  is_multi   = true
 	  is_no_data = true
       operand  = "above"
