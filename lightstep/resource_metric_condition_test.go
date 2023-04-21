@@ -211,7 +211,7 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("at least one query is required"),
+				ExpectError: regexp.MustCompile("(Missing required argument|Insufficient metric_query blocks)"),
 			},
 			{
 				Config: conditionConfig,
