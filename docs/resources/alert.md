@@ -46,21 +46,99 @@ EOT
 
 ### Required
 
-- `expression` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression))
 - `name` (String)
 - `project_name` (String)
-- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--query))
 
 ### Optional
 
 - `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
+- `composite_alert` (Block List, Max: 1) (see [below for nested schema](#nestedblock--composite_alert))
 - `description` (String)
+- `expression` (Block List, Max: 1) (see [below for nested schema](#nestedblock--expression))
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
+- `query` (Block List) (see [below for nested schema](#nestedblock--query))
 
 ### Read-Only
 
 - `id` (String) The ID of this resource.
 - `type` (String)
+
+<a id="nestedblock--alerting_rule"></a>
+### Nested Schema for `alerting_rule`
+
+Required:
+
+- `update_interval` (String)
+
+Optional:
+
+- `exclude_filters` (List of Map of String)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
+- `include_filters` (List of Map of String)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+
+<a id="nestedblock--composite_alert"></a>
+### Nested Schema for `composite_alert`
+
+Required:
+
+- `alert` (Block Set, Min: 1, Max: 10) (see [below for nested schema](#nestedblock--composite_alert--alert))
+
+<a id="nestedblock--composite_alert--alert"></a>
+### Nested Schema for `composite_alert.alert`
+
+Required:
+
+- `expression` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression))
+- `name` (String)
+- `query` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--query))
+
+Optional:
+
+- `title` (String)
+
+<a id="nestedblock--composite_alert--alert--expression"></a>
+### Nested Schema for `composite_alert.alert.expression`
+
+Required:
+
+- `operand` (String)
+- `thresholds` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
+
+Optional:
+
+- `is_no_data` (Boolean)
+
+<a id="nestedblock--composite_alert--alert--expression--thresholds"></a>
+### Nested Schema for `composite_alert.alert.expression.thresholds`
+
+Optional:
+
+- `critical` (String)
+- `warning` (String)
+
+
+
+<a id="nestedblock--composite_alert--alert--query"></a>
+### Nested Schema for `composite_alert.alert.query`
+
+Required:
+
+- `hidden` (Boolean)
+- `query_name` (String)
+- `query_string` (String)
+
+Optional:
+
+- `display` (String)
+- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
+
+
+
 
 <a id="nestedblock--expression"></a>
 ### Nested Schema for `expression`
@@ -85,6 +163,18 @@ Optional:
 
 
 
+<a id="nestedblock--label"></a>
+### Nested Schema for `label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)
+
+
 <a id="nestedblock--query"></a>
 ### Nested Schema for `query`
 
@@ -98,33 +188,3 @@ Optional:
 
 - `display` (String)
 - `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
-
-
-<a id="nestedblock--alerting_rule"></a>
-### Nested Schema for `alerting_rule`
-
-Required:
-
-- `update_interval` (String)
-
-Optional:
-
-- `exclude_filters` (List of Map of String)
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
-- `include_filters` (List of Map of String)
-
-Read-Only:
-
-- `id` (String) The ID of this resource.
-
-
-<a id="nestedblock--label"></a>
-### Nested Schema for `label`
-
-Required:
-
-- `value` (String)
-
-Optional:
-
-- `key` (String)

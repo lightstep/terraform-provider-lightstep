@@ -14,13 +14,25 @@ type UnifiedCondition struct {
 }
 
 type UnifiedConditionAttributes struct {
-	Name          string                      `json:"name"`
-	Description   string                      `json:"description"`
-	Labels        []Label                     `json:"labels"`
-	Type          string                      `json:"condition_type"`
-	Expression    Expression                  `json:"expression"`
-	Queries       []MetricQueryWithAttributes `json:"metric-queries"`
-	AlertingRules []AlertingRule              `json:"alerting-rules,omitempty"`
+	Name           string                      `json:"name"`
+	Description    string                      `json:"description"`
+	Labels         []Label                     `json:"labels"`
+	Type           string                      `json:"condition_type"`
+	Expression     *Expression                 `json:"expression,omitempty"`
+	Queries        []MetricQueryWithAttributes `json:"metric-queries"`
+	AlertingRules  []AlertingRule              `json:"alerting-rules,omitempty"`
+	CompositeAlert *CompositeAlert             `json:"composite-alert,omitempty"`
+}
+
+type CompositeAlert struct {
+	Alerts []CompositeSubAlert `json:"alerts"`
+}
+
+type CompositeSubAlert struct {
+	Name       string                      `json:"name"`
+	Title      string                      `json:"title"`
+	Expression SubAlertExpression          `json:"expression"`
+	Queries    []MetricQueryWithAttributes `json:"queries"`
 }
 
 type AlertingRule struct {
@@ -123,18 +135,7 @@ func (c *Client) CreateUnifiedCondition(
 		resp Envelope
 	)
 
-	bytes, err := json.Marshal(UnifiedCondition{
-		Type: condition.Type,
-		Attributes: UnifiedConditionAttributes{
-			Name:          condition.Attributes.Name,
-			Type:          condition.Type,
-			Expression:    condition.Attributes.Expression,
-			Queries:       condition.Attributes.Queries,
-			AlertingRules: condition.Attributes.AlertingRules,
-			Description:   condition.Attributes.Description,
-			Labels:        condition.Attributes.Labels,
-		},
-	})
+	bytes, err := json.Marshal(condition)
 
 	if err != nil {
 		return cond, err
