@@ -18,10 +18,6 @@ type ChartSchemaType int
 const (
 	MetricChartSchema ChartSchemaType = iota
 	UnifiedChartSchema
-
-	// if the incoming HCL contains loose charts, we will put them in an implicit group
-	// this group should have a unique name, so we can distinguish it from an _explicit_ implicit group with no title
-	legacyImplicitGroupName = "legacy implicit group"
 )
 
 // resourceUnifiedDashboard creates a resource for either:
@@ -260,7 +256,7 @@ type resourceUnifiedDashboardImp struct {
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getUnifiedDashboardAttributesFromResource(d)
+	attrs, hasLegacyChartsIn, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes: %v", err))
 	}
@@ -294,7 +290,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardCreate(ctx context
 				}
 			}
 		}
-		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d); err != nil {
+		if err := p.setResourceDataFromUnifiedDashboard(projectName, dashboard, d, hasLegacyChartsIn); err != nil {
 			return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 		}
 		return nil
@@ -314,7 +310,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 		convertToQueryString = true
 	}
 
-	prevAttrs, err := getUnifiedDashboardAttributesFromResource(d)
+	prevAttrs, hasLegacyChartsIn, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
 	}
@@ -378,24 +374,24 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 		}
 	}
 
-	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d); err != nil {
+	if err := p.setResourceDataFromUnifiedDashboard(d.Get("project_name").(string), *dashboard, d, hasLegacyChartsIn); err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err))
 	}
 	return diags
 }
 
-func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, error) {
+func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, bool, error) {
 	chartSet := d.Get("chart").(*schema.Set)
 	groupSet := d.Get("group").(*schema.Set)
-	groups, err := buildGroups(groupSet.List(), chartSet.List())
+	groups, hasLegacyChartsIn, err := buildGroups(groupSet.List(), chartSet.List())
 	if err != nil {
-		return nil, err
+		return nil, hasLegacyChartsIn, err
 	}
 
 	labelSet := d.Get("label").(*schema.Set)
 	labels, err := buildLabels(labelSet.List())
 	if err != nil {
-		return nil, err
+		return nil, hasLegacyChartsIn, err
 	}
 
 	templateVariableSet := d.Get("template_variable").(*schema.Set)
@@ -409,23 +405,25 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		TemplateVariables: templateVariables,
 	}
 
-	return attributes, nil
+	return attributes, hasLegacyChartsIn, nil
 }
 
-func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client.UnifiedGroup, error) {
+func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client.UnifiedGroup, bool, error) {
 	var (
-		groups    []map[string]interface{}
-		newGroups []client.UnifiedGroup
+		groups            []map[string]interface{}
+		newGroups         []client.UnifiedGroup
+		hasLegacyChartsIn bool
 	)
 
 	if len(legacyChartsIn) != 0 {
+		hasLegacyChartsIn = true
 		c, err := buildCharts(legacyChartsIn)
 		if err != nil {
-			return nil, err
+			return nil, hasLegacyChartsIn, err
 		}
 		newGroups = append(newGroups, client.UnifiedGroup{
 			Rank:           0,
-			Title:          legacyImplicitGroupName,
+			Title:          "",
 			VisibilityType: "implicit",
 			Charts:         c,
 		})
@@ -438,7 +436,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 	for _, group := range groups {
 		c, err := buildCharts(group["chart"].(*schema.Set).List())
 		if err != nil {
-			return nil, err
+			return nil, hasLegacyChartsIn, err
 		}
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
@@ -449,7 +447,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		}
 		newGroups = append(newGroups, g)
 	}
-	return newGroups, nil
+	return newGroups, hasLegacyChartsIn, nil
 }
 
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
@@ -545,7 +543,7 @@ func buildDefaultValues(valuesIn []interface{}) []string {
 	return defaultValues
 }
 
-func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData) error {
+func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData, hasLegacyChartsIn bool) error {
 	if err := d.Set("project_name", project); err != nil {
 		return fmt.Errorf("unable to set project_name resource field: %v", err)
 	}
@@ -601,7 +599,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		}
 		return charts, nil
 	}
-	if isLegacyImplicitGroup(dash.Attributes.Groups) {
+	if isLegacyImplicitGroup(dash.Attributes.Groups, hasLegacyChartsIn) {
 		charts, err := assembleCharts(dash.Attributes.Groups[0].Charts)
 		if err != nil {
 			return err
@@ -653,14 +651,14 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 
 // isLegacyImplicitGroup defines the logic for determining if the charts in this dashboard need to be unwrapped to
 // maintain backwards compatibility with the pre group definition
-func isLegacyImplicitGroup(groups []client.UnifiedGroup) bool {
+func isLegacyImplicitGroup(groups []client.UnifiedGroup, hasLegacyChartsIn bool) bool {
 	if len(groups) != 1 {
 		return false
 	}
 	if groups[0].VisibilityType != "implicit" {
 		return false
 	}
-	if groups[0].Title != legacyImplicitGroupName {
+	if !hasLegacyChartsIn {
 		return false
 	}
 	for _, c := range groups[0].Charts {
@@ -674,7 +672,7 @@ func isLegacyImplicitGroup(groups []client.UnifiedGroup) bool {
 
 func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
-	attrs, err := getUnifiedDashboardAttributesFromResource(d)
+	attrs, _, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to get dashboard attributes from resource : %v", err))
 	}
@@ -723,7 +721,7 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 		return []*schema.ResourceData{}, fmt.Errorf("failed to get dashboard. err: %v", err)
 	}
 	d.SetId(id)
-	if err := p.setResourceDataFromUnifiedDashboard(project, *dash, d); err != nil {
+	if err := p.setResourceDataFromUnifiedDashboard(project, *dash, d, false); err != nil {
 		return nil, fmt.Errorf("failed to set dashboard from API response to terraform state: %v", err)
 	}
 
