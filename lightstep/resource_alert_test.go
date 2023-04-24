@@ -839,7 +839,7 @@ resource "lightstep_alert" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
 				),
-				ExpectError: regexp.MustCompile("single alert queries must not be set"),
+				ExpectError: regexp.MustCompile("single alert queries and composite alert cannot both be set"),
 			},
 			{
 				Config: compositeConditionConfig,
