@@ -87,6 +87,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 				Schema: getUnifiedQuerySchemaMap(),
 			},
 		}
+		// Configuration for a composite alert, consists of two or more sub alerts
 		resource.Schema["composite_alert"] = &schema.Schema{
 			Type:     schema.TypeList,
 			Optional: true,
