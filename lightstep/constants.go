@@ -37,5 +37,11 @@ func GetUpdateIntervalValue(in int) interface{} {
 			return k
 		}
 	}
-	return ""
+	if in == 0 {
+		return ""
+	}
+	// This isn't a valid value according to the validation fun in the schema. The only
+	// reason we return this here is so terraform can tell there's a difference between
+	// no update interval and an update interval not supported by terraform.
+	return "invalid"
 }
