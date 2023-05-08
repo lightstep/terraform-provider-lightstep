@@ -890,3 +890,57 @@ func testAccChecLightstepAlertExists(resourceName string, condition *client.Unif
 		return nil
 	}
 }
+
+func TestAccEmptyUpdateInterval(t *testing.T) {
+	var compositeCondition client.UnifiedCondition
+
+	emptyUpdateIntervalConfig := `
+resource "lightstep_slack_destination" "slack" {
+ project_name = "terraform-provider-tests"
+ channel = "#emergency-room"
+}
+
+resource "lightstep_alert" "test" {
+ project_name = "terraform-provider-tests"
+ name = "Too many requests & customers"
+ description = "A link to a playbook"
+
+ expression {
+	  is_multi   = true
+	  is_no_data = false
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+ }
+
+ query {
+    query_name          = "a"
+    hidden              = false
+	query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
+ }
+
+ alerting_rule {
+   id          = lightstep_slack_destination.slack.id
+ }
+}
+`
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: emptyUpdateIntervalConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
+					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.update_interval", ""),
+				),
+			},
+		},
+	})
+}

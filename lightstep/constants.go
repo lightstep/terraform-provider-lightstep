@@ -11,7 +11,6 @@ var (
 		"40m": 2400000,
 		"50m": 3000000,
 		"1h":  3600000,
-		"1":   5400000,
 		"2h":  7200000,
 		"3h":  10800000,
 		"4h":  14400000,
@@ -32,7 +31,7 @@ func GetValidUpdateInterval() []string {
 	return res
 }
 
-func GetUpdateIntervalValue(in int) string {
+func GetUpdateIntervalValue(in int) interface{} {
 	for k, v := range validUpdateInterval {
 		if v == in {
 			return k
