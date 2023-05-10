@@ -195,15 +195,12 @@ Optional:
 <a id="nestedblock--alerting_rule"></a>
 ### Nested Schema for `alerting_rule`
 
-Required:
-
-- `update_interval` (String)
-
 Optional:
 
 - `exclude_filters` (List of Map of String)
 - `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
 - `include_filters` (List of Map of String)
+- `update_interval` (String)
 
 Read-Only:
 
