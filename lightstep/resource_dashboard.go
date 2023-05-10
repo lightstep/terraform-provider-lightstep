@@ -16,9 +16,20 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 			Required: true,
 		},
 		"display": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map", "big_number_v2", "scatter_plot"}, false),
+			Type:     schema.TypeString,
+			Optional: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				"line",
+				"area",
+				"bar",
+				"big_number",
+				"heatmap",
+				"dependency_map",
+				"big_number_v2",
+				"scatter_plot",
+				"ordered_list",
+				"table",
+			}, false),
 		},
 		"query_name": {
 			Type:     schema.TypeString,
