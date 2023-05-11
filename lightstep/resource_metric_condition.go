@@ -779,6 +779,23 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 				DependencyMapOptions: buildDependencyMapOptions(query["dependency_map_options"]),
 			}
 
+			// Check for the optional "JSON bloc" of display options
+			if opts, ok := query["display_type_options"].(*schema.Set); ok {
+				list := opts.List()
+				count := len(list)
+				if count > 1 {
+					return nil, fmt.Errorf("display_type_options must be defined only once")
+				} else if count == 1 {
+					m, ok := list[0].(map[string]interface{})
+					if !ok {
+						return nil, fmt.Errorf("unexpected format for display_type_options")
+					}
+					// The API treats display_type_options as an opaque blob, so now that
+					// we can pass what we have along directly
+					newQuery.DisplayTypeOptions = m
+				}
+			}
+
 			// "hidden_queries" is only applicable to "tql"/ "query_string" queries.
 			// Due to Terraform's issues with TypeMap of TypeBool, we're forced to use strings
 			if hiddenQueries, ok := query["hidden_queries"].(map[string]interface{}); ok && len(hiddenQueries) > 0 {

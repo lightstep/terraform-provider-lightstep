@@ -31,6 +31,26 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"table",
 			}, false),
 		},
+		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
+		// Using a TyypeSet of size 1 is a way to do nested properties
+		"display_type_options": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				// This is the *superset* of all possible fields for all display types
+				Schema: map[string]*schema.Schema{
+					"sort_by": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
+					"sort_direction": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
+				},
+			},
+		},
 		"query_name": {
 			Type:     schema.TypeString,
 			Required: true,
@@ -84,6 +104,7 @@ func getQueriesFromUnifiedDashboardResourceData(
 		qs := map[string]interface{}{
 			"hidden":                 q.Hidden,
 			"display":                q.Display,
+			"display_type_options":   displayTypeOptionsFromResourceData(q.DisplayTypeOptions),
 			"query_name":             q.Name,
 			"query_string":           q.TQLQuery,
 			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
@@ -105,6 +126,15 @@ func getQueriesFromUnifiedDashboardResourceData(
 		queries = append(queries, qs)
 	}
 	return queries, nil
+}
+
+func displayTypeOptionsFromResourceData(opts map[string]interface{}) *schema.Set {
+	// "display_type_options" is a set that always has at most one element, so
+	// the hash function is trivial
+	f := func(i interface{}) int {
+		return 1
+	}
+	return schema.NewSet(f, []interface{}{opts})
 }
 
 func getDependencyMapOptions(options *client.DependencyMapOptions) []interface{} {
