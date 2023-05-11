@@ -39,6 +39,11 @@ spans latency
 | point percentile(value, 50)
 EOT
   }
+
+  alerting_rule {
+      id = lightstep_pagerduty_destination.my_destination.id
+  }
+}
 ```
 
 {{ .SchemaMarkdown | trimspace }}

@@ -6,6 +6,8 @@ description: |-
 
 ---
 
+# NOTE: this resource will be deprecated in v2+. Use `lightstep_alert` instead.
+
 # lightstep_alerting_rule (Resource)
 
 Provides a [Lightstep Alerting Rule](https://api-docs.lightstep.com/reference/listalertingrules). This can be used to create and manage Lightstep alerting rules.
