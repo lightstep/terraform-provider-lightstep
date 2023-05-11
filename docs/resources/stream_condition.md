@@ -6,6 +6,8 @@ description: |-
 
 ---
 
+# NOTE: this resource will be deprecated in v2+. Use `lightstep_alert` instead.
+
 # lightstep_stream_condition (Resource)
 
 Provides a [Lightstep Stream Condition](https://api-docs.lightstep.com/reference/conditions). This can be used to create and manage Lightstep Stream Conditions.
