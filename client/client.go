@@ -13,13 +13,13 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"github.com/lightstep/terraform-provider-lightstep/version"
 	"golang.org/x/time/rate"
+
+	"github.com/lightstep/terraform-provider-lightstep/version"
 )
 
 const (
 	DefaultRateLimitPerSecond = 2
-	DefaultRetryMax           = 3
 	DefaultTimeoutSeconds     = 60
 	DefaultUserAgent          = "terraform-provider-lightstep"
 )
@@ -95,13 +95,8 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 
-	newClient := &retryablehttp.Client{
-		HTTPClient:   http.DefaultClient,
-		CheckRetry:   checkHTTPRetry,
-		RetryWaitMin: 1 * time.Second,
-		Backoff:      retryablehttp.DefaultBackoff,
-		RetryMax:     DefaultRetryMax,
-	}
+	// Default client retries 5xx and 429 errors.
+	newClient := retryablehttp.NewClient()
 	newClient.HTTPClient.Timeout = DefaultTimeoutSeconds * time.Second
 
 	return &Client{
@@ -113,18 +108,6 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 		client:      newClient,
 		contentType: "application/vnd.api+json",
 	}
-}
-
-// checkHTTPRetry inspects HTTP errors from the Lightstep API for known transient errors
-func checkHTTPRetry(_ context.Context, resp *http.Response, err error) (bool, error) {
-	if resp == nil {
-		// If response is nil we can't make retry choices.
-		return false, err
-	}
-	if resp.StatusCode == http.StatusInternalServerError || resp.StatusCode == http.StatusServiceUnavailable {
-		return true, err
-	}
-	return false, nil
 }
 
 // CallAPI calls the given API and unmarshals the result to into result.
