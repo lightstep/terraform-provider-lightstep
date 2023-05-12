@@ -756,7 +756,7 @@ resource "lightstep_dashboard" "test_implicit_group" {
 	})
 }
 
-func TestSomething(t *testing.T) {
+func TestGroupChartsAreComputed(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
 	baseConfig := `
