@@ -121,6 +121,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		"chart": {
 			Type:     schema.TypeSet,
 			Optional: true,
+			Computed: true, // the charts can be mutated individually; chart mutations should not trigger group updates
 			Elem: &schema.Resource{
 				Schema: getChartSchema(chartSchemaType),
 			},

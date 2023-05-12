@@ -879,7 +879,7 @@ resource "lightstep_dashboard" "test_dash" {
 				Config: updatedConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "LogDB Support Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
 					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
 				),
