@@ -755,3 +755,1091 @@ resource "lightstep_dashboard" "test_implicit_group" {
 		},
 	})
 }
+
+func TestSomething(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	baseConfig := `
+resource "lightstep_dashboard" "logdb_support_dashboard" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "LogDB Support Dashboard"
+
+  label {
+    key   = "type"
+    value = "service"
+  }
+
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+    chart {
+      name   = "Total query count per hour"
+      type   = "timeseries"
+      rank   = 0
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "bar"
+        hidden       = false
+        query_string = "metric quarry_search_query_count | delta 1h | group_by [], sum"
+      }
+    }
+    chart {
+      name   = "Log lines per second"
+      type   = "timeseries"
+      rank   = 1
+      x_pos  = 0
+      y_pos  = 0
+      width  = 16
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_docs_received_total | rate | group_by [\"k8s.pod.name\", \"namespace\"], sum"
+      }
+    }
+    chart {
+      name   = "Log bytes per second"
+      type   = "timeseries"
+      rank   = 2
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_bytes | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Disk usage per pod (GB)"
+      type   = "timeseries"
+      rank   = 3
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name     = "(b-a)"
+        display        = "line"
+        hidden         = false
+        hidden_queries = { a = "true", b = "true" }
+        query_string   = "with\n  a = metric kubernetes.kubelet.volume.stats.available_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\n  b = metric kubernetes.kubelet.volume.stats.capacity_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\njoin ((b - a)), a=0, b=0"
+      }
+    }
+    chart {
+      name   = "LogDB Jemalloc Active Bytes (No Mmap)"
+      type   = "timeseries"
+      rank   = 4
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_jemalloc_active_bytes | latest | group_by [\"k8s.pod.name\"], mean"
+      }
+    }
+    chart {
+      name   = "LogDB Process Resident Bytes (With Mmap)"
+      type   = "timeseries"
+      rank   = 5
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_process_resident_bytes | latest | group_by [\"k8s.pod.name\"], mean"
+      }
+    }
+    chart {
+      name   = "Memory usage per pod (%)"
+      type   = "timeseries"
+      rank   = 6
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a*100)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric kubernetes.memory.usage_pct | filter (kube_app_name =~ \".*log.*\") | latest | group_by [\"pod_name\", \"kube_namespace\"], mean | point ((value *100))"
+      }
+    }
+    chart {
+      name   = "CPU usage per pod (%)"
+      type   = "timeseries"
+      rank   = 7
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = <<EOT
+  with
+    usage = metric kubernetes.cpu.usage.total
+      | point_filter value != 0
+      | filter kube_app_name =~ ".*log.*"
+      | reduce 2m, mean
+      | group_by [kube_namespace, pod_name], sum;
+    requests = metric kubernetes.cpu.requests
+      | filter kube_app_name =~ ".*log.*"
+      | align
+      | group_by [kube_namespace, pod_name], mean
+      | point value * 1000000000;
+  join usage / requests * 100
+  EOT
+      }
+    }
+    chart {
+      name   = "Quarry _bulk request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 8
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry to Maxwell request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 9
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_maxwell_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 10
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_http_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage object PUT duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 11
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_gcs_insert_object_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage object GET duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 12
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_gcs_get_object_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry cache write duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 13
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cache_write_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry cache submit duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 14
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cache_submit_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry tokio blocking queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 15
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_blocking_queue_duration_ns_p99 | filter (k8s.replicaset.name =~ \".*deployment.*\") | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry rayon queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 16
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cpu_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 17
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search handler duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 18
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_handler_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry catalog lock wait duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 19
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_lock_wait_catalog_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry rootset lock wait duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 20
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_lock_wait_rootset_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry spawn queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 21
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_spawn_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry query queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 22
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_query_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Query search blocking task duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 23
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_blocking_task_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry aggregation blocking task duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 24
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_aggregation_blocking_task_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search scan duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 25
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_scan_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry aggregation scan duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 26
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_aggregation_scan_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry fetch originals duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 27
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_fetch_originals_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry fetch doc count per second"
+      type   = "timeseries"
+      rank   = 28
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_fetch_originals_doc_count | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Quarry blocking tasks count"
+      type   = "timeseries"
+      rank   = 29
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_blocking_tasks_current_count | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Quarry download roots from object store count"
+      type   = "timeseries"
+      rank   = 30
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_ensure_roots_download_count | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+  }
+}
+`
+
+	updatedConfig := `
+resource "lightstep_dashboard" "logdb_support_dashboard" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "LogDB Support Dashboard"
+
+  label {
+    key   = "type"
+    value = "service"
+  }
+
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+    chart {
+      name   = "Total query count per hour"
+      type   = "timeseries"
+      rank   = 0
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "bar"
+        hidden       = false
+        query_string = "metric quarry_search_query_count | delta 1h | group_by [], sum"
+      }
+    }
+    chart {
+      name   = "Log lines per second!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      type   = "timeseries"
+      rank   = 1
+      x_pos  = 0
+      y_pos  = 0
+      width  = 16
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_docs_received_total | rate | group_by [\"k8s.pod.name\", \"namespace\"], sum"
+      }
+    }
+    chart {
+      name   = "Log bytes per second"
+      type   = "timeseries"
+      rank   = 2
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_bytes | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Disk usage per pod (GB)"
+      type   = "timeseries"
+      rank   = 3
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name     = "(b-a)"
+        display        = "line"
+        hidden         = false
+        hidden_queries = { a = "true", b = "true" }
+        query_string   = "with\n  a = metric kubernetes.kubelet.volume.stats.available_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\n  b = metric kubernetes.kubelet.volume.stats.capacity_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\njoin ((b - a)), a=0, b=0"
+      }
+    }
+    chart {
+      name   = "LogDB Jemalloc Active Bytes (No Mmap)"
+      type   = "timeseries"
+      rank   = 4
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_jemalloc_active_bytes | latest | group_by [\"k8s.pod.name\"], mean"
+      }
+    }
+    chart {
+      name   = "LogDB Process Resident Bytes (With Mmap)"
+      type   = "timeseries"
+      rank   = 5
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_process_resident_bytes | latest | group_by [\"k8s.pod.name\"], mean"
+      }
+    }
+    chart {
+      name   = "Memory usage per pod (%)"
+      type   = "timeseries"
+      rank   = 6
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a*100)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric kubernetes.memory.usage_pct | filter (kube_app_name =~ \".*log.*\") | latest | group_by [\"pod_name\", \"kube_namespace\"], mean | point ((value *100))"
+      }
+    }
+    chart {
+      name   = "CPU usage per pod (%)"
+      type   = "timeseries"
+      rank   = 7
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = <<EOT
+  with
+    usage = metric kubernetes.cpu.usage.total
+      | point_filter value != 0
+      | filter kube_app_name =~ ".*log.*"
+      | reduce 2m, mean
+      | group_by [kube_namespace, pod_name], sum;
+    requests = metric kubernetes.cpu.requests
+      | filter kube_app_name =~ ".*log.*"
+      | align
+      | group_by [kube_namespace, pod_name], mean
+      | point value * 1000000000;
+  join usage / requests * 100
+  EOT
+      }
+    }
+    chart {
+      name   = "Quarry _bulk request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 8
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_bulk_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry to Maxwell request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 9
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_maxwell_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage request duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 10
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_http_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage object PUT duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 11
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_gcs_insert_object_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "LogStorage object GET duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 12
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric logstorage_gcs_get_object_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry cache write duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 13
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cache_write_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry cache submit duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 14
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cache_submit_request_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry tokio blocking queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 15
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_blocking_queue_duration_ns_p99 | filter (k8s.replicaset.name =~ \".*deployment.*\") | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry rayon queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 16
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_cpu_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 17
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search handler duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 18
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_handler_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry catalog lock wait duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 19
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_lock_wait_catalog_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry rootset lock wait duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 20
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_lock_wait_rootset_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry spawn queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 21
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_spawn_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry query queue duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 22
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_query_queue_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Query search blocking task duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 23
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_blocking_task_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry aggregation blocking task duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 24
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_aggregation_blocking_task_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry search scan duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 25
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_search_scan_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry aggregation scan duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 26
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_aggregation_scan_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry fetch originals duration P99 (ms)"
+      type   = "timeseries"
+      rank   = 27
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "(a/1000000)"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_fetch_originals_duration_ns_p99 | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean | point ((value /1000000))"
+      }
+    }
+    chart {
+      name   = "Quarry fetch doc count per second"
+      type   = "timeseries"
+      rank   = 28
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_fetch_originals_doc_count | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Quarry blocking tasks count"
+      type   = "timeseries"
+      rank   = 29
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_blocking_tasks_current_count | latest | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+    chart {
+      name   = "Quarry download roots from object store count"
+      type   = "timeseries"
+      rank   = 30
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+
+      query {
+        query_name   = "a"
+        display      = "line"
+        hidden       = false
+        query_string = "metric quarry_ensure_roots_download_count | rate | group_by [\"k8s.pod.name\", \"namespace\"], mean"
+      }
+    }
+  }
+}
+`
+
+	resourceName := "lightstep_dashboard.logdb_support_dashboard"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: baseConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "LogDB Support Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+				),
+			},
+			{
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "LogDB Support Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+				),
+			},
+		},
+	})
+}
