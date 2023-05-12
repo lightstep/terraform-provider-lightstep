@@ -755,3 +755,147 @@ resource "lightstep_dashboard" "test_implicit_group" {
 		},
 	})
 }
+
+func TestGroupChartsAreComputed(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	baseConfig := `
+resource "lightstep_dashboard" "test_dash" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "test dash"
+
+  label {
+    key   = "type"
+    value = "service"
+  }
+
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+    chart {
+      name   = "chart 1"
+      type   = "timeseries"
+      rank   = 1
+      x_pos  = 0
+      y_pos  = 0
+      width  = 16
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric foo | rate | group_by [], sum"
+      }
+    }
+	chart {
+      name   = "chart 2"
+      type   = "timeseries"
+      rank   = 3
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+      query {
+        query_name     = "(b-a)"
+        display        = "line"
+        hidden         = false
+        hidden_queries = { a = "true", b = "true" }
+        query_string   = "with\n  a = metric cpu.utilization | filter (kube_app == \"iOS\") | latest | group_by [], mean;\n  b = metric cpu.utilization | filter (kube_app == \"android\") | latest | group_by [], mean;\njoin ((b - a)), a=0, b=0"
+      }
+    }
+  }
+}
+`
+
+	updatedConfig := `
+resource "lightstep_dashboard" "test_dash" {
+  project_name   = "terraform-provider-tests"
+  dashboard_name = "test dash"
+
+  label {
+    key   = "type"
+    value = "service"
+  }
+
+  group {
+    rank            = 0
+    title           = ""
+    visibility_type = "implicit"
+    chart {
+      name   = "chart 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      type   = "timeseries"
+      rank   = 1
+      x_pos  = 0
+      y_pos  = 0
+      width  = 16
+      height = 10
+
+      query {
+        query_name   = "a"
+        display      = "area"
+        hidden       = false
+        query_string = "metric foo | rate | group_by [], sum"
+      }
+    }
+	chart {
+      name   = "chart 2"
+      type   = "timeseries"
+      rank   = 3
+      x_pos  = 0
+      y_pos  = 0
+      width  = 0
+      height = 0
+      query {
+        query_name     = "(b-a)"
+        display        = "line"
+        hidden         = false
+        hidden_queries = { a = "true", b = "true" }
+        query_string   = "with\n  a = metric cpu.utilization | filter (kube_app == \"iOS\") | latest | group_by [], mean;\n  b = metric cpu.utilization | filter (kube_app == \"android\") | latest | group_by [], mean;\njoin ((b - a)), a=0, b=0"
+      }
+    }
+  }
+}
+`
+
+	resourceName := "lightstep_dashboard.test_dash"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: baseConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.0.chart.*",
+						map[string]string{
+							"name": "chart 1",
+						},
+					),
+				),
+			},
+			{
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.0.chart.*",
+						map[string]string{
+							"name": "chart 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+						},
+					),
+				),
+			},
+		},
+	})
+}
