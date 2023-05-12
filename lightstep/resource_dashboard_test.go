@@ -760,9 +760,9 @@ func TestSomething(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
 	baseConfig := `
-resource "lightstep_dashboard" "logdb_support_dashboard" {
+resource "lightstep_dashboard" "test_dash" {
   project_name   = "terraform-provider-tests"
-  dashboard_name = "LogDB Support Dashboard"
+  dashboard_name = "test dash"
 
   label {
     key   = "type"
@@ -774,7 +774,7 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
     title           = ""
     visibility_type = "implicit"
     chart {
-      name   = "Log lines per second"
+      name   = "chart 1"
       type   = "timeseries"
       rank   = 1
       x_pos  = 0
@@ -786,11 +786,11 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
         query_name   = "a"
         display      = "area"
         hidden       = false
-        query_string = "metric quarry_bulk_request_docs_received_total | rate | group_by [\"k8s.pod.name\", \"namespace\"], sum"
+        query_string = "metric foo | rate | group_by [], sum"
       }
     }
 	chart {
-      name   = "Disk usage per pod (GB)"
+      name   = "chart 2"
       type   = "timeseries"
       rank   = 3
       x_pos  = 0
@@ -802,7 +802,7 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
         display        = "line"
         hidden         = false
         hidden_queries = { a = "true", b = "true" }
-        query_string   = "with\n  a = metric kubernetes.kubelet.volume.stats.available_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\n  b = metric kubernetes.kubelet.volume.stats.capacity_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\njoin ((b - a)), a=0, b=0"
+        query_string   = "with\n  a = metric cpu.utilization | filter (kube_app == \"iOS\") | latest | group_by [], mean;\n  b = metric cpu.utilization | filter (kube_app == \"android\") | latest | group_by [], mean;\njoin ((b - a)), a=0, b=0"
       }
     }
   }
@@ -810,9 +810,9 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
 `
 
 	updatedConfig := `
-resource "lightstep_dashboard" "logdb_support_dashboard" {
+resource "lightstep_dashboard" "test_dash" {
   project_name   = "terraform-provider-tests"
-  dashboard_name = "LogDB Support Dashboard"
+  dashboard_name = "test dash"
 
   label {
     key   = "type"
@@ -824,7 +824,7 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
     title           = ""
     visibility_type = "implicit"
     chart {
-      name   = "Log lines per second!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+      name   = "chart 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
       type   = "timeseries"
       rank   = 1
       x_pos  = 0
@@ -836,11 +836,11 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
         query_name   = "a"
         display      = "area"
         hidden       = false
-        query_string = "metric quarry_bulk_request_docs_received_total | rate | group_by [\"k8s.pod.name\", \"namespace\"], sum"
+        query_string = "metric foo | rate | group_by [], sum"
       }
     }
 	chart {
-      name   = "Disk usage per pod (GB)"
+      name   = "chart 2"
       type   = "timeseries"
       rank   = 3
       x_pos  = 0
@@ -852,14 +852,14 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
         display        = "line"
         hidden         = false
         hidden_queries = { a = "true", b = "true" }
-        query_string   = "with\n  a = metric kubernetes.kubelet.volume.stats.available_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\n  b = metric kubernetes.kubelet.volume.stats.capacity_bytes | filter (kube_app == \"logdb\") | latest | group_by [\"pod_name\", \"namespace\"], mean;\njoin ((b - a)), a=0, b=0"
+        query_string   = "with\n  a = metric cpu.utilization | filter (kube_app == \"iOS\") | latest | group_by [], mean;\n  b = metric cpu.utilization | filter (kube_app == \"android\") | latest | group_by [], mean;\njoin ((b - a)), a=0, b=0"
       }
     }
   }
 }
 `
 
-	resourceName := "lightstep_dashboard.logdb_support_dashboard"
+	resourceName := "lightstep_dashboard.test_dash"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -870,7 +870,7 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
 				Config: baseConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "LogDB Support Dashboard"),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
 					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
 				),
