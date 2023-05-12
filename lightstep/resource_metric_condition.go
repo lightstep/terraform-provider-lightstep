@@ -124,7 +124,7 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"update_interval": {
 			Type:         schema.TypeString,
-			Required:     true,
+			Optional:     true,
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
 		},
 		"id": {
@@ -663,7 +663,10 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			MessageDestinationID: rule["id"].(string),
 		}
 
-		newRule.UpdateInterval = validUpdateInterval[rule["update_interval"].(string)]
+		updateIntervalMilli, ok := validUpdateInterval[rule["update_interval"].(string)]
+		if ok {
+			newRule.UpdateInterval = updateIntervalMilli
+		}
 
 		var includes []interface{}
 		var excludes []interface{}
