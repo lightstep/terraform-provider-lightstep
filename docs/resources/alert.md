@@ -132,7 +132,17 @@ Required:
 Optional:
 
 - `display` (String)
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--composite_alert--alert--query--display_type_options))
 - `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
+
+<a id="nestedblock--composite_alert--alert--query--display_type_options"></a>
+### Nested Schema for `composite_alert.alert.query.display_type_options`
+
+Optional:
+
+- `sort_by` (String)
+- `sort_direction` (String)
+
 
 
 
@@ -184,4 +194,13 @@ Required:
 Optional:
 
 - `display` (String)
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--query--display_type_options))
 - `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
+
+<a id="nestedblock--query--display_type_options"></a>
+### Nested Schema for `query.display_type_options`
+
+Optional:
+
+- `sort_by` (String)
+- `sort_direction` (String)

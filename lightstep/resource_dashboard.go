@@ -50,6 +50,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 					},
 				},
 			},
+			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
 		},
 		"query_name": {
 			Type:     schema.TypeString,
