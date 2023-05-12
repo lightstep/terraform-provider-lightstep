@@ -873,6 +873,12 @@ resource "lightstep_dashboard" "test_dash" {
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
 					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.0.chart.*",
+						map[string]string{
+							"name": "chart 1",
+						},
+					),
 				),
 			},
 			{
@@ -882,6 +888,12 @@ resource "lightstep_dashboard" "test_dash" {
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test dash"),
 					resource.TestCheckResourceAttr(resourceName, "chart.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.0.chart.*",
+						map[string]string{
+							"name": "chart 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+						},
+					),
 				),
 			},
 		},
