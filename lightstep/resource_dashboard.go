@@ -32,13 +32,13 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 			}, false),
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
-		// Using a TyypeSet of size 1 is a way to do nested properties
+		// Using a TypeSet of size 1 as a way to allow nested properties
 		"display_type_options": {
 			Type:     schema.TypeSet,
 			Optional: true,
 			MaxItems: 1,
 			Elem: &schema.Resource{
-				// This is the *superset* of all possible fields for all display types
+				// This is the superset of all possible fields for all display types
 				Schema: map[string]*schema.Schema{
 					"sort_by": {
 						Type:     schema.TypeString,

@@ -755,6 +755,7 @@ resource "lightstep_dashboard" "test_implicit_group" {
 		},
 	})
 }
+
 func TestGroupChartsAreComputed(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 

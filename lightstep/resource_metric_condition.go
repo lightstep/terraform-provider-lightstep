@@ -782,7 +782,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 				DependencyMapOptions: buildDependencyMapOptions(query["dependency_map_options"]),
 			}
 
-			// Check for the optional "JSON bloc" of display options
+			// Check for the optional JSON block of display options
 			if opts, ok := query["display_type_options"].(*schema.Set); ok {
 				list := opts.List()
 				count := len(list)
