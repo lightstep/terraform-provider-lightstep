@@ -774,22 +774,6 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
     title           = ""
     visibility_type = "implicit"
     chart {
-      name   = "Total query count per hour"
-      type   = "timeseries"
-      rank   = 0
-      x_pos  = 0
-      y_pos  = 0
-      width  = 0
-      height = 0
-
-      query {
-        query_name   = "a"
-        display      = "bar"
-        hidden       = false
-        query_string = "metric quarry_search_query_count | delta 1h | group_by [], sum"
-      }
-    }
-    chart {
       name   = "Log lines per second"
       type   = "timeseries"
       rank   = 1
@@ -839,22 +823,6 @@ resource "lightstep_dashboard" "logdb_support_dashboard" {
     rank            = 0
     title           = ""
     visibility_type = "implicit"
-	chart {
-      name   = "Total query count per hour"
-      type   = "timeseries"
-      rank   = 0
-      x_pos  = 0
-      y_pos  = 0
-      width  = 0
-      height = 0
-
-      query {
-        query_name   = "a"
-        display      = "bar"
-        hidden       = false
-        query_string = "metric quarry_search_query_count | delta 1h | group_by [], sum"
-      }
-    }
     chart {
       name   = "Log lines per second!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
       type   = "timeseries"
