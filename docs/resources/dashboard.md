@@ -112,6 +112,7 @@ Optional:
 
 - `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--dependency_map_options))
 - `display` (String)
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--chart--query--display_type_options))
 - `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--chart--query--dependency_map_options"></a>
@@ -121,6 +122,15 @@ Optional:
 
 - `map_type` (String)
 - `scope` (String)
+
+
+<a id="nestedblock--chart--query--display_type_options"></a>
+### Nested Schema for `chart.query.display_type_options`
+
+Optional:
+
+- `sort_by` (String)
+- `sort_direction` (String)
 
 
 
@@ -186,6 +196,7 @@ Optional:
 
 - `dependency_map_options` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--dependency_map_options))
 - `display` (String)
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--group--chart--query--display_type_options))
 - `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--group--chart--query--dependency_map_options"></a>
@@ -195,6 +206,15 @@ Optional:
 
 - `map_type` (String)
 - `scope` (String)
+
+
+<a id="nestedblock--group--chart--query--display_type_options"></a>
+### Nested Schema for `group.chart.query.display_type_options`
+
+Optional:
+
+- `sort_by` (String)
+- `sort_direction` (String)
 
 
 

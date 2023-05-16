@@ -899,3 +899,111 @@ resource "lightstep_dashboard" "test_dash" {
 		},
 	})
 }
+
+func makeDisplayTypeConfig(displayType, displayTypeOptions string) string {
+	return fmt.Sprintf(`
+resource "lightstep_dashboard" "test_display_type_options" {
+project_name   = "terraform-provider-tests"
+dashboard_name = "test display_type_options"
+
+group {
+rank            = 0
+title           = ""
+visibility_type = "implicit"
+
+chart {
+	name   = "Chart #123"
+	type   = "timeseries"
+	rank   = 0
+	x_pos  = 4
+	y_pos  = 0
+	width  = 4
+	height = 4
+
+	query {
+	  query_name   = "a"
+	  display      = "%v"
+	  %v
+	  hidden       = false
+	  query_string = "metric cpu.utilization | delta | group_by[], sum"
+	}
+  }
+}
+}
+`, displayType, displayTypeOptions)
+}
+
+func TestDisplayTypeOptionsError(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	resourceName := "lightstep_dashboard.test_display_type_options"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
+	display_type_options {
+			positive_data_only = true
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+				),
+				ExpectError: regexp.MustCompile("Unsupported argument"),
+			},
+		},
+	})
+}
+
+func TestDisplayTypeOptions(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	resourceName := "lightstep_dashboard.test_display_type_options"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: makeDisplayTypeConfig("line", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
+				),
+			},
+			{
+				Config: makeDisplayTypeConfig("ordered_list", strings.TrimSpace(`
+	display_type_options {
+			sort_direction = "asc"
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "ordered_list"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.sort_direction", "asc"),
+				),
+			},
+			{
+				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
+	display_type_options {
+			sort_direction = "desc"
+			sort_by = "value"
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "table"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.sort_direction", "desc"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.sort_by", "value"),
+				),
+			},
+		},
+	})
+}

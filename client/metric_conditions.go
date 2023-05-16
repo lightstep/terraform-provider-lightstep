@@ -63,16 +63,17 @@ type DependencyMapOptions struct {
 }
 
 type MetricQueryWithAttributes struct {
-	Name                 string                `json:"query-name"`
-	Type                 string                `json:"query-type"`
-	Hidden               bool                  `json:"hidden"`
-	Display              string                `json:"display-type"`
-	Query                MetricQuery           `json:"metric-query"`
-	SpansQuery           SpansQuery            `json:"spans-query,omitempty"`
-	CompositeQuery       CompositeQuery        `json:"composite-query,omitempty"`
-	TQLQuery             string                `json:"tql-query"`
-	DependencyMapOptions *DependencyMapOptions `json:"dependency-map-options,omitempty"`
-	HiddenQueries        map[string]bool       `json:"hidden-queries,omitempty"`
+	Name                 string                 `json:"query-name"`
+	Type                 string                 `json:"query-type"`
+	Hidden               bool                   `json:"hidden"`
+	Display              string                 `json:"display-type"`
+	DisplayTypeOptions   map[string]interface{} `json:"display-type-options,omitempty"`
+	Query                MetricQuery            `json:"metric-query"`
+	SpansQuery           SpansQuery             `json:"spans-query,omitempty"`
+	CompositeQuery       CompositeQuery         `json:"composite-query,omitempty"`
+	TQLQuery             string                 `json:"tql-query"`
+	DependencyMapOptions *DependencyMapOptions  `json:"dependency-map-options,omitempty"`
+	HiddenQueries        map[string]bool        `json:"hidden-queries,omitempty"`
 }
 
 type MetricQuery struct {
