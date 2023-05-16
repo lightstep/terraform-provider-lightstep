@@ -126,11 +126,75 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 				Schema: getChartSchema(chartSchemaType),
 			},
 		},
+		"text_panel": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Computed: true, // the panels can be mutated individually; chart mutations should not trigger group updates
+			Elem: &schema.Resource{
+				Schema: getTextPanelSchema(),
+			},
+		},
+	}
+}
+
+func getTextPanelSchema() map[string]*schema.Schema {
+	return mergeSchemas(
+		getPanelSchema(),
+		map[string]*schema.Schema{
+			"text": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+		},
+	)
+}
+
+// getPanelSchema returns the common metadata on any dashboard panel (timeseries charts or text panels)
+func getPanelSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		// Alias for what we refer to as title elsewhere
+		"name": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"rank": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Optional:     true,
+			Computed:     true, // Now that position is explicit, we don't want rank changes to produce diffs
+		},
+		"x_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"y_pos": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"width": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"height": {
+			Type:         schema.TypeInt,
+			ValidateFunc: validation.IntAtLeast(0),
+			Default:      0,
+			Optional:     true,
+		},
+		"id": {
+			Type:     schema.TypeString,
+			Computed: true,
+		},
 	}
 }
 
 func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
-
 	var querySchema map[string]*schema.Schema
 	if chartSchemaType == UnifiedChartSchema {
 		querySchema = getUnifiedQuerySchemaMap()
@@ -157,75 +221,42 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		querySchema = getMetricQuerySchemaMap()
 	}
 
-	return map[string]*schema.Schema{
-		"name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
-		"rank": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Required:     true,
-		},
-		"x_pos": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Default:      0,
-			Optional:     true,
-		},
-		"y_pos": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Default:      0,
-			Optional:     true,
-		},
-		"width": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Default:      0,
-			Optional:     true,
-		},
-		"height": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Default:      0,
-			Optional:     true,
-		},
-		"type": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringInSlice([]string{"timeseries"}, true),
-		},
-		"id": {
-			Type:     schema.TypeString,
-			Computed: true,
-		},
-		"y_axis": {
-			Type:       schema.TypeList,
-			MaxItems:   1,
-			Deprecated: "The y_axis field is no longer used",
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"min": {
-						Type:     schema.TypeFloat,
-						Required: true,
-					},
-					"max": {
-						Type:     schema.TypeFloat,
-						Required: true,
+	return mergeSchemas(
+		getPanelSchema(),
+		map[string]*schema.Schema{
+			"type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "timeseries",
+				ValidateFunc: validation.StringInSlice([]string{"timeseries"}, true),
+			},
+			"y_axis": {
+				Type:       schema.TypeList,
+				MaxItems:   1,
+				Deprecated: "The y_axis field is no longer used",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"min": {
+							Type:     schema.TypeFloat,
+							Required: true,
+						},
+						"max": {
+							Type:     schema.TypeFloat,
+							Required: true,
+						},
 					},
 				},
+				Optional: true,
 			},
-			Optional: true,
-		},
-		"query": {
-			Type:     schema.TypeList,
-			Required: true,
-			Elem: &schema.Resource{
-				Schema: querySchema,
+			"query": {
+				Type:     schema.TypeList,
+				Required: true,
+				Elem: &schema.Resource{
+					Schema: querySchema,
+				},
 			},
 		},
-	}
+	)
 }
 
 func getTemplateVariableSchema() map[string]*schema.Schema {
@@ -411,7 +442,6 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 
 func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client.UnifiedGroup, bool, error) {
 	var (
-		groups            []map[string]interface{}
 		newGroups         []client.UnifiedGroup
 		hasLegacyChartsIn bool
 	)
@@ -430,25 +460,54 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		})
 	}
 
-	for _, group := range groupsIn {
-		groups = append(groups, group.(map[string]interface{}))
-	}
+	for i := range groupsIn {
+		group := groupsIn[i].(map[string]interface{})
 
-	for _, group := range groups {
-		c, err := buildCharts(group["chart"].(*schema.Set).List())
+		chartPanels, err := buildCharts(group["chart"].(*schema.Set).List())
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
+		textPanels, err := buildTextPanels(group["text_panel"].(*schema.Set).List())
+		if err != nil {
+			return nil, hasLegacyChartsIn, err
+		}
+
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
 			Rank:           group["rank"].(int),
 			Title:          group["title"].(string),
 			VisibilityType: group["visibility_type"].(string),
-			Charts:         c,
+			Charts:         append(chartPanels, textPanels...),
 		}
 		newGroups = append(newGroups, g)
 	}
 	return newGroups, hasLegacyChartsIn, nil
+}
+
+func buildPosition(panel map[string]interface{}) client.UnifiedPosition {
+	return client.UnifiedPosition{
+		XPos:   panel["x_pos"].(int),
+		YPos:   panel["y_pos"].(int),
+		Width:  panel["width"].(int),
+		Height: panel["height"].(int),
+	}
+}
+
+func buildTextPanels(textPanelsIn []interface{}) ([]client.UnifiedChart, error) {
+	newCharts := []client.UnifiedChart{}
+	for i := range textPanelsIn {
+		textPanel := textPanelsIn[i].(map[string]interface{})
+		c := client.UnifiedChart{
+			ChartType: "text",
+			ID:        textPanel["id"].(string),
+			Title:     textPanel["name"].(string),
+			Rank:      textPanel["rank"].(int),
+			Position:  buildPosition(textPanel),
+			Text:      textPanel["text"].(string),
+		}
+		newCharts = append(newCharts, c)
+	}
+	return newCharts, nil
 }
 
 func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
@@ -462,16 +521,10 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	}
 
 	for _, chart := range charts {
-		p := client.UnifiedPosition{
-			XPos:   chart["x_pos"].(int),
-			YPos:   chart["y_pos"].(int),
-			Width:  chart["width"].(int),
-			Height: chart["height"].(int),
-		}
 		c := client.UnifiedChart{
 			Title:     chart["name"].(string),
 			Rank:      chart["rank"].(int),
-			Position:  p,
+			Position:  buildPosition(chart),
 			ID:        chart["id"].(string),
 			ChartType: chart["type"].(string),
 		}
