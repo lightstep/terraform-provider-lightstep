@@ -614,49 +614,13 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
-	assembleCharts := func(chartsIn []client.UnifiedChart) ([]interface{}, error) {
-		var charts []interface{}
-		for _, c := range chartsIn {
-			chart := map[string]interface{}{}
-
-			yMap := map[string]interface{}{}
-
-			if c.YAxis != nil {
-				yMap["max"] = c.YAxis.Max
-				yMap["min"] = c.YAxis.Min
-				chart["y_axis"] = []map[string]interface{}{yMap}
-			}
-
-			if p.chartSchemaType == MetricChartSchema {
-				chart["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
-			} else {
-				queries, err := getQueriesFromUnifiedDashboardResourceData(
-					c.MetricQueries,
-					dash.ID,
-					c.ID,
-				)
-				if err != nil {
-					return nil, err
-				}
-				chart["query"] = queries
-			}
-			chart["name"] = c.Title
-			chart["rank"] = c.Rank
-			chart["x_pos"] = c.Position.XPos
-			chart["y_pos"] = c.Position.YPos
-			chart["width"] = c.Position.Width
-			chart["height"] = c.Position.Height
-			chart["type"] = c.ChartType
-			chart["id"] = c.ID
-
-			charts = append(charts, chart)
-		}
-		return charts, nil
-	}
 	if isLegacyImplicitGroup(dash.Attributes.Groups, hasLegacyChartsIn) {
-		charts, err := assembleCharts(dash.Attributes.Groups[0].Charts)
+		charts, textPanels, err := assembleDashboardPanels(dash.ID, p.chartSchemaType, dash.Attributes.Groups[0].Charts)
 		if err != nil {
 			return err
+		}
+		if len(textPanels) > 0 {
+			return fmt.Errorf("text panels are only supported within groups")
 		}
 		if err := d.Set("chart", charts); err != nil {
 			return err
@@ -670,11 +634,13 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["visibility_type"] = g.VisibilityType
 			group["rank"] = g.Rank
 
-			groupCharts, err := assembleCharts(g.Charts)
+			groupCharts, groupTextPanels, err := assembleDashboardPanels(dash.ID, p.chartSchemaType, g.Charts)
 			if err != nil {
 				return err
 			}
 			group["chart"] = groupCharts
+			group["text_panel"] = groupTextPanels
+
 			groups = append(groups, group)
 		}
 		if err := d.Set("group", groups); err != nil {
@@ -701,6 +667,122 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 
 	return nil
+}
+
+func assembleDashboardPanels(
+	dashboardID string,
+	chartSchemaType ChartSchemaType,
+	panels []client.UnifiedChart,
+) (
+	chartResources []interface{},
+	textPanelResources []interface{},
+	err error,
+) {
+
+	charts := []client.UnifiedChart{}
+	textPanels := []client.UnifiedChart{}
+
+	// Partition by type
+	for _, panel := range panels {
+		switch panel.ChartType {
+		case "timeseries":
+			charts = append(charts, panel)
+		case "text":
+			textPanels = append(textPanels, panel)
+		default:
+			return nil, nil, fmt.Errorf("unknown panel type: %s", panel.ChartType)
+		}
+	}
+
+	chartResources, err = assembleCharts(dashboardID, chartSchemaType, charts)
+	if err != nil {
+		return nil, nil, err
+	}
+	textPanelResources, err = assembleTextPanels(dashboardID, textPanels)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return chartResources, textPanelResources, nil
+}
+
+// assemblePanel copies the data common to all panels (both charts and text panels)
+// into the resource interface
+func setPanelResourceData(
+	resource map[string]interface{}, // Terraform resource
+	panel client.UnifiedChart, // Panel from the API
+) {
+	resource["name"] = panel.Title
+	resource["rank"] = panel.Rank
+	resource["x_pos"] = panel.Position.XPos
+	resource["y_pos"] = panel.Position.YPos
+	resource["width"] = panel.Position.Width
+	resource["height"] = panel.Position.Height
+	resource["type"] = panel.ChartType
+	resource["id"] = panel.ID
+}
+
+// assembleTextPanels copies the data from the API into the Terraform resource.
+// Note that in Terraform charts and text panels are separate resources, but in
+// the API they are both UnifiedCharts.
+func assembleTextPanels(
+	dashboardID string,
+	textPanels []client.UnifiedChart,
+) ([]interface{}, error) {
+	panelResources := make([]interface{}, 0, len(textPanels))
+	for _, textPanel := range textPanels {
+		if textPanel.ChartType != "text" {
+			return nil, fmt.Errorf("panel %s is not a text panel", textPanel.Title)
+		}
+
+		resource := map[string]interface{}{}
+		setPanelResourceData(resource, textPanel)
+		resource["text"] = textPanel.Text
+		panelResources = append(panelResources, resource)
+	}
+	return panelResources, nil
+}
+
+func assembleCharts(
+	dashboardID string,
+	chartSchemaType ChartSchemaType,
+	chartsIn []client.UnifiedChart,
+) ([]interface{}, error) {
+	var chartResources []interface{}
+	for _, c := range chartsIn {
+		if c.ChartType != "timeseries" {
+			return nil, fmt.Errorf("panel %s is not a timeseries chart", c.Title)
+		}
+
+		resource := map[string]interface{}{}
+		setPanelResourceData(resource, c)
+
+		if c.YAxis != nil {
+			resource["y_axis"] = []map[string]interface{}{
+				{
+					"max": c.YAxis.Max,
+					"min": c.YAxis.Min,
+				},
+			}
+		}
+
+		if chartSchemaType == MetricChartSchema {
+			resource["query"] = getQueriesFromMetricConditionData(c.MetricQueries)
+		} else {
+			queries, err := getQueriesFromUnifiedDashboardResourceData(
+				c.MetricQueries,
+				dashboardID,
+				c.ID,
+			)
+			if err != nil {
+				return nil, err
+			}
+			resource["query"] = queries
+		}
+
+		chartResources = append(chartResources, resource)
+	}
+	return chartResources, nil
 }
 
 // isLegacyImplicitGroup defines the logic for determining if the charts in this dashboard need to be unwrapped to
