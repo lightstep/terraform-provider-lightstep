@@ -55,7 +55,7 @@ test-staging:
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_STAGING_API_KEY} \
 	LIGHTSTEP_ORG="LightStep" \
 	LIGHTSTEP_ENV="staging" \
-	go test -v ./lightstep -run TestTextPanels
+	go test -v ./lightstep
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
