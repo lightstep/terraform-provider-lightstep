@@ -668,6 +668,9 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	return nil
 }
 
+// assembleDashboardPanels takes the incoming set of UnifiedCharts which contain a mix
+// of charts and text panels, then partitions them into separate slices to
+// be processed into distinct Terraform resources.
 func assembleDashboardPanels(
 	dashboardID string,
 	chartSchemaType ChartSchemaType,
