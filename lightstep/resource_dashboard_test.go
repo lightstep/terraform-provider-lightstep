@@ -1184,8 +1184,14 @@ resource "lightstep_dashboard" "test_text_panels" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "group.1.text_panel.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.*", map[string]string{
+						"text_panel.#":      "1",
+						"text_panel.0.text": "single0",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.*", map[string]string{
+						"text_panel.#":      "1",
+						"text_panel.0.text": "single1",
+					}),
 				),
 			},
 			{
@@ -1222,14 +1228,55 @@ resource "lightstep_dashboard" "test_text_panels" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "group.1.text_panel.#", "3"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.*", map[string]string{
+						"text_panel.#":      "2",
+						"text_panel.0.text": "single0.0",
+						"text_panel.1.text": "single0.1",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.*", map[string]string{
+						"text_panel.#":      "3",
+						"text_panel.0.text": "single1.0",
+						"text_panel.1.text": "single1.1",
+						"text_panel.2.text": "single1.2",
+					}),
 				),
 			},
 		},
 	})
 }
 
-/*
+func TestTextPanelsOutsideGroups(t *testing.T) {
+	var dashboard client.UnifiedDashboard
 
- */
+	resourceName := "lightstep_dashboard.test_text_panels"
+
+	makeTextPanelTestConfig := func() string {
+		return `
+resource "lightstep_dashboard" "test_text_panels" {
+	project_name   = "terraform-provider-tests"
+	dashboard_name   = "test_text_panels"
+	
+	text_panel {
+		name = "Do panic 😅"
+		text = "# Hello **world**...?"
+	}
+}
+`
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Check an invalid text_panel property
+				Config: makeTextPanelTestConfig(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+				),
+				ExpectError: regexp.MustCompile("Unsupported block type"),
+			},
+		},
+	})
+}
