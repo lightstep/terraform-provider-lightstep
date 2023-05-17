@@ -1007,3 +1007,229 @@ func TestDisplayTypeOptions(t *testing.T) {
 		},
 	})
 }
+
+func TestTextPanels(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	resourceName := "lightstep_dashboard.test_text_panels"
+
+	chartDescriptor := `
+	chart {
+		type   = "timeseries"
+		rank   = 0
+		x_pos  = 4
+		y_pos  = 0
+		width  = 4
+		height = 4
+	
+		query {
+		  query_name   = "a"
+		  display      = "line"
+		  hidden       = false
+		  query_string = "metric cpu.utilization | delta | group_by[], sum"
+		}
+	}`
+
+	longText := strings.Repeat("abc ", 1024)
+
+	makeTextPanelTestConfig := func(extra1, extra2 string) string {
+		return fmt.Sprintf(`
+resource "lightstep_dashboard" "test_text_panels" {
+	project_name   = "terraform-provider-tests"
+	dashboard_name   = "test_text_panels"
+	
+	group {
+		rank            = 0
+		title           = ""
+		visibility_type = "implicit"
+
+		%v
+
+		text_panel {
+			name = "Don't panic 😅"
+			text = "# Hello **world**...?"
+		}
+		text_panel {
+			text = "## Hello world"
+			%v
+		}
+	}
+}
+	`, extra1, extra2) //, resourceName, extra)
+	}
+
+	makeTextPanelTestConfig2 := func(body string) string {
+		return fmt.Sprintf(`
+resource "lightstep_dashboard" "test_text_panels" {
+	project_name   = "terraform-provider-tests"
+	dashboard_name   = "test_text_panels"
+	
+	%v
+}
+	`, body) //, resourceName, extra)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Check an invalid text_panel property
+				Config: makeTextPanelTestConfig("", "nonsense = \"true\""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+				),
+				ExpectError: regexp.MustCompile("Unsupported argument"),
+			},
+			{
+				// Rank is not a property of text_panel (explicit position is used instead)
+				Config: makeTextPanelTestConfig("", "rank = 0"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+				),
+				ExpectError: regexp.MustCompile("Unsupported argument"),
+			},
+			{
+				// Check the base config
+				Config: makeTextPanelTestConfig("", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.0.name", "Don't panic 😅"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.0.text", "# Hello **world**...?"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.1.text", "## Hello world"),
+				),
+			},
+			{
+				// Update with a chart
+				Config: makeTextPanelTestConfig(chartDescriptor, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.0.text", "# Hello **world**...?"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.1.text", "## Hello world"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
+				),
+			},
+			{
+				// Update with explicit positioning
+				Config: makeTextPanelTestConfig(chartDescriptor, `
+		x_pos  = 4
+		y_pos  = 4
+		width  = 4
+		height = 4
+`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.0.text", "# Hello **world**...?"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.1.text", "## Hello world"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.1.x_pos", "4"),
+				),
+			},
+			{
+				// Update with a long text string
+				Config: strings.Replace(makeTextPanelTestConfig("", ""), "## Hello world", longText, 1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.0.text", "# Hello **world**...?"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.1.text", longText),
+				),
+			},
+			{
+				// Single group, single text panel
+				Config: makeTextPanelTestConfig2(`
+	group {
+		rank            = 0
+		title           = ""
+		visibility_type = "implicit"
+
+		text_panel {
+			text = "single"
+		}
+	}
+				`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.#", "1"),
+				),
+			},
+			{
+				// Multiple groups, single text panel
+				Config: makeTextPanelTestConfig2(`
+	group {
+		rank            = 0
+		title           = ""
+		visibility_type = "implicit"
+
+		text_panel {
+			text = "single0"
+		}
+	}
+	group {
+		rank            = 1
+		title           = ""
+		visibility_type = "implicit"
+
+		text_panel {
+			text = "single1"
+		}
+	}
+				`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.1.text_panel.#", "1"),
+				),
+			},
+			{
+				// Multiple groups, multiple text panels
+				Config: makeTextPanelTestConfig2(`
+	group {
+		rank            = 0
+		title           = ""
+		visibility_type = "implicit"
+
+		text_panel {
+			text = "single0.0"
+		}
+		text_panel {
+			text = "single0.1"
+		}
+	}
+	group {
+		rank            = 1
+		title           = ""
+		visibility_type = "implicit"
+
+		text_panel {
+			text = "single1.0"
+		}
+		text_panel {
+			text = "single1.1"
+		}
+		text_panel {
+			text = "single1.2"
+		}
+	}
+				`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test_text_panels"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.text_panel.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "group.1.text_panel.#", "3"),
+				),
+			},
+		},
+	})
+}
+
+/*
+
+ */
