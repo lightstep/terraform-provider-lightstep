@@ -155,13 +155,8 @@ func getPanelSchema() map[string]*schema.Schema {
 		// Alias for what we refer to as title elsewhere
 		"name": {
 			Type:     schema.TypeString,
-			Required: true,
-		},
-		"rank": {
-			Type:         schema.TypeInt,
-			ValidateFunc: validation.IntAtLeast(0),
-			Optional:     true,
-			Computed:     true, // Now that position is explicit, we don't want rank changes to produce diffs
+			Optional: true,
+			Default:  "",
 		},
 		"x_pos": {
 			Type:         schema.TypeInt,
@@ -226,9 +221,13 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		map[string]*schema.Schema{
 			"type": {
 				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "timeseries",
+				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"timeseries"}, true),
+			},
+			"rank": {
+				Type:         schema.TypeInt,
+				ValidateFunc: validation.IntAtLeast(0),
+				Required:     true,
 			},
 			"y_axis": {
 				Type:       schema.TypeList,
@@ -467,7 +466,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
-		textPanels, err := buildTextPanels(group["text_panel"].(*schema.Set).List())
+		textPanels, err := buildTextPanels(group["text_panel"].([]interface{}))
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
@@ -501,7 +500,7 @@ func buildTextPanels(textPanelsIn []interface{}) ([]client.UnifiedChart, error) 
 			ChartType: "text",
 			ID:        textPanel["id"].(string),
 			Title:     textPanel["name"].(string),
-			Rank:      textPanel["rank"].(int),
+			Rank:      0, // Always 0, ignored for text panels
 			Position:  buildPosition(textPanel),
 			Text:      textPanel["text"].(string),
 		}
@@ -678,7 +677,6 @@ func assembleDashboardPanels(
 	textPanelResources []interface{},
 	err error,
 ) {
-
 	charts := []client.UnifiedChart{}
 	textPanels := []client.UnifiedChart{}
 
@@ -713,12 +711,11 @@ func setPanelResourceData(
 	panel client.UnifiedChart, // Panel from the API
 ) {
 	resource["name"] = panel.Title
-	resource["rank"] = panel.Rank
 	resource["x_pos"] = panel.Position.XPos
 	resource["y_pos"] = panel.Position.YPos
 	resource["width"] = panel.Position.Width
 	resource["height"] = panel.Position.Height
-	resource["type"] = panel.ChartType
+
 	resource["id"] = panel.ID
 }
 
@@ -756,6 +753,8 @@ func assembleCharts(
 
 		resource := map[string]interface{}{}
 		setPanelResourceData(resource, c)
+		resource["rank"] = c.Rank
+		resource["type"] = c.ChartType
 
 		if c.YAxis != nil {
 			resource["y_axis"] = []map[string]interface{}{
