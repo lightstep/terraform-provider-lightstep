@@ -104,7 +104,6 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 Required:
 
-- `name` (String)
 - `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--chart--query))
 - `rank` (Number)
 - `type` (String)
@@ -112,6 +111,7 @@ Required:
 Optional:
 
 - `height` (Number)
+- `name` (String)
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
@@ -198,6 +198,7 @@ Required:
 Optional:
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
+- `text_panel` (Block List) (see [below for nested schema](#nestedblock--group--text_panel))
 - `title` (String)
 
 Read-Only:
@@ -209,7 +210,6 @@ Read-Only:
 
 Required:
 
-- `name` (String)
 - `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--group--chart--query))
 - `rank` (Number)
 - `type` (String)
@@ -217,6 +217,7 @@ Required:
 Optional:
 
 - `height` (Number)
+- `name` (String)
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
@@ -290,6 +291,26 @@ Required:
 - `max` (Number)
 - `min` (Number)
 
+
+
+<a id="nestedblock--group--text_panel"></a>
+### Nested Schema for `group.text_panel`
+
+Required:
+
+- `text` (String)
+
+Optional:
+
+- `height` (Number)
+- `name` (String)
+- `width` (Number)
+- `x_pos` (Number)
+- `y_pos` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 
