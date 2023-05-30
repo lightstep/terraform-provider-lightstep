@@ -92,7 +92,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 - `dashboard_description` (String)
 - `group` (Block Set) (see [below for nested schema](#nestedblock--group))
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
-- `template_variable` (Block Set) [Do not use - this field is not yet supported by the Lightstep SaaS] Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable))
+- `template_variable` (Block Set) Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable))
 
 ### Read-Only
 
@@ -331,6 +331,6 @@ Optional:
 
 Required:
 
-- `default_values` (List of String) [Do not use - this field is not yet supported by the Lightstep SaaS] One or more values to set the template variable to by default (if none are provided, defaults to all possible values)
-- `name` (String) [Do not use - this field is not yet supported by the Lightstep SaaS] Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores
-- `suggestion_attribute_key` (String) [Do not use - this field is not yet supported by the Lightstep SaaS] Attribute key used as source for suggested template variable values appearing in Lightstep UI
+- `default_values` (List of String) One or more values to set the template variable to by default (if none are provided, defaults to all possible values)
+- `name` (String) Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores
+- `suggestion_attribute_key` (String) Attribute key used as source for suggested template variable values appearing in Lightstep UI
