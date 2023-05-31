@@ -71,7 +71,7 @@ type TemplateVariable struct {
 	SuggestionAttributeKey string   `json:"suggestion_attribute_key"`
 }
 
-func getUnifiedDashboardURL(project, id string, query map[string]string) string {
+func getUnifiedDashboardURL(project, id string) string {
 	path := fmt.Sprintf(
 		"projects/%s/metric_dashboards",
 		url.PathEscape(project),
@@ -80,13 +80,6 @@ func getUnifiedDashboardURL(project, id string, query map[string]string) string 
 		path += "/" + url.PathEscape(id)
 	}
 	u := url.URL{Path: path}
-	if len(query) > 0 {
-		q := u.Query()
-		for k, v := range query {
-			q.Set(k, v)
-		}
-		u.RawQuery = q.Encode()
-	}
 	return u.String()
 }
 
@@ -115,7 +108,7 @@ func (c *Client) CreateUnifiedDashboard(
 		return cond, err
 	}
 
-	url := getUnifiedDashboardURL(projectName, "", nil)
+	url := getUnifiedDashboardURL(projectName, "")
 
 	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
@@ -129,18 +122,13 @@ func (c *Client) CreateUnifiedDashboard(
 	return cond, err
 }
 
-func (c *Client) GetUnifiedDashboard(ctx context.Context, projectName string, id string, convertToQueryString bool) (*UnifiedDashboard, error) {
+func (c *Client) GetUnifiedDashboard(ctx context.Context, projectName string, id string) (*UnifiedDashboard, error) {
 	var (
 		d    *UnifiedDashboard
 		resp Envelope
 	)
 
-	var q map[string]string
-	if convertToQueryString {
-		q = map[string]string{"query_format": "query_string"}
-	}
-
-	url := getUnifiedDashboardURL(projectName, id, q)
+	url := getUnifiedDashboardURL(projectName, id)
 	err := c.CallAPI(ctx, "GET", url, nil, &resp)
 	if err != nil {
 		return nil, err
@@ -170,7 +158,7 @@ func (c *Client) UpdateUnifiedDashboard(
 		return nil, err
 	}
 
-	url := getUnifiedDashboardURL(projectName, dashboardID, nil)
+	url := getUnifiedDashboardURL(projectName, dashboardID)
 	err = c.CallAPI(ctx, "PUT", url, Envelope{Data: bytes}, &resp)
 	if err != nil {
 		return d, err
@@ -181,7 +169,7 @@ func (c *Client) UpdateUnifiedDashboard(
 }
 
 func (c *Client) DeleteUnifiedDashboard(ctx context.Context, projectName string, dashboardID string) error {
-	url := getUnifiedDashboardURL(projectName, dashboardID, nil)
+	url := getUnifiedDashboardURL(projectName, dashboardID)
 
 	err := c.CallAPI(ctx, "DELETE", url, nil, nil)
 	if err != nil {

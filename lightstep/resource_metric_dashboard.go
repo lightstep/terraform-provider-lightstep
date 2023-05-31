@@ -334,19 +334,12 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
 
-	// The lightstep_dashboard resource always wants to use query_strings rather than
-	// JSON-based queries
-	convertToQueryString := false
-	if p.chartSchemaType == UnifiedChartSchema {
-		convertToQueryString = true
-	}
-
 	prevAttrs, hasLegacyChartsIn, err := getUnifiedDashboardAttributesFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
 	}
 
-	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id(), convertToQueryString)
+	dashboard, err := c.GetUnifiedDashboard(ctx, d.Get("project_name").(string), d.Id())
 	if err != nil {
 		apiErr, ok := err.(client.APIResponseCarrier)
 		if !ok {
@@ -848,13 +841,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 		return []*schema.ResourceData{}, fmt.Errorf("error importing %v. Expecting an  ID formed as '<lightstep_project>.<%v_ID>'", resourceName, resourceName)
 	}
 
-	convertToQueryString := false
-	if p.chartSchemaType == UnifiedChartSchema {
-		convertToQueryString = true
-	}
-
 	project, id := ids[0], ids[1]
-	dash, err := c.GetUnifiedDashboard(ctx, project, id, convertToQueryString)
+	dash, err := c.GetUnifiedDashboard(ctx, project, id)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("failed to get dashboard. err: %v", err)
 	}

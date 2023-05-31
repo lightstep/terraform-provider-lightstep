@@ -181,13 +181,9 @@ func Run(args ...string) error {
 	if args[2] != "dashboard" && args[2] != "lightstep_dashboard" {
 		log.Fatalf("error: only dashboard resources are supported at this time")
 	}
-	convertToQueryString := false
-	if args[2] == "lightstep_dashboard" {
-		convertToQueryString = true
-	}
 
 	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepEnv)
-	d, err := c.GetUnifiedDashboard(context.Background(), args[3], args[4], convertToQueryString)
+	d, err := c.GetUnifiedDashboard(context.Background(), args[3], args[4])
 	if err != nil {
 		log.Fatalf("error: could not get dashboard: %v", err)
 	}
