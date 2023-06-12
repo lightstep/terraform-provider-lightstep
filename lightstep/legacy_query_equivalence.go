@@ -144,6 +144,7 @@ func compareUpdatedLegacyQueries(
 	req := map[string]interface{}{
 		"data": map[string]interface{}{
 			"queries": priorQueries,
+			// todo add "template_variables" here
 		},
 	}
 	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
