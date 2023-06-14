@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 	"testing"
