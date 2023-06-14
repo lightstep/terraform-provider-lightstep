@@ -16,7 +16,7 @@ func TestAccSlackDestination(t *testing.T) {
 
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = "terraform-provider-tests"
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   channel = "#emergency-room"
 }
 `
@@ -45,7 +45,7 @@ func TestAccSlackDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_slack_destination" "imported" {
- project_name = "terraform-provider-tests"
+ project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
  channel = "#terraform-provider-acceptance-tests"
 }
 `,
@@ -54,7 +54,7 @@ resource "lightstep_slack_destination" "imported" {
 				ResourceName:        "lightstep_slack_destination.imported",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", testProject),
 			},
 		},
 	})
@@ -74,7 +74,7 @@ func testAccCheckSlackDestinationExists(resourceName string, destination *client
 
 		// get destination from LS
 		client := testAccProvider.Meta().(*client.Client)
-		d, err := client.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
+		d, err := client.GetDestination(context.Background(), testProject, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -91,7 +91,7 @@ func testAccSlackDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		d, err := conn.GetDestination(context.Background(), test_project, r.Primary.ID)
+		d, err := conn.GetDestination(context.Background(), testProject, r.Primary.ID)
 		if err == nil {
 			if d.ID == r.Primary.ID {
 				return fmt.Errorf("destination with ID (%v) still exists.", r.Primary.ID)

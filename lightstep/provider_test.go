@@ -1,6 +1,7 @@
 package lightstep
 
 import (
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -9,9 +10,9 @@ import (
 var testAccProviders map[string]*schema.Provider
 var testAccProvider *schema.Provider
 var testAccProviderFactories map[string]func() (*schema.Provider, error)
+var testProject string
 
 func init() {
-
 	testAccProvider = Provider()
 	testAccProviders = map[string]*schema.Provider{
 		"lightstep": testAccProvider,
@@ -20,10 +21,11 @@ func init() {
 	testAccProviderFactories = map[string]func() (*schema.Provider, error){
 		"lightstep": func() (*schema.Provider, error) { return Provider(), nil }, //nolint:unparam
 	}
-}
 
-func TestProvider_impl(t *testing.T) {
-	var _ *schema.Provider = Provider()
+	testProject = os.Getenv("LIGHTSTEP_PROJECT")
+	if testProject == "" {
+		testProject = "terraform-provider-tests"
+	}
 }
 
 func TestProvider(t *testing.T) {

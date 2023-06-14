@@ -17,14 +17,14 @@ func TestAccPagerdutyDestination(t *testing.T) {
 
 	missingExpressionConfig := `
 resource "lightstep_pagerduty_destination" "missing_pagerduty" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "missing integration_key"
 }
 `
 
 	destinationConfig := `
 resource "lightstep_pagerduty_destination" "pagerduty" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "Acceptance Test Destination"
   integration_key = "abc123def456"
 }
@@ -62,7 +62,7 @@ func TestAccPagerdutyDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_pagerduty_destination" "pagerduty" {
-	project_name = "terraform-provider-tests"
+	project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	destination_name = "Terraform LS Destination Acceptance Test Service"
 	integration_key = "8e25bec5edc44d05a2acf8238d0246d5"
 }
@@ -72,7 +72,7 @@ resource "lightstep_pagerduty_destination" "pagerduty" {
 				ResourceName:        "lightstep_pagerduty_destination.pagerduty",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", testProject),
 			},
 		},
 	})
@@ -92,7 +92,7 @@ func testAccCheckPagerdutyDestinationExists(resourceName string, destination *cl
 
 		// get destination from LS
 		c := testAccProvider.Meta().(*client.Client)
-		d, err := c.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
+		d, err := c.GetDestination(context.Background(), testProject, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -109,7 +109,7 @@ func testAccPagerdutyDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
+		s, err := conn.GetDestination(context.Background(), testProject, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("destination with ID (%v) still exists.", resource.Primary.ID)

@@ -15,7 +15,7 @@ func TestAccDashboardLegacyFormat(t *testing.T) {
 
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
-	project_name          = "terraform-provider-tests"
+	project_name          = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardLegacyFormat)"
 	dashboard_description = "Dashboard to test if the legacy formats are retained when there's no diff"
 	
@@ -96,7 +96,7 @@ func TestAccDashboardLegacyAndTQLFormat(t *testing.T) {
 
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
-	project_name          = "terraform-provider-tests"
+	project_name          = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardLegacyFormat)"
 	dashboard_description = "Dashboard to test if the legacy formats are retained when there's no diff"
 	
@@ -242,7 +242,7 @@ func TestAccDashboardVPADashTest(t *testing.T) {
 
 	dashboardConfig := `
 resource "lightstep_metric_dashboard" "test" {
- project_name   = "terraform-provider-tests"
+ project_name   = ` + fmt.Sprintf("\"%s\"", testProject) + `
  dashboard_name = "VPA (VerticalPodAutoscaler) - TimeSeries (terraform)"
 
  chart {

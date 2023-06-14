@@ -17,14 +17,14 @@ func TestAccWebhookDestination(t *testing.T) {
 
 	missingExpressionConfig := `
 resource "lightstep_webhook_destination" "missing_webhook" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "alert-scraper"
 }
 `
 
 	destinationConfig := `
 resource "lightstep_webhook_destination" "webhook" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "very important webhook"
   url = "https://www.downforeveryoneorjustme.com"
   custom_headers = {
@@ -66,7 +66,7 @@ func TestAccWebhookDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_webhook_destination" "webhook" {
-	project_name = "terraform-provider-tests"
+	project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	destination_name = "do-not-delete"
 	url = "https://www.this-is-for-the-integration-tests.com"
     custom_headers = {
@@ -79,7 +79,7 @@ resource "lightstep_webhook_destination" "webhook" {
 				ResourceName:        "lightstep_webhook_destination.webhook",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", testProject),
 			},
 		},
 	})
@@ -99,7 +99,7 @@ func testAccCheckWebhookDestinationExists(resourceName string, destination *clie
 
 		// get destination from LS
 		client := testAccProvider.Meta().(*client.Client)
-		d, err := client.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
+		d, err := client.GetDestination(context.Background(), testProject, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -116,7 +116,7 @@ func testAccWebhookDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
+		s, err := conn.GetDestination(context.Background(), testProject, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("destination with ID (%v) still exists.", resource.Primary.ID)
