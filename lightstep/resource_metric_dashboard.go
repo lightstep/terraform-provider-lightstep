@@ -153,14 +153,24 @@ func getTextPanelSchema() map[string]*schema.Schema {
 //
 // Timeseries charts requires "name" to be a required, while text panels don't.
 func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
+	nameSchema := func() *schema.Schema {
+		if isNameRequired {
+			return &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			}
+		}
+
+		return &schema.Schema{
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		}
+	}
+
 	return map[string]*schema.Schema{
 		// Alias for what we refer to as title elsewhere
-		"name": {
-			Type:     schema.TypeString,
-			Optional: !isNameRequired,
-			Required: isNameRequired,
-			Default:  "",
-		},
+		"name": nameSchema(),
 		"x_pos": {
 			Type:         schema.TypeInt,
 			ValidateFunc: validation.IntAtLeast(0),
