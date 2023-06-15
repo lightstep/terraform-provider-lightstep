@@ -82,6 +82,7 @@ resource "lightstep_dashboard" "customer_charges" {
 
 Required:
 
+- `name` (String)
 - `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--chart--query))
 - `rank` (Number)
 - `type` (String)
@@ -89,7 +90,6 @@ Required:
 Optional:
 
 - `height` (Number)
-- `name` (String)
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
@@ -167,6 +167,7 @@ Read-Only:
 
 Required:
 
+- `name` (String)
 - `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--group--chart--query))
 - `rank` (Number)
 - `type` (String)
@@ -174,7 +175,6 @@ Required:
 Optional:
 
 - `height` (Number)
-- `name` (String)
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))

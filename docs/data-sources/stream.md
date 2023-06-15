@@ -25,5 +25,3 @@ Use this data source to retrieve information about an existing stream for use in
 - `id` (String) The ID of this resource.
 - `stream_name` (String)
 - `stream_query` (String) Stream query
-
-

@@ -139,7 +139,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 
 func getTextPanelSchema() map[string]*schema.Schema {
 	return mergeSchemas(
-		getPanelSchema(),
+		getPanelSchema(false),
 		map[string]*schema.Schema{
 			"text": {
 				Type:     schema.TypeString,
@@ -150,12 +150,15 @@ func getTextPanelSchema() map[string]*schema.Schema {
 }
 
 // getPanelSchema returns the common metadata on any dashboard panel (timeseries charts or text panels)
-func getPanelSchema() map[string]*schema.Schema {
+//
+// Timeseries charts requires "name" to be a required, while text panels don't.
+func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		// Alias for what we refer to as title elsewhere
 		"name": {
 			Type:     schema.TypeString,
-			Optional: true,
+			Optional: !isNameRequired,
+			Required: isNameRequired,
 			Default:  "",
 		},
 		"x_pos": {
@@ -217,7 +220,7 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 	}
 
 	return mergeSchemas(
-		getPanelSchema(),
+		getPanelSchema(true),
 		map[string]*schema.Schema{
 			"type": {
 				Type:         schema.TypeString,

@@ -1015,6 +1015,7 @@ func TestTextPanels(t *testing.T) {
 
 	chartDescriptor := `
 	chart {
+		name   = "cpu"
 		type   = "timeseries"
 		rank   = 0
 		x_pos  = 4
