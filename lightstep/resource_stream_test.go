@@ -18,7 +18,7 @@ func TestAccStream(t *testing.T) {
 
 	badQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   stream_name = "Errors (All)"
   query = "error = true"
 }
@@ -26,7 +26,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	streamConfig := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   stream_name = "Aggie Errors"
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
   custom_data = [
@@ -42,7 +42,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   stream_name = "Errors (All)"
   query = "\"error\" IN (\"true\")"
   custom_data = [
@@ -99,7 +99,7 @@ func TestAccStreamImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_stream" "import-stream"{
-	project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+	project_name = "` + testProject + `"
     stream_name = "very important stream to import"
 	query = "service IN (\"api\")"
 }
@@ -120,21 +120,21 @@ func TestAccStreamQueryNormalization(t *testing.T) {
 
 	query1 := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query 1"
 	  query = "\"error\" IN (\"true\") AND service IN (\"api\")"
 	}
 	`
 	query1updated := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query One"
 	  query = "\"error\" IN (\"true\") AND service IN (\"api\")"
 	}
 	`
 	query1updatedQuery := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query One"
 	  query = "service IN (\"api\") AND \"error\" IN (\"true\")"
 	}

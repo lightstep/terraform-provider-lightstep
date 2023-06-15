@@ -16,7 +16,7 @@ func TestAccSlackDestination(t *testing.T) {
 
 	destinationConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 `
@@ -45,7 +45,7 @@ func TestAccSlackDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_slack_destination" "imported" {
- project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+ project_name = "` + testProject + `"
  channel = "#terraform-provider-acceptance-tests"
 }
 `,

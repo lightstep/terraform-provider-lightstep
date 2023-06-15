@@ -17,14 +17,14 @@ func TestAccPagerdutyDestination(t *testing.T) {
 
 	missingExpressionConfig := `
 resource "lightstep_pagerduty_destination" "missing_pagerduty" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   destination_name = "missing integration_key"
 }
 `
 
 	destinationConfig := `
 resource "lightstep_pagerduty_destination" "pagerduty" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   destination_name = "Acceptance Test Destination"
   integration_key = "abc123def456"
 }
@@ -62,7 +62,7 @@ func TestAccPagerdutyDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_pagerduty_destination" "pagerduty" {
-	project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+	project_name = "` + testProject + `"
 	destination_name = "Terraform LS Destination Acceptance Test Service"
 	integration_key = "8e25bec5edc44d05a2acf8238d0246d5"
 }

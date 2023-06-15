@@ -45,7 +45,7 @@ func TestAccMetricCondition(t *testing.T) {
 
 	badCondition := `
 resource "lightstep_metric_condition" "errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Too many requests"
   expression {
 	  is_multi   = true
@@ -62,12 +62,12 @@ resource "lightstep_metric_condition" "errors" {
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Too many requests"
   description = "A link to a playbook"
 
@@ -133,12 +133,12 @@ resource "lightstep_metric_condition" "test" {
 
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "updated"
   description = "A link to a fresh playbook"
 
@@ -252,12 +252,12 @@ func TestAccSpanLatencyCondition(t *testing.T) {
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span latency alert"
 
   expression {
@@ -296,12 +296,12 @@ resource "lightstep_metric_condition" "test" {
 
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span latency alert - updated"
 
   expression {
@@ -373,12 +373,12 @@ func TestAccSpanRateCondition(t *testing.T) {
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span rate alert"
 
   expression {
@@ -416,12 +416,12 @@ resource "lightstep_metric_condition" "test" {
 
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span rate alert - updated"
 
   expression {
@@ -490,12 +490,12 @@ func TestAccSpanErrorRatioCondition(t *testing.T) {
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span error ratio alert"
 
   expression {
@@ -533,12 +533,12 @@ resource "lightstep_metric_condition" "test" {
 
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span error ratio alert - updated"
 
   expression {
@@ -607,12 +607,12 @@ func TestAccSpanRateConditionWithFormula(t *testing.T) {
 
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span rate alert"
 
   expression {
@@ -656,12 +656,12 @@ resource "lightstep_metric_condition" "test" {
 
 	updatedConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   channel = "#emergency-room"
 }
 
 resource "lightstep_metric_condition" "test" {
-  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
+  project_name = "` + testProject + `"
   name = "Span rate alert - updated"
 
   expression {
@@ -742,12 +742,12 @@ with
 join (a/b)*100, a=0, b=0`
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+fmt.Sprintf("\"%s\"", testProject)+`
+  project_name = `+"` + testProject + `"+`
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+fmt.Sprintf("\"%s\"", testProject)+`
+  project_name = `+"` + testProject + `"+`
   name = "Too many requests"
 
   expression {
