@@ -183,12 +183,12 @@ resource "lightstep_metric_condition" "errors" {
 
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Too many requests"
   description = "A link to a playbook"
 
@@ -235,12 +235,12 @@ EOT
 
 	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "updated"
   description = "A link to a fresh playbook"
 
@@ -328,12 +328,12 @@ func TestAccSpanLatencyAlert(t *testing.T) {
 
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Span latency alert"
 
   expression {
@@ -366,12 +366,12 @@ EOT
 
 	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Span latency alert - updated"
 
   expression {
@@ -433,12 +433,12 @@ func TestAccAlertSpansQueryWithFormula(t *testing.T) {
 
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Span rate alert"
 
   expression {
@@ -471,12 +471,12 @@ EOT
 
 	updatedConditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Span rate alert - updated"
 
   expression {
@@ -542,12 +542,12 @@ with
 join (a/b)*100, a=0, b=0`
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Too many requests"
 
   expression {

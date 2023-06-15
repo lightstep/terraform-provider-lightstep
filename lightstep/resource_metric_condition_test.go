@@ -742,12 +742,12 @@ with
 join (a/b)*100, a=0, b=0`
 	conditionConfig := fmt.Sprintf(`
 resource "lightstep_slack_destination" "slack" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   channel = "#emergency-room"
 }
 
 resource "lightstep_alert" "test" {
-  project_name = `+"` + testProject + `"+`
+  project_name = "`+testProject+`"
   name = "Too many requests"
 
   expression {

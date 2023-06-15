@@ -330,7 +330,7 @@ func TestAccDashboard2(t *testing.T) {
 	// missing required field 'type'
 	badDashboard := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = `+"` + testProject + `"+`
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
 
@@ -358,7 +358,7 @@ EOT
 
 	dashboardConfig := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = `+"` + testProject + `"+`
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
 
@@ -387,7 +387,7 @@ EOT
 
 	updatedTitleDashboardConfig := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = `+"` + testProject + `"+`
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard Updated"
   dashboard_description = "Dashboard to test if the terraform provider still works"
 
@@ -615,7 +615,7 @@ join b + c, b = 0, c = 0
 
 	config := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-	project_name          = `+"` + testProject + `"+`
+	project_name          = "`+testProject+`"
 	dashboard_name        = "Acceptance Test Dashboard with Hidden Queries"
 	chart {
 	  name = "Chart Number One"
@@ -903,7 +903,7 @@ resource "lightstep_dashboard" "test_dash" {
 func makeDisplayTypeConfig(displayType, displayTypeOptions string) string {
 	return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_display_type_options" {
-project_name   = `+"` + testProject + `"+`
+project_name   = "`+testProject+`"
 dashboard_name = "test display_type_options"
 
 group {
@@ -1036,7 +1036,7 @@ func TestTextPanels(t *testing.T) {
 	makeTextPanelTestConfig := func(extra1, extra2 string) string {
 		return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_text_panels" {
-	project_name   = `+"` + testProject + `"+`
+	project_name   = "`+testProject+`"
 	dashboard_name   = "test_text_panels"
 	
 	group {
@@ -1062,7 +1062,7 @@ resource "lightstep_dashboard" "test_text_panels" {
 	makeTextPanelTestConfig2 := func(body string) string {
 		return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_text_panels" {
-	project_name   = `+"` + testProject + `"+`
+	project_name   = "`+testProject+`"
 	dashboard_name   = "test_text_panels"
 	
 	%v
