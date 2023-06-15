@@ -46,7 +46,7 @@ jobs:
       - name: Setup tfplugindocs
         run: |
           cd /tmp
-          curl -L -o tfplugindocs.zip https://github.com/hashicorp/terraform-plugin-docs/releases/download/v0.13.0/tfplugindocs_0.13.0_linux_amd64.zip
+          curl -L -o tfplugindocs.zip https://github.com/hashicorp/terraform-plugin-docs/releases/download/v0.15.0/tfplugindocs_0.15.0_linux_amd64.zip
           unzip tfplugindocs.zip
           chmod +x tfplugindocs
 
