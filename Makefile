@@ -42,7 +42,7 @@ acc-test:
 ifndef LIGHTSTEP_API_KEY_PUBLIC
 	$(error LIGHTSTEP_API_KEY_PUBLIC must be defined for acc-test)
 endif
-	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_PROJECT="terraform-provider-tests" LIGHTSTEP_ENV="public" go test -v ./lightstep
+	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="terraform-provider" LIGHTSTEP_PROJECT="terraform-provider-test" LIGHTSTEP_ENV="public" go test -v ./lightstep
 
 .PHONY: test-local
 test-local:
