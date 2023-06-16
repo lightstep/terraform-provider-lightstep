@@ -57,10 +57,9 @@ type Envelope struct {
 	Data json.RawMessage `json:"data"`
 }
 
-type Body struct {
-	Data   interface{}            `json:"data,omitempty"`
-	Errors []string               `json:"errors,omitempty"`
-	Links  map[string]interface{} `json:"links,omitempty"`
+// genericAPIResponse represents a generic response from the Lightstep Public API
+type genericAPIResponse[T any] struct {
+	Data T `json:"data"`
 }
 
 type Client struct {
@@ -254,4 +253,9 @@ func (c *Client) GetStreamIDByLink(ctx context.Context, url string) (string, err
 	}
 
 	return str.ID, nil
+}
+
+// OrgName returns the name of the organization that this client will make request on behalf to.
+func (c *Client) OrgName() string {
+	return c.orgName
 }
