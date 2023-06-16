@@ -42,18 +42,30 @@ acc-test:
 ifndef LIGHTSTEP_API_KEY_PUBLIC
 	$(error LIGHTSTEP_API_KEY_PUBLIC must be defined for acc-test)
 endif
-	@TF_ACC=true LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep
+	@TF_ACC=true \
+	LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} \
+	LIGHTSTEP_ORG="terraform-provider" \
+	LIGHTSTEP_PROJECT="terraform-provider-test" \
+	LIGHTSTEP_ENV="public" \
+	go test -v ./lightstep
 
 .PHONY: test-local
 test-local:
-	@TF_ACC=true LIGHTSTEP_API_BASE_URL=http://localhost:11000 LIGHTSTEP_API_KEY=${LIGHTSTEP_LOCAL_API_KEY} LIGHTSTEP_ORG="LightStep" LIGHTSTEP_ENV="public" go test -v ./lightstep 
+	@TF_ACC=true \
+	LIGHTSTEP_API_BASE_URL=http://localhost:11000 \
+	LIGHTSTEP_API_KEY=${LIGHTSTEP_LOCAL_API_KEY}  \
+	LIGHTSTEP_ORG="terraform-provider" \
+	LIGHTSTEP_PROJECT="terraform-provider-test" \
+	LIGHTSTEP_ENV="public" \
+	go test -v ./lightstep
 
 .PHONY: test-staging
 test-staging:
 	@TF_ACC=true \
 	LIGHTSTEP_API_BASE_URL=https://api-staging.lightstep.com \
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_STAGING_API_KEY} \
-	LIGHTSTEP_ORG="LightStep" \
+	LIGHTSTEP_ORG="terraform-provider" \
+	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_ENV="staging" \
 	go test -v ./lightstep
 

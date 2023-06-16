@@ -13,14 +13,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-const test_project = "terraform-provider-tests"
-
 func TestAccStream(t *testing.T) {
 	var stream client.Stream
 
 	badQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = "` + testProject + `"
   stream_name = "Errors (All)"
   query = "error = true"
 }
@@ -28,7 +26,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	streamConfig := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = "` + testProject + `"
   stream_name = "Aggie Errors"
   query = "service IN (\"aggie\") AND \"error\" IN (\"true\")"
   custom_data = [
@@ -44,7 +42,7 @@ resource "lightstep_stream" "aggie_errors" {
 
 	updatedNameQuery := `
 resource "lightstep_stream" "aggie_errors" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = "` + testProject + `"
   stream_name = "Errors (All)"
   query = "\"error\" IN (\"true\")"
   custom_data = [
@@ -101,7 +99,7 @@ func TestAccStreamImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_stream" "import-stream"{
-	project_name = "terraform-provider-tests"
+	project_name = "` + testProject + `"
     stream_name = "very important stream to import"
 	query = "service IN (\"api\")"
 }
@@ -111,7 +109,7 @@ resource "lightstep_stream" "import-stream"{
 				ResourceName:        "lightstep_stream.import-stream",
 				ImportState:         true,
 				ImportStateVerify:   true,
-				ImportStateIdPrefix: fmt.Sprintf("%s.", test_project),
+				ImportStateIdPrefix: fmt.Sprintf("%s.", testProject),
 			},
 		},
 	})
@@ -122,21 +120,21 @@ func TestAccStreamQueryNormalization(t *testing.T) {
 
 	query1 := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query 1"
 	  query = "\"error\" IN (\"true\") AND service IN (\"api\")"
 	}
 	`
 	query1updated := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query One"
 	  query = "\"error\" IN (\"true\") AND service IN (\"api\")"
 	}
 	`
 	query1updatedQuery := `
 	resource "lightstep_stream" "query_one" {
-	  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+	  project_name = "` + testProject + `"
 	  stream_name = "Query One"
 	  query = "service IN (\"api\") AND \"error\" IN (\"true\")"
 	}
@@ -190,7 +188,7 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 
 		// get stream from LS
 		client := testAccProvider.Meta().(*client.Client)
-		str, err := client.GetStream(context.Background(), test_project, tfStream.Primary.ID)
+		str, err := client.GetStream(context.Background(), testProject, tfStream.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -210,7 +208,7 @@ func testAccStreamDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetStream(context.Background(), test_project, resource.Primary.ID)
+		s, err := conn.GetStream(context.Background(), testProject, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("stream with ID (%v) still exists.", resource.Primary.ID)

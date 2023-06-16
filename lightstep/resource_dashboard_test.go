@@ -19,7 +19,7 @@ func TestAccDashboard(t *testing.T) {
 	// missing required field 'type'
 	badDashboard := `
 	resource "lightstep_dashboard" "test" {
-	 project_name   = "terraform-provider-tests"
+	 project_name   = "` + testProject + `"
 	 dashboard_name = "Acceptance Test Dashboard"
 	
 	 chart {
@@ -43,7 +43,7 @@ func TestAccDashboard(t *testing.T) {
 
 	queryDashboardConfig := `
 	resource "lightstep_dashboard" "test" {
-	 project_name = "terraform-provider-tests"
+	 project_name = "` + testProject + `"
 	 dashboard_name = "Acceptance Test Dashboard"
 	
 	 chart {
@@ -63,7 +63,7 @@ func TestAccDashboard(t *testing.T) {
 
 	dashboardConfig := `
 	resource "lightstep_dashboard" "test" {
-	 project_name = "terraform-provider-tests"
+	 project_name = "` + testProject + `"
 	 dashboard_name = "Acceptance Test Dashboard"
 	
 	 chart {
@@ -87,7 +87,7 @@ func TestAccDashboard(t *testing.T) {
 	`
 	updatedTitleDashboardConfig := `
 	resource "lightstep_dashboard" "test" {
-	 project_name = "terraform-provider-tests"
+	 project_name = "` + testProject + `"
 	 dashboard_name = "Acceptance Test Dashboard Updated"
 	
 	 chart {
@@ -112,7 +112,7 @@ func TestAccDashboard(t *testing.T) {
 
 	dependencyMapDashboard := `
 	resource "lightstep_dashboard" "test" {
-	 project_name   = "terraform-provider-tests"
+	 project_name   = "` + testProject + `"
 	 dashboard_name = "Acceptance Test Dashboard"
 	
 	 chart {
@@ -136,7 +136,7 @@ func TestAccDashboard(t *testing.T) {
 
 	groupedDashboardConfig := `
 	resource "lightstep_dashboard" "test" {
-		project_name          = "terraform-provider-tests"
+		project_name          = "` + testProject + `"
 		dashboard_name        = "Acceptance Test Dashboard"
 		dashboard_description = "Dashboard to test if the terraform provider works"
 		group {
@@ -163,7 +163,7 @@ func TestAccDashboard(t *testing.T) {
 resource "lightstep_dashboard" "test" {
   dashboard_name = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
 
   group {
     rank            = 0
@@ -193,7 +193,7 @@ resource "lightstep_dashboard" "test" {
 resource "lightstep_dashboard" "test" {
   dashboard_name = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
 
   group {
     rank            = 0
@@ -330,7 +330,7 @@ func TestAccDashboard2(t *testing.T) {
 	// missing required field 'type'
 	badDashboard := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
 
@@ -358,7 +358,7 @@ EOT
 
 	dashboardConfig := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard"
   dashboard_description = "Dashboard to test if the terraform provider works"
 
@@ -387,7 +387,7 @@ EOT
 
 	updatedTitleDashboardConfig := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
+  project_name          = "`+testProject+`"
   dashboard_name        = "Acceptance Test Dashboard Updated"
   dashboard_description = "Dashboard to test if the terraform provider still works"
 
@@ -456,7 +456,7 @@ func TestAccDashboardLabels(t *testing.T) {
 
 	baseConfig := `
 resource "lightstep_dashboard" "labels" {
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
   dashboard_name = "Acceptance Test Dashboard"
 
   label {
@@ -481,7 +481,7 @@ resource "lightstep_dashboard" "labels" {
 
 	updatedConfig := `
 resource "lightstep_dashboard" "labels" {
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
   dashboard_name = "Acceptance Test Dashboard"
 
   chart {
@@ -529,7 +529,7 @@ resource "lightstep_dashboard" "labels" {
 func TestAccDashboardWithTemplateVariables(t *testing.T) {
 	validDashboardConfigWithTemplateVariables := `
 resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
+  project_name          = "` + testProject + `"
   dashboard_name        = "Acceptance Test Dashboard with Template Variables"
   chart {
     name = "Chart Number One"
@@ -552,7 +552,7 @@ resource "lightstep_dashboard" "test" {
 
 	invalidDashboardConfigWithInvalidTemplateVariableName := `
 resource "lightstep_dashboard" "test" {
-  project_name          = "terraform-provider-tests"
+  project_name          = "` + testProject + `"
   dashboard_name        = "Acceptance Test Dashboard"
   chart {
     name = "Chart Number One"
@@ -615,7 +615,7 @@ join b + c, b = 0, c = 0
 
 	config := fmt.Sprintf(`
 resource "lightstep_dashboard" "test" {
-	project_name          = "terraform-provider-tests"
+	project_name          = "`+testProject+`"
 	dashboard_name        = "Acceptance Test Dashboard with Hidden Queries"
 	chart {
 	  name = "Chart Number One"
@@ -670,7 +670,7 @@ func testGetMetricDashboardDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetUnifiedDashboard(context.Background(), test_project, r.Primary.ID)
+		s, err := conn.GetUnifiedDashboard(context.Background(), testProject, r.Primary.ID)
 		if err == nil {
 			if s.ID == r.Primary.ID {
 				return fmt.Errorf("metric dashboard with ID (%v) still exists.", r.Primary.ID)
@@ -692,7 +692,7 @@ func testAccCheckMetricDashboardExists(resourceName string, dashboard *client.Un
 		}
 
 		c := testAccProvider.Meta().(*client.Client)
-		dash, err := c.GetUnifiedDashboard(context.Background(), test_project, tfDashboard.Primary.ID)
+		dash, err := c.GetUnifiedDashboard(context.Background(), testProject, tfDashboard.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -707,7 +707,7 @@ func TestLegacyImplicitGroup(t *testing.T) {
 
 	baseConfig := `
 resource "lightstep_dashboard" "test_implicit_group" {
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
   dashboard_name = "test legacy implicit groups"
 
   # we declare this implicit group explicitly; it is thus _not_ a legacy implicit group
@@ -761,7 +761,7 @@ func TestGroupChartsAreComputed(t *testing.T) {
 
 	baseConfig := `
 resource "lightstep_dashboard" "test_dash" {
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
   dashboard_name = "test dash"
 
   label {
@@ -811,7 +811,7 @@ resource "lightstep_dashboard" "test_dash" {
 
 	updatedConfig := `
 resource "lightstep_dashboard" "test_dash" {
-  project_name   = "terraform-provider-tests"
+  project_name   = "` + testProject + `"
   dashboard_name = "test dash"
 
   label {
@@ -903,7 +903,7 @@ resource "lightstep_dashboard" "test_dash" {
 func makeDisplayTypeConfig(displayType, displayTypeOptions string) string {
 	return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_display_type_options" {
-project_name   = "terraform-provider-tests"
+project_name   = "`+testProject+`"
 dashboard_name = "test display_type_options"
 
 group {
@@ -1015,6 +1015,7 @@ func TestTextPanels(t *testing.T) {
 
 	chartDescriptor := `
 	chart {
+		name   = "cpu"
 		type   = "timeseries"
 		rank   = 0
 		x_pos  = 4
@@ -1035,7 +1036,7 @@ func TestTextPanels(t *testing.T) {
 	makeTextPanelTestConfig := func(extra1, extra2 string) string {
 		return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_text_panels" {
-	project_name   = "terraform-provider-tests"
+	project_name   = "`+testProject+`"
 	dashboard_name   = "test_text_panels"
 	
 	group {
@@ -1061,7 +1062,7 @@ resource "lightstep_dashboard" "test_text_panels" {
 	makeTextPanelTestConfig2 := func(body string) string {
 		return fmt.Sprintf(`
 resource "lightstep_dashboard" "test_text_panels" {
-	project_name   = "terraform-provider-tests"
+	project_name   = "`+testProject+`"
 	dashboard_name   = "test_text_panels"
 	
 	%v
@@ -1253,7 +1254,7 @@ func TestTextPanelsOutsideGroups(t *testing.T) {
 	makeTextPanelTestConfig := func() string {
 		return `
 resource "lightstep_dashboard" "test_text_panels" {
-	project_name   = "terraform-provider-tests"
+	project_name   = "` + testProject + `"
 	dashboard_name   = "test_text_panels"
 	
 	text_panel {
