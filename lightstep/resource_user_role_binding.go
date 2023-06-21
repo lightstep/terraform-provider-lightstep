@@ -32,7 +32,7 @@ func resourceUserRoleBinding() *schema.Resource {
 				ForceNew: true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
 			},
 			"users": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Required: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -57,7 +57,7 @@ func getUserRoleBindingFromResource(_ context.Context, d *schema.ResourceData) c
 
 	users, ok := d.GetOk("users")
 	if ok {
-		for _, user := range users.([]interface{}) {
+		for _, user := range users.(*schema.Set).List() {
 			userRoleBinding.Users = append(userRoleBinding.Users, user.(string))
 		}
 	}
@@ -66,9 +66,9 @@ func getUserRoleBindingFromResource(_ context.Context, d *schema.ResourceData) c
 }
 
 func setUserRoleBindingFromResource(d *schema.ResourceData, userRoleBinding client.RoleBinding) error {
-	var users []interface{}
+	users := schema.NewSet(schema.HashString, nil)
 	for _, user := range userRoleBinding.Users {
-		users = append(users, user)
+		users.Add(user)
 	}
 
 	err := d.Set("users", users)

@@ -60,6 +60,7 @@ func Provider() *schema.Provider {
 			"lightstep_alerting_rule":          resourceAlertingRule(),
 			"lightstep_dashboard":              resourceUnifiedDashboard(UnifiedChartSchema),
 			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),
+			"lightstep_user_role_binding":     resourceUserRoleBinding(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
