@@ -10,6 +10,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -94,6 +95,12 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 
+	rateLimitStr := os.Getenv("LIGHTSTEP_API_RATE_LIMIT")
+	rateLimit, err := strconv.Atoi(rateLimitStr)
+	if err != nil {
+		rateLimit = DefaultRateLimitPerSecond
+	}
+
 	// Default client retries 5xx and 429 errors.
 	newClient := retryablehttp.NewClient()
 	newClient.HTTPClient.Timeout = DefaultTimeoutSeconds * time.Second
@@ -103,7 +110,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 		orgName:     orgName,
 		baseURL:     fullBaseURL,
 		userAgent:   userAgent,
-		rateLimiter: rate.NewLimiter(rate.Limit(DefaultRateLimitPerSecond), 1),
+		rateLimiter: rate.NewLimiter(rate.Limit(rateLimit), 1),
 		client:      newClient,
 		contentType: "application/vnd.api+json",
 	}
