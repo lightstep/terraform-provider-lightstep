@@ -86,7 +86,7 @@ func TestAccServiceNowDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_servicenow_destination" "servicenow" {
-	project_name = "terraform-provider-tests"
+    project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	destination_name = "do-not-delete-sn"
 	url = "https://example.com"
     auth {
