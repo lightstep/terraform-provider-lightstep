@@ -105,6 +105,10 @@ jobs:
         run: make test
   acc-tests:
     runs-on: ubuntu-latest
+    ## Skip acc tests on dependabot PRs because secrets are excluded on these PRs
+    ## which in turn guarantees that the acc-tests will fail. We will rely solely on
+    ## unit tests to tell us that the dependencies are working as expected.
+    if: ${{ github.actor != 'dependabot[bot]' }}
     env:
       LIGHTSTEP_API_KEY_PUBLIC: ${{ secrets.LIGHTSTEP_API_KEY_PUBLIC }}
 
