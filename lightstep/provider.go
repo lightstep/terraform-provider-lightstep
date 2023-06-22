@@ -7,11 +7,13 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
+
 	"github.com/lightstep/terraform-provider-lightstep/version"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -48,17 +50,18 @@ func Provider() *schema.Provider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"lightstep_stream":                resourceStream(),
-			"lightstep_stream_dashboard":      resourceStreamDashboard(),
-			"lightstep_stream_condition":      resourceStreamCondition(),
-			"lightstep_metric_condition":      resourceUnifiedCondition(MetricConditionSchema),
-			"lightstep_metric_dashboard":      resourceUnifiedDashboard(MetricChartSchema),
-			"lightstep_webhook_destination":   resourceWebhookDestination(),
-			"lightstep_pagerduty_destination": resourcePagerdutyDestination(),
-			"lightstep_slack_destination":     resourceSlackDestination(),
-			"lightstep_alerting_rule":         resourceAlertingRule(),
-			"lightstep_dashboard":             resourceUnifiedDashboard(UnifiedChartSchema),
-			"lightstep_alert":                 resourceUnifiedCondition(UnifiedConditionSchema),
+			"lightstep_stream":                 resourceStream(),
+			"lightstep_stream_dashboard":       resourceStreamDashboard(),
+			"lightstep_stream_condition":       resourceStreamCondition(),
+			"lightstep_metric_condition":       resourceUnifiedCondition(MetricConditionSchema),
+			"lightstep_metric_dashboard":       resourceUnifiedDashboard(MetricChartSchema),
+			"lightstep_webhook_destination":    resourceWebhookDestination(),
+			"lightstep_pagerduty_destination":  resourcePagerdutyDestination(),
+			"lightstep_slack_destination":      resourceSlackDestination(),
+			"lightstep_servicenow_destination": resourceServiceNowDestination(),
+			"lightstep_alerting_rule":          resourceAlertingRule(),
+			"lightstep_dashboard":              resourceUnifiedDashboard(UnifiedChartSchema),
+			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
