@@ -116,7 +116,7 @@ resource "lightstep_user_role_binding" "proj_member" {
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.org_admin", "users.*", "terraform-test+2@lightstep.com"),
 
 					resource.TestCheckResourceAttr("lightstep_user_role_binding.org_restricted", "project", ""),
-					resource.TestCheckResourceAttr("lightstep_user_role_binding.org_restricted", "users.#", "4	"),
+					resource.TestCheckResourceAttr("lightstep_user_role_binding.org_restricted", "users.#", "4"),
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.org_restricted", "users.*", "terraform-test+1@lightstep.com"),
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.org_restricted", "users.*", "terraform-test+3@lightstep.com"),
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.org_restricted", "users.*", "terraform-test+4@lightstep.com"),
