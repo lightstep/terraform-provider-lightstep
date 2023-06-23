@@ -17,7 +17,7 @@ func TestAccServiceNowDestination(t *testing.T) {
 
 	missingUrlConfig := `
 resource "lightstep_servicenow_destination" "missing_url" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "my-destination"
   auth {
     username = "me"
@@ -27,7 +27,7 @@ resource "lightstep_servicenow_destination" "missing_url" {
 `
 	missingAuthConfig := `
 resource "lightstep_servicenow_destination" "missing_auth" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "my-destination"
   url = "https://example.com"
 }
@@ -35,7 +35,7 @@ resource "lightstep_servicenow_destination" "missing_auth" {
 
 	destinationConfig := `
 resource "lightstep_servicenow_destination" "servicenow" {
-  project_name = ` + fmt.Sprintf("\"%s\"", test_project) + `
+  project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
   destination_name = "my-destination"
   url = "https://example.com"
   auth {
@@ -86,7 +86,7 @@ func TestAccServiceNowDestinationImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_servicenow_destination" "servicenow" {
-	project_name = "terraform-provider-tests"
+    project_name = ` + fmt.Sprintf("\"%s\"", testProject) + `
 	destination_name = "do-not-delete-sn"
 	url = "https://example.com"
     auth {
@@ -101,7 +101,7 @@ resource "lightstep_servicenow_destination" "servicenow" {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"auth.0.password"},
-				ImportStateIdPrefix:     fmt.Sprintf("%s.", test_project),
+				ImportStateIdPrefix:     fmt.Sprintf("%s.", testProject),
 			},
 		},
 	})
@@ -121,7 +121,7 @@ func testAccCheckServiceNowDestinationExists(resourceName string, destination *c
 
 		// get destination from LS
 		client := testAccProvider.Meta().(*client.Client)
-		d, err := client.GetDestination(context.Background(), test_project, tfDestination.Primary.ID)
+		d, err := client.GetDestination(context.Background(), testProject, tfDestination.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ func testAccServiceNowDestinationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		s, err := conn.GetDestination(context.Background(), test_project, resource.Primary.ID)
+		s, err := conn.GetDestination(context.Background(), testProject, resource.Primary.ID)
 		if err == nil {
 			if s.ID == resource.Primary.ID {
 				return fmt.Errorf("destination with ID (%v) still exists.", resource.Primary.ID)
