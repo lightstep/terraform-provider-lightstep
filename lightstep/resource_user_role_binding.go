@@ -14,7 +14,7 @@ import (
 
 func resourceUserRoleBinding() *schema.Resource {
 	return &schema.Resource{
-		Description:   "This resources is under development and is not generally available yet.",
+		Description:   "This resource is under development and is not generally available yet.",
 		CreateContext: resourceUserRoleBindingCreateOrUpdate,
 		ReadContext:   resourceUserRoleBindingRead,
 		UpdateContext: resourceUserRoleBindingCreateOrUpdate,
