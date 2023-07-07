@@ -14,7 +14,7 @@ type RoleBinding struct {
 }
 
 func (rb RoleBinding) ID() string {
-	if rb.ProjectName != "" {
+	if rb.ProjectName == "" {
 		return rb.RoleName
 	}
 	return fmt.Sprintf("%s/%s", rb.RoleName, rb.ProjectName)

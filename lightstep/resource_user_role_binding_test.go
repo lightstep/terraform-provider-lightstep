@@ -34,9 +34,9 @@ resource "lightstep_user_role_binding" "proj_editor" {
 	]
 }
 
-resource "lightstep_user_role_binding" "proj_member" {
+resource "lightstep_user_role_binding" "proj_viewer" {
 	project = "` + testProject + `"
-	role = "Project Member"
+	role = "Project Viewer"
 	users = [
 		"terraform-test+5@lightstep.com"
 	]
@@ -72,9 +72,9 @@ resource "lightstep_user_role_binding" "proj_editor" {
 }
 
 
-resource "lightstep_user_role_binding" "proj_member" {
+resource "lightstep_user_role_binding" "proj_viewer" {
 	project = "` + testProject + `"
-	role = "Project Member"
+	role = "Project Viewer"
 	users = [
 	]
 }
@@ -103,9 +103,9 @@ resource "lightstep_user_role_binding" "proj_member" {
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_editor", "users.*", "terraform-test+3@lightstep.com"),
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_editor", "users.*", "terraform-test+4@lightstep.com"),
 
-					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_member", "project", testProject),
-					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_member", "users.#", "1"),
-					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_member", "users.*", "terraform-test+5@lightstep.com"),
+					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_viewer", "project", testProject),
+					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_viewer", "users.#", "1"),
+					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_viewer", "users.*", "terraform-test+5@lightstep.com"),
 				),
 			},
 			{
@@ -128,11 +128,51 @@ resource "lightstep_user_role_binding" "proj_member" {
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_editor", "users.*", "terraform-test+3@lightstep.com"),
 					resource.TestCheckTypeSetElemAttr("lightstep_user_role_binding.proj_editor", "users.*", "terraform-test+4@lightstep.com"),
 
-					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_member", "project", testProject),
-					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_member", "users.#", "0"),
+					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_viewer", "project", testProject),
+					resource.TestCheckResourceAttr("lightstep_user_role_binding.proj_viewer", "users.#", "0"),
 				),
 			},
 		},
 	})
 
+}
+
+func TestUserRoleBindingImport(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "lightstep_user_role_binding" "org_viewer" {
+	role = "Organization Viewer"
+	users = [
+		"terraform-test+3@lightstep.com",
+		"terraform-test+4@lightstep.com",
+		"terraform-test+5@lightstep.com"
+	]
+}
+
+resource "lightstep_user_role_binding" "proj_editor" {
+	project = "` + testProject + `"
+	role = "Project Editor"
+	users = [
+		"terraform-test+4@lightstep.com",
+		"terraform-test+5@lightstep.com"
+	]
+}
+`,
+			},
+			{
+				ResourceName:      "lightstep_user_role_binding.org_viewer",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{
+				ResourceName:      "lightstep_user_role_binding.proj_editor",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
 }

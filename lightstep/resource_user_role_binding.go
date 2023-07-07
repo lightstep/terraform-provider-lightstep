@@ -7,29 +7,41 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 func resourceUserRoleBinding() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceUserRoleCreateOrUpdate,
+		Description:   "This resources is under development and is not generally available yet.",
+		CreateContext: resourceUserRoleBindingCreateOrUpdate,
 		ReadContext:   resourceUserRoleBindingRead,
-		UpdateContext: resourceUserRoleCreateOrUpdate,
+		UpdateContext: resourceUserRoleBindingCreateOrUpdate,
 		DeleteContext: resourceUserRoleBindingDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceUserRoleBindingImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"role": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
+				Description: "Role's name being granted with this role binding.",
+				ValidateFunc: validation.StringInSlice([]string{
+					"Organization Admin",
+					"Organization Editor",
+					"Organization Viewer",
+					"Organization Restricted Member",
+					"Project Editor",
+					"Project Viewer",
+				}, false),
 			},
 			"project": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
+				Description: "Name of the project where this project, if omitted the role will be applied to the organization",
 			},
 			"users": {
 				Type:     schema.TypeSet,
@@ -37,6 +49,7 @@ func resourceUserRoleBinding() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
+				Description: "Complete list of users that should have this specified role in the organization or in the project (if specified), users not specified will lose this permission.",
 			},
 		},
 	}
@@ -87,7 +100,7 @@ func setUserRoleBindingFromResource(d *schema.ResourceData, userRoleBinding clie
 	return nil
 }
 
-func resourceUserRoleCreateOrUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceUserRoleBindingCreateOrUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
 
 	// Read the proposed plan
@@ -110,7 +123,7 @@ func resourceUserRoleCreateOrUpdate(ctx context.Context, d *schema.ResourceData,
 // resourceUserRoleBindingRead reads a user role binding from the resource data.
 //
 // When called by a Read or Delete Context, it will read data from the terraform state.
-// When Called by a Create or Update context, it will reda data from the terraform plan.
+// When called by a Create or Update context, it will read data from the terraform plan.
 func resourceUserRoleBindingRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*client.Client)
@@ -169,7 +182,7 @@ func resourceUserRoleBindingImport(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	if c.OrgName() != orgName {
-		return nil, fmt.Errorf("lightstep terraform provider is configured to organization %s but it is trying to import resource bindings from organization %s", c.OrgName(), orgName)
+		return nil, fmt.Errorf("lightstep terraform provider is configured to organization %s but it is trying to import resource bindings from organization %s: %s", c.OrgName(), orgName, d.Id())
 	}
 
 	userRoleBinding, err := c.ListRoleBinding(ctx, projectName, roleName)
