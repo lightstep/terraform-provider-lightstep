@@ -43,6 +43,7 @@ ifndef LIGHTSTEP_API_KEY_PUBLIC
 	$(error LIGHTSTEP_API_KEY_PUBLIC must be defined for acc-test)
 endif
 	@TF_ACC=true \
+	LIGHTSTEP_API_RATE_LIMIT=5 \
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} \
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
@@ -56,6 +57,7 @@ test-local:
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_LOCAL_API_KEY}  \
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
+	LIGHTSTEP_API_RATE_LIMIT=100 \
 	LIGHTSTEP_ENV="public" \
 	go test -v ./lightstep
 

@@ -3,18 +3,17 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"regexp"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
-
-	"github.com/lightstep/terraform-provider-lightstep/version"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/meta"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
+	"github.com/lightstep/terraform-provider-lightstep/version"
 )
 
 func Provider() *schema.Provider {
@@ -62,6 +61,7 @@ func Provider() *schema.Provider {
 			"lightstep_alerting_rule":          resourceAlertingRule(),
 			"lightstep_dashboard":              resourceUnifiedDashboard(UnifiedChartSchema),
 			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),
+			"lightstep_user_role_binding":      resourceUserRoleBinding(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -99,4 +99,16 @@ func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, 
 	)
 
 	return client, diags
+}
+
+func handleAPIError(err error, d *schema.ResourceData, resourceName string) diag.Diagnostics {
+	apiErr, ok := err.(client.APIResponseCarrier)
+	if ok {
+		if apiErr.GetStatusCode() == http.StatusNotFound {
+			d.SetId("")
+			return diag.FromErr(fmt.Errorf("%s not found: %v", resourceName, apiErr))
+		}
+	}
+
+	return diag.FromErr(fmt.Errorf("failed to %s: %v", resourceName, err))
 }
