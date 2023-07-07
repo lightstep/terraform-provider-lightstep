@@ -41,7 +41,7 @@ func resourceUserRoleBinding() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true, // changing role or project requires a new tf resource to ensure permissions are properly removed.
-				Description: "Name of the project where this project, if omitted the role will be applied to the organization",
+				Description: "Name of the project where this role will be applied; if omitted the role will be applied to the organization",
 			},
 			"users": {
 				Type:     schema.TypeSet,
