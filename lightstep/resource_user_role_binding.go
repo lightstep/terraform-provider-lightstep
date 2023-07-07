@@ -49,7 +49,7 @@ func resourceUserRoleBinding() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "Complete list of users that should have this specified role in the organization or in the project (if specified), users not specified will lose this permission.",
+				Description: "Complete list of users that should have this specified role in the organization or in the project (if specified). Important: this list is authoritative; any users not included in this list WILL NOT have this role for the given project or organization.",
 			},
 		},
 	}
