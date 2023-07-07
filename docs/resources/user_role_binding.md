@@ -3,12 +3,12 @@
 page_title: "lightstep_user_role_binding Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  This resources is under development and is not generally available yet.
+  This resource is under development and is not generally available yet.
 ---
 
 # lightstep_user_role_binding (Resource)
 
-This resources is under development and is not generally available yet.
+This resource is under development and is not generally available yet.
 
 
 
@@ -18,11 +18,11 @@ This resources is under development and is not generally available yet.
 ### Required
 
 - `role` (String) Role's name being granted with this role binding.
-- `users` (Set of String) Complete list of users that should have this specified role in the organization or in the project (if specified), users not specified will lose this permission.
+- `users` (Set of String) Complete list of users that should have this specified role in the organization or in the project (if specified). Important: this list is authoritative; any users not included in this list WILL NOT have this role for the given project or organization.
 
 ### Optional
 
-- `project` (String) Name of the project where this project, if omitted the role will be applied to the organization
+- `project` (String) Name of the project where this role will be applied; if omitted the role will be applied to the organization
 
 ### Read-Only
 
