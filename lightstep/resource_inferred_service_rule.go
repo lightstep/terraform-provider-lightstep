@@ -129,7 +129,7 @@ func resourceInferredServiceRuleRead(
 		resourceData,
 	)
 	if err != nil {
-		diag.Errorf("failed to read inferred service rule due to %v")
+		diag.Errorf("failed to read inferred service rule due to %v", err)
 	}
 
 	return diagnostics
