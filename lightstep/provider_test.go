@@ -33,3 +33,12 @@ func TestProvider(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 }
+
+func testAccPreCheck(t *testing.T) {
+	if v := os.Getenv("LIGHTSTEP_API_KEY"); v == "" {
+		t.Fatal("LIGHTSTEP_API_KEY must be set.")
+	}
+	if v := os.Getenv("LIGHTSTEP_ORG"); v == "" {
+		t.Fatal("LIGHTSTEP_ORG must be set")
+	}
+}
