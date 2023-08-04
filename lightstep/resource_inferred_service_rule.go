@@ -128,6 +128,9 @@ func resourceInferredServiceRuleRead(
 		&inferredServiceRuleResponse.Attributes,
 		resourceData,
 	)
+	if err != nil {
+		diag.Errorf("failed to read inferred service rule due to %v")
+	}
 
 	return diagnostics
 }
@@ -145,7 +148,7 @@ func resourceInferredServiceRuleUpdate(
 
 	_, err = apiClient.UpdateInferredServiceRule(ctx, getProjectNameFromResource(resourceData), resourceData.Id(), requestAttributes)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("failed to update inferred service rule due to error: %v", err))
+		return diag.Errorf("failed to update inferred service rule due to error: %v", err)
 	}
 
 	return resourceInferredServiceRuleRead(ctx, resourceData, m)

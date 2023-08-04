@@ -280,9 +280,9 @@ resource "lightstep_slack_destination" "slack" {
 ##############################################################
 
 resource "lightstep_inferred_service_rule" "databases" {
-  project_name     = var.project
-  name             = "database"
-  description      = "Identifies select database management systems in the larger service topology"
+  project_name = var.project
+  name         = "database"
+  description  = "Identifies select database management systems in the larger service topology"
 
   attribute_filters {
     key    = "span.kind"
