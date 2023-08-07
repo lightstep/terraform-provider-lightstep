@@ -395,6 +395,9 @@ func getCompositeSubAlertExpressionSchema() *schema.Schema {
 func getCompositeSubAlertExpressionResource() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
+			// The expression must either include `is_no_data = true` OR an operand and a threshold.
+			// However that logic can't be expressed statically using the Required attribute so we
+			// just mark all these fields as optional and let the server handle the detailed validation.
 			"is_no_data": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -402,12 +405,12 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 			},
 			"operand": {
 				Type:         schema.TypeString,
-				Required:     true,
+				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
 			},
 			"thresholds": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				MaxItems: 1,
 				MinItems: 1,
 				Elem: &schema.Resource{
