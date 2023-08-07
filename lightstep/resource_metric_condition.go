@@ -412,7 +412,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				MinItems: 1,
+				MinItems: 0,
 				Elem: &schema.Resource{
 					Schema: getThresholdSchemaMap(),
 				},
@@ -969,7 +969,15 @@ func buildKeys(keysIn []interface{}) []string {
 func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds, error) {
 	t := client.Thresholds{}
 
-	thresholdsObj := singleExpression["thresholds"].([]interface{})[0].(map[string]interface{})
+	elem, ok := singleExpression["thresholds"]
+	if !ok {
+		return t, nil
+	}
+	elemList := elem.([]interface{})
+	if len(elemList) == 0 {
+		return t, nil
+	}
+	thresholdsObj := elemList[0].(map[string]interface{})
 
 	critical := thresholdsObj["critical"]
 	if critical != "" {
