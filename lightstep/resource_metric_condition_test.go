@@ -200,6 +200,69 @@ resource "lightstep_metric_condition" "test" {
 }
 `
 
+	noDataOnlyConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "` + testProject + `"
+  name = "updated"
+  description = "A link to a fresh playbook"
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+  }
+
+  metric_query {
+    metric         = "requests"
+    query_name          = "a"
+    timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden              = false
+	display             = "line"
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+    
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+
+    include_filters = [
+      {
+        key   = "project_name"
+        value = "catlab"
+      }
+    ]
+  }
+}
+`
 	resourceName := "lightstep_metric_condition.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -241,6 +304,17 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
+				),
+			},
+			{
+				Config: noDataOnlyConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
+					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
+					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
 		},
