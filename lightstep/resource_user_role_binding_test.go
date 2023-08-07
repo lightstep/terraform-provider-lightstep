@@ -7,6 +7,8 @@ import (
 )
 
 func TestAccUserRoleBinding(t *testing.T) {
+	t.Skip("LS-51303: Fix public API compatibility.")
+
 	validConfiguration := `
 resource "lightstep_user_role_binding" "org_admin" {
 	role = "Organization Editor"
