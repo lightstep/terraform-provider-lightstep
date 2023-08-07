@@ -406,7 +406,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 			"operand": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"above", "below"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"", "above", "below"}, false),
 			},
 			"thresholds": {
 				Type:     schema.TypeList,
