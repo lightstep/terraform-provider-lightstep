@@ -81,7 +81,7 @@ resource "lightstep_inferred_service_rule" "test_database_rule" {
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "group_by_keys.0", "db.type"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "group_by_keys.1", "db.instance"),
 
-					//testAccCheckInferredServiceRuleExists("lightstep_inferred_service_rule.test_kafka_rule"),
+					testAccCheckInferredServiceRuleExists("lightstep_inferred_service_rule.test_kafka_rule"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "project_name", testProject),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "name", "kafka"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "description", ""),
