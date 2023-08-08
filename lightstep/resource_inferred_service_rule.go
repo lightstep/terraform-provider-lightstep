@@ -12,8 +12,7 @@ import (
 
 func resourceInferredServiceRule() *schema.Resource {
 	return &schema.Resource{
-		Description: "[This resource is under development and is not generally available yet.] " +
-			"Provides a Lightstep Inferred Service Rule that can detect and identify inferred services.",
+		Description:   "Provides a Lightstep Inferred Service Rule that can detect and identify inferred services.",
 		Schema:        getResourceInferredServiceRuleSchema(),
 		CreateContext: resourceInferredServiceRuleCreate,
 		ReadContext:   resourceInferredServiceRuleRead,
@@ -39,7 +38,7 @@ func getResourceInferredServiceRuleSchema() map[string]*schema.Schema {
 			ValidateFunc: validation.StringLenBetween(0, 190),
 		},
 		"description": {
-			Description:  "An optional description to describe the rule and what services it should infer",
+			Description:  "A description of the rule and what services it should infer",
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringLenBetween(0, 255),
@@ -54,7 +53,7 @@ func getResourceInferredServiceRuleSchema() map[string]*schema.Schema {
 			MinItems: 1,
 		},
 		"group_by_keys": {
-			Description: "A list of attribute keys whose values will be included in the inferred service name",
+			Description: "Attribute keys whose values will be included in the inferred service name",
 			Type:        schema.TypeList,
 			Optional:    true,
 			Elem: &schema.Schema{
