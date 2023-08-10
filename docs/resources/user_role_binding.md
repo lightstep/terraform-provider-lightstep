@@ -15,8 +15,8 @@ description: |-
   * Project Viewer
   Changes to both Organization level roles and Project level roles for the same user can cause race conditions,
   in that case, we suggest these changes be made in two steps.
-  * When lowering a user Organization level role and upping their Project level Role, first change their organization role.
-  * When upping a user Organization level role and removing or lowering their Project level Role, first change their project role.
+  * When lowering a user's Organization level role and upping their Project level Role, first change their organization role.
+  * When upping a user's Organization level role and removing or lowering their Project level Role, first change their project role.
 ---
 
 # lightstep_user_role_binding (Resource)
@@ -40,8 +40,8 @@ The list of valid roles for Project level role bindings are:
 
 Changes to both Organization level roles and Project level roles for the same user can cause race conditions, 
 in that case, we suggest these changes be made in two steps. 
-* When lowering a user Organization level role and upping their Project level Role, first change their organization role.
-* When upping a user Organization level role and removing or lowering their Project level Role, first change their project role.
+* When lowering a user's Organization level role and upping their Project level Role, first change their organization role.
+* When upping a user's Organization level role and removing or lowering their Project level Role, first change their project role.
 
 ## Example Usage
 
