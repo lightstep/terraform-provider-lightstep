@@ -14,7 +14,7 @@ import (
 
 func resourceUserRoleBinding() *schema.Resource {
 	return &schema.Resource{
-		Description: `Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/cwronditions). This can be used to manage User's Organization level roles and Project level roles.
+		Description: `Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/RoleBinding). This can be used to manage User's Organization level roles and Project level roles.
 
 A role binding can target either the Organization level roles or a Project role for a specific project. An user Project role can't be set to a more restrict role than their Organization level role. 
 
