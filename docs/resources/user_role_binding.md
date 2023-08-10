@@ -51,29 +51,29 @@ in that case we suggest these changes to be made in two steps.
 
 # Set users to "Organization Restricted Member"
 resource "lightstep_user_role_binding" "org_restricted" {
-	role = "Organization Restricted Member"
-	users = [
-		"proj_a-editor@lightstep.com",
-		"proj_a-viewer@lightstep.com"
-	]
+  role = "Organization Restricted Member"
+  users = [
+    "proj_a-editor@lightstep.com",
+    "proj_a-viewer@lightstep.com"
+  ]
 }
 
 # Set user "proj_a-editor@lightstep.com" to Project Editor in "Project A"
 resource "lightstep_user_role_binding" "proj_editor" {
-	project = "Project A"
-	role = "Project Editor"
-	users = [
-		"proj_a-editor@lightstep.com",
-	]
+  project = "Project A"
+  role    = "Project Editor"
+  users = [
+    "proj_a-editor@lightstep.com",
+  ]
 }
 
 # Set user "proj_a-viewer@lightstep.com" to Project Viewer in "Project A"
 resource "lightstep_user_role_binding" "proj_viewer" {
-	project = "Project A"
-	role = "Project Viewer"
-	users = [
-		"proj_a-viewer@lightstep.com"
-	]
+  project = "Project A"
+  role    = "Project Viewer"
+  users = [
+    "proj_a-viewer@lightstep.com"
+  ]
 }
 ```
 
