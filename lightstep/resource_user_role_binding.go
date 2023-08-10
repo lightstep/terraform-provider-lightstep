@@ -14,7 +14,28 @@ import (
 
 func resourceUserRoleBinding() *schema.Resource {
 	return &schema.Resource{
-		Description:   "This resource is under development and is not generally available yet.",
+		Description: `Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/cwronditions). This can be used to manage User's Organization level roles and Project level roles.
+
+A role binding can target either the Organization level roles or a Project role for a specific project. An user Project role can't be set to a more restrict role than their Organization level role. 
+
+**NOTE**: this terraform resource is authoritative, users that are not declared in a terraform resource will lose the declared role in the specified organization/project.
+
+The list of valid roles for Organization level role bindings are:
+* Organization Admin
+* Organization Editor
+* Organization Viewer
+
+
+The list of valid roles for Project level role bindings are:
+* Project Editor
+* Project Viewer
+
+
+Changes to both Organization level role and Project level roles for the same user can cause race condition, 
+in that case we suggest these changes to be made in two steps. 
+* When lowering an user Organization level role and upping their Project level Role, first change their organization role.
+* When upping an user Organization level role and removing or lowering their Project level Role, first change their project role.
+`,
 		CreateContext: resourceUserRoleBindingCreateOrUpdate,
 		ReadContext:   resourceUserRoleBindingRead,
 		UpdateContext: resourceUserRoleBindingCreateOrUpdate,
