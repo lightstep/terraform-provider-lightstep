@@ -944,3 +944,74 @@ resource "lightstep_alert" "test" {
 		},
 	})
 }
+
+func TestAccAlertWithNoUpdateInterval(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_alert" "test" {
+  project_name = "` + testProject + `"
+  name = "High CPU utilization for host"
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 90
+	  }
+  }
+
+  query {
+	query_name                          = "a"
+	hidden                              = false
+    display                             = "line"
+	query_string                        = <<EOT
+metric cpu.utilization | latest 30s | group_by["host"], max
+EOT
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+	filters = [{
+		  key   = "service_name"
+		  value = "frontend"
+		  operand = "contains"
+	}]
+  }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "High CPU utilization for host"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*",
+						map[string]string{
+							"update_interval":   "",
+							"include_filters.#": "1",
+							"filters.#":         "1",
+						}),
+				),
+			},
+		},
+	})
+}

@@ -39,7 +39,7 @@ func resourceAlertingRule() *schema.Resource {
 			"update_interval": {
 				Type:         schema.TypeString,
 				ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
-				Required:     true,
+				Optional:     true,
 				ForceNew:     true, // API does not provide an Update method
 			},
 		},
