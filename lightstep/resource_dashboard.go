@@ -48,6 +48,14 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Optional: true,
 					},
+					"y_axis_scale": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
+					"y_axis_log_base": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
 				},
 			},
 			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
@@ -134,6 +142,9 @@ func displayTypeOptionsFromResourceData(opts map[string]interface{}) *schema.Set
 	// the hash function is trivial
 	f := func(i interface{}) int {
 		return 1
+	}
+	if opts["y_axis_scale"] == "log" && opts["y_axis_log_base"] == "" {
+		opts["y_axis_log_base"] = 10
 	}
 	return schema.NewSet(f, []interface{}{opts})
 }
