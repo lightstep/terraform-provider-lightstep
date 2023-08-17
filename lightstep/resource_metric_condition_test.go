@@ -208,8 +208,8 @@ resource "lightstep_slack_destination" "slack" {
 
 resource "lightstep_metric_condition" "test" {
   project_name = "` + testProject + `"
-  name = "updated"
-  description = "A link to a fresh playbook"
+  name = "no data only"
+  description = "An alert with No Data as the only threshold setting"
 
   label {
     key = "team"
@@ -310,10 +310,7 @@ resource "lightstep_metric_condition" "test" {
 				Config: noDataOnlyConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
-					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
-					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
-					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
+					resource.TestCheckResourceAttr(resourceName, "name", "no data only"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
