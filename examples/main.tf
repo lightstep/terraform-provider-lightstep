@@ -274,3 +274,25 @@ resource "lightstep_slack_destination" "slack" {
   project_name = var.project
   channel      = "#urgent-care"
 }
+
+##############################################################
+## Inferred Service Rules
+##############################################################
+
+resource "lightstep_inferred_service_rule" "databases" {
+  project_name = var.project
+  name         = "database"
+  description  = "Identifies select database management systems in the larger service topology"
+
+  attribute_filters {
+    key    = "span.kind"
+    values = ["client"]
+  }
+
+  attribute_filters {
+    key    = "db.type"
+    values = ["sql", "redis", "memcached", "cassandra"]
+  }
+
+  group_by_keys = ["db.type", "db.instance"]
+}

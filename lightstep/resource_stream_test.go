@@ -3,7 +3,6 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -218,13 +217,4 @@ func testAccStreamDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func testAccPreCheck(t *testing.T) {
-	if v := os.Getenv("LIGHTSTEP_API_KEY"); v == "" {
-		t.Fatal("LIGHTSTEP_API_KEY must be set.")
-	}
-	if v := os.Getenv("LIGHTSTEP_ORG"); v == "" {
-		t.Fatal("LIGHTSTEP_ORG must be set")
-	}
 }
