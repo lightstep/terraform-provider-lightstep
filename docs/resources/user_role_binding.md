@@ -21,7 +21,7 @@ description: |-
 
 # lightstep_user_role_binding (Resource)
 
-Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/RoleBinding). This can be used to manage User's Organization level roles and Project level roles.
+Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/RoleBinding). Use this resource to manage users' roles in Lightstep. For conceptual information about managing users and roles, visit [Lightstep's documentation](https://docs.lightstep.com/docs/create-lightstep-users).
 
 A role binding can target either the Organization level roles or a Project role for a specific project. Users can't be assigned to a more restrictive Project role than their Organization level role. 
 
