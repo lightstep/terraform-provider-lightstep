@@ -1,5 +1,5 @@
-# The following example shows how to configure two users with the "Organization Restricted Member" and
-# override their permissions in "Project A", one with the "Project Editor" role and the other with the "Project Viewer" role.
+# The following example configures two users with the "Organization Restricted Member" role.
+# It also overrides their permissions in "Project A", one with the "Project Editor" role and the other with the "Project Viewer" role.
 
 # Set users to "Organization Restricted Member"
 resource "lightstep_user_role_binding" "org_restricted" {

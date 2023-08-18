@@ -3,51 +3,53 @@
 page_title: "lightstep_user_role_binding Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  Provides a Lightstep Role Binding https://api-docs.lightstep.com/reference/RoleBinding. This can be used to manage User's Organization level roles and Project level roles.
-  A role binding can target either the Organization level roles or a Project role for a specific project. Users can't be assigned to a more restrictive Project role than their Organization level role.
-  NOTE: this terraform resource is authoritative, users that are not declared in a terraform resource will lose the declared role in the specified organization/project.
-  The list of valid roles for Organization level role bindings are:
+  Provides a Lightstep Role Binding https://api-docs.lightstep.com/reference/RoleBinding. Use this resource to manage users' roles in Lightstep. For conceptual information about managing users and roles, visit Lightstep's documentation https://docs.lightstep.com/docs/create-lightstep-users.
+  You can assign users organization-level https://docs.lightstep.com/docs/roles-and-permissions#organization-roles or project-level https://docs.lightstep.com/docs/roles-and-permissions#project-roles roles. You can't assign users to a more restrictive project role than their organization role.
+  NOTE: This Terraform resource is authoritative. If you don't declare a user in a Terraform resource, that user will lose any previously assigned roles in the specified organization and project.
+  The valid organization roles are:
   * Organization Admin
   * Organization Editor
   * Organization Viewer
-  The list of valid roles for Project level role bindings are:
+  * Organization Restricted Member
+  The valid project roles are:
   * Project Editor
   * Project Viewer
-  Changes to both Organization level roles and Project level roles for the same user can cause race conditions,
-  in that case, we suggest these changes be made in two steps.
-  * When lowering a user's Organization level role and upping their Project level Role, first change their organization role.
-  * When upping a user's Organization level role and removing or lowering their Project level Role, first change their project role.
+  Changes to both organization- and project-level roles for the same user can cause race conditions.
+  We suggest these changes be made in two steps.
+  * When lowering a user's organization-level role and upping their project-level role, first change their organization role.
+  * When upping a user's organization-level role and removing or lowering their project-level role, first change their project role.
 ---
 
 # lightstep_user_role_binding (Resource)
 
 Provides a [Lightstep Role Binding](https://api-docs.lightstep.com/reference/RoleBinding). Use this resource to manage users' roles in Lightstep. For conceptual information about managing users and roles, visit [Lightstep's documentation](https://docs.lightstep.com/docs/create-lightstep-users).
 
-A role binding can target either the Organization level roles or a Project role for a specific project. Users can't be assigned to a more restrictive Project role than their Organization level role. 
+You can assign users [organization-level](https://docs.lightstep.com/docs/roles-and-permissions#organization-roles) or [project-level](https://docs.lightstep.com/docs/roles-and-permissions#project-roles) roles. You can't assign users to a more restrictive project role than their organization role.
 
-**NOTE**: this terraform resource is authoritative, users that are not declared in a terraform resource will lose the declared role in the specified organization/project.
+**NOTE**: This Terraform resource is authoritative. If you don't declare a user in a Terraform resource, that user will lose any previously assigned roles in the specified organization and project. 
 
-The list of valid roles for Organization level role bindings are:
+The valid organization roles are:
 * Organization Admin
 * Organization Editor
 * Organization Viewer
+* Organization Restricted Member
 
 
-The list of valid roles for Project level role bindings are:
+The valid project roles are:
 * Project Editor
 * Project Viewer
 
 
-Changes to both Organization level roles and Project level roles for the same user can cause race conditions, 
-in that case, we suggest these changes be made in two steps. 
-* When lowering a user's Organization level role and upping their Project level Role, first change their organization role.
-* When upping a user's Organization level role and removing or lowering their Project level Role, first change their project role.
+Changes to both organization- and project-level roles for the same user can cause race conditions. 
+We suggest these changes be made in two steps. 
+* When lowering a user's organization-level role and upping their project-level role, first change their organization role.
+* When upping a user's organization-level role and removing or lowering their project-level role, first change their project role.
 
 ## Example Usage
 
 ```terraform
-# The following example shows how to configure two users with the "Organization Restricted Member" and
-# override their permissions in "Project A", one with the "Project Editor" role and the other with the "Project Viewer" role.
+# The following example configures two users with the "Organization Restricted Member" role.
+# It also overrides their permissions in "Project A", one with the "Project Editor" role and the other with the "Project Viewer" role.
 
 # Set users to "Organization Restricted Member"
 resource "lightstep_user_role_binding" "org_restricted" {
