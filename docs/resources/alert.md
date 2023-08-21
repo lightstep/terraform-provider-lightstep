@@ -148,7 +148,7 @@ Optional:
 - `sort_by` (String)
 - `sort_direction` (String)
 - `y_axis_scale` (String)
-- `y_axis_log-base` (String)
+- `y_axis_log_base` (String)
 
 
 
@@ -212,4 +212,4 @@ Optional:
 - `sort_by` (String)
 - `sort_direction` (String)
 - `y_axis_scale` (String)
-- `y_axis_log-base` (String)
+- `y_axis_log_base` (String)
