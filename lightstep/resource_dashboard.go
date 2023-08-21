@@ -143,9 +143,6 @@ func displayTypeOptionsFromResourceData(opts map[string]interface{}) *schema.Set
 	f := func(i interface{}) int {
 		return 1
 	}
-	if opts["y_axis_scale"] == "log" && opts["y_axis_log_base"] == "" {
-		opts["y_axis_log_base"] = 10
-	}
 	return schema.NewSet(f, []interface{}{opts})
 }
 

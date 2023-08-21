@@ -793,9 +793,6 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 					if !ok {
 						return nil, fmt.Errorf("unexpected format for display_type_options")
 					}
-					if m["y_axis_scale"] == "log" && m["y_axis_log_base"] == "" {
-						m["y_axis_log_base"] = 10
-					}
 					// The API treats display_type_options as an opaque blob, so now that
 					// we can pass what we have along directly
 					newQuery.DisplayTypeOptions = m
