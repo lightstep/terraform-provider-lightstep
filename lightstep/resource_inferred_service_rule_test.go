@@ -3,18 +3,23 @@ package lightstep
 import (
 	"context"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/lightstep/terraform-provider-lightstep/client"
+	"math/rand"
 	"testing"
 
+	"github.com/lightstep/terraform-provider-lightstep/client"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccInferredServiceRule(t *testing.T) {
+	databaseRuleName := "database-" + getRandomStringSuffix()
+	kafkaRuleName := "kafka-" + getRandomStringSuffix()
+
 	validInitialConfiguration := `
 resource "lightstep_inferred_service_rule" "test_database_rule" {
 	project_name = "` + testProject + `"
-	name         = "database"
+	name         = "` + databaseRuleName + `"
     description  =  "detects selected databases"
 
     attribute_filters {
@@ -32,7 +37,7 @@ resource "lightstep_inferred_service_rule" "test_database_rule" {
 
 resource "lightstep_inferred_service_rule" "test_kafka_rule" {
 	project_name = "` + testProject + `"
-	name         = "kafka"
+	name         = "` + kafkaRuleName + `"
 
    attribute_filters {
 		key    = "messaging.destination_kind"
@@ -44,7 +49,7 @@ resource "lightstep_inferred_service_rule" "test_kafka_rule" {
 	validUpdatedConfiguration := `
 resource "lightstep_inferred_service_rule" "test_database_rule" {
 	project_name = "` + testProject + `"
-	name         = "database"
+	name         = "` + databaseRuleName + `"
     description  =  "detects selected databases"
 
     attribute_filters {
@@ -68,7 +73,7 @@ resource "lightstep_inferred_service_rule" "test_database_rule" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckInferredServiceRuleExists("lightstep_inferred_service_rule.test_database_rule"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "project_name", testProject),
-					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "name", "database"),
+					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "name", databaseRuleName),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "description", "detects selected databases"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "attribute_filters.#", "2"),
 					resource.TestCheckTypeSetElemNestedAttrs("lightstep_inferred_service_rule.test_database_rule", "attribute_filters.*", map[string]string{"key": "db.type", "values.#": "3"}),
@@ -83,7 +88,7 @@ resource "lightstep_inferred_service_rule" "test_database_rule" {
 
 					testAccCheckInferredServiceRuleExists("lightstep_inferred_service_rule.test_kafka_rule"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "project_name", testProject),
-					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "name", "kafka"),
+					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "name", kafkaRuleName),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "description", ""),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_kafka_rule", "attribute_filters.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("lightstep_inferred_service_rule.test_kafka_rule", "attribute_filters.*", map[string]string{"key": "messaging.destination_kind"}),
@@ -95,7 +100,7 @@ resource "lightstep_inferred_service_rule" "test_database_rule" {
 				Config: validUpdatedConfiguration,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "project_name", testProject),
-					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "name", "database"),
+					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "name", databaseRuleName),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "description", "detects selected databases"),
 					resource.TestCheckResourceAttr("lightstep_inferred_service_rule.test_database_rule", "attribute_filters.#", "1"),
 					resource.TestCheckTypeSetElemNestedAttrs("lightstep_inferred_service_rule.test_database_rule", "attribute_filters.*", map[string]string{"key": "db.type", "values.#": "4"}),
@@ -205,4 +210,15 @@ func testAccInferredServiceRuleDestroy(tfState *terraform.State) error {
 
 	}
 	return nil
+}
+
+func getRandomStringSuffix() string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	const length = 5
+
+	suffixChars := make([]byte, length)
+	for i := range suffixChars {
+		suffixChars[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(suffixChars)
 }
