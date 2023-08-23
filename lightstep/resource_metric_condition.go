@@ -322,12 +322,10 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 		"critical": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "",
 		},
 		"warning": {
 			Type:     schema.TypeString,
 			Optional: true,
-			Default:  "",
 		},
 	}
 }
@@ -411,6 +409,21 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 			"thresholds": {
 				Type:     schema.TypeList,
 				Optional: true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					if strings.HasSuffix(k, "thresholds.#") {
+						// When parsing the resource that we get from the Lightstep API, we don't include the thresholds
+						// block unless at least one of the thresholds is set. If a user includes an empty thresholds
+						// block in their config instead of omitting it entirely, terraform would normally treat that as a diff.
+						// However, for convenience, we allow users to specify an empty thresholds block and
+						// we treat it as semantically equivalent to omitting the thresholds block entirely.
+						oldIntf, newIntf := d.GetChange(strings.TrimRight(k, ".#"))
+						newList := newIntf.([]interface{})
+						if len(oldIntf.([]interface{})) == 0 && len(newList) == 1 && newList[0] == nil {
+							return true
+						}
+					}
+					return old == new
+				},
 				MaxItems: 1,
 				MinItems: 0,
 				Elem: &schema.Resource{
@@ -974,7 +987,7 @@ func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds
 		return t, nil
 	}
 	elemList := elem.([]interface{})
-	if len(elemList) == 0 {
+	if len(elemList) == 0 || elemList[0] == nil {
 		return t, nil
 	}
 	thresholdsObj := elemList[0].(map[string]interface{})
@@ -1215,9 +1228,7 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 				"is_multi":   c.Attributes.Expression.IsMulti,
 				"is_no_data": c.Attributes.Expression.IsNoData,
 				"operand":    c.Attributes.Expression.Operand,
-				"thresholds": []interface{}{
-					buildUntypedThresholdsMap(c.Attributes.Expression.Thresholds),
-				},
+				"thresholds": buildUntypedThresholds(c.Attributes.Expression.Thresholds),
 			},
 		}); err != nil {
 			return fmt.Errorf("unable to set expression resource field: %v", err)
@@ -1279,7 +1290,11 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	return nil
 }
 
-func buildUntypedThresholdsMap(thresholds client.Thresholds) map[string]interface{} {
+func buildUntypedThresholds(thresholds client.Thresholds) []map[string]interface{} {
+	if thresholds.Warning == nil && thresholds.Critical == nil {
+		return nil
+	}
+
 	outputMap := map[string]interface{}{}
 	if thresholds.Critical != nil {
 		outputMap["critical"] = strconv.FormatFloat(*thresholds.Critical, 'f', -1, 64)
@@ -1288,7 +1303,9 @@ func buildUntypedThresholdsMap(thresholds client.Thresholds) map[string]interfac
 	if thresholds.Warning != nil {
 		outputMap["warning"] = strconv.FormatFloat(*thresholds.Warning, 'f', -1, 64)
 	}
-	return outputMap
+	return []map[string]interface{}{
+		outputMap,
+	}
 }
 
 func getIncludeExcludeFilters(filters []client.LabelFilter) ([]interface{}, []interface{}, []interface{}) {

@@ -200,6 +200,63 @@ resource "lightstep_metric_condition" "test" {
 }
 `
 
+	noDataEmptyThresholdBlockConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "` + testProject + `"
+  name = "no data empty thresholds"
+  description = "An alert with No Data enabled and an empty threshold block"
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+	  thresholds {}
+  }
+
+  metric_query {
+    metric         = "requests"
+    query_name          = "a"
+    timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden              = false
+	display             = "line"
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+    
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
 	noDataOnlyConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
   project_name = "` + testProject + `"
@@ -217,7 +274,6 @@ resource "lightstep_metric_condition" "test" {
   }
 
   expression {
-	  is_multi   = true
 	  is_no_data = true
   }
 
@@ -253,13 +309,6 @@ resource "lightstep_metric_condition" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -311,6 +360,14 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "no data only"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
+				),
+			},
+			{
+				Config: noDataEmptyThresholdBlockConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "no data empty thresholds"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
