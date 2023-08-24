@@ -106,14 +106,11 @@ Optional:
 <a id="nestedblock--composite_alert--alert--expression"></a>
 ### Nested Schema for `composite_alert.alert.expression`
 
-Required:
-
-- `operand` (String)
-- `thresholds` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
-
 Optional:
 
 - `is_no_data` (Boolean)
+- `operand` (String)
+- `thresholds` (Block List, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
 
 <a id="nestedblock--composite_alert--alert--expression--thresholds"></a>
 ### Nested Schema for `composite_alert.alert.expression.thresholds`
@@ -155,15 +152,12 @@ Optional:
 <a id="nestedblock--expression"></a>
 ### Nested Schema for `expression`
 
-Required:
-
-- `operand` (String)
-- `thresholds` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--expression--thresholds))
-
 Optional:
 
 - `is_multi` (Boolean)
 - `is_no_data` (Boolean)
+- `operand` (String)
+- `thresholds` (Block List, Max: 1) (see [below for nested schema](#nestedblock--expression--thresholds))
 
 <a id="nestedblock--expression--thresholds"></a>
 ### Nested Schema for `expression.thresholds`
