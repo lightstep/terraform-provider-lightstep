@@ -680,75 +680,75 @@ resource "lightstep_alert" "errors" {
 `
 
 	compositeConditionConfig := `
-resource "lightstep_slack_destination" "slack" {
- project_name = "` + testProject + `"
- channel = "#emergency-room"
-}
-
-resource "lightstep_alert" "test" {
- project_name = "` + testProject + `"
- name = "Too many requests & customers"
- description = "A link to a playbook"
-
- composite_alert {
-     alert {
-       name = "A"
-       title = "Too many requests"
-       expression {
-	      is_no_data = false
-         operand  = "above"
-         thresholds {
-	    	critical  = 10
-	    	warning = 5
+	resource "lightstep_slack_destination" "slack" {
+	project_name = "` + testProject + `"
+	channel = "#emergency-room"
+	}
+	
+	resource "lightstep_alert" "test" {
+	project_name = "` + testProject + `"
+	name = "Too many requests & customers"
+	description = "A link to a playbook"
+	
+	composite_alert {
+	    alert {
+	      name = "A"
+	      title = "Too many requests"
+	      expression {
+		      is_no_data = false
+	        operand  = "above"
+	        thresholds {
+		    	critical  = 10
+		    	warning = 5
+		      }
 	      }
-       }
-       query {
-         query_name          = "a"
-         hidden              = false
-	      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-       }
-     }
-     
-     alert {
-       name = "B"
-       title = "Too many customers"
-       expression {
-	      is_no_data = false
-         operand  = "above"
-         thresholds {
-	    	critical  = 10
-	    	warning = 5
+	      query {
+	        query_name          = "a"
+	        hidden              = false
+		      query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
 	      }
-       }
-       query {
-         query_name          = "a"
-         hidden              = false
-	      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-       }
-     }
- }
-
- alerting_rule {
-   id          = lightstep_slack_destination.slack.id
-   update_interval = "1h"
-
-   include_filters = [
-     {
-       key   = "project_name"
-       value = "catlab"
-     }
-   ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
+	    }
+	
+	    alert {
+	      name = "B"
+	      title = "Too many customers"
+	      expression {
+		      is_no_data = false
+	        operand  = "above"
+	        thresholds {
+		    	critical  = 10
+		    	warning = 5
+		      }
+	      }
+	      query {
+	        query_name          = "a"
+	        hidden              = false
+		      query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
+	      }
+	    }
+	}
+	
+	alerting_rule {
+	  id          = lightstep_slack_destination.slack.id
+	  update_interval = "1h"
+	
+	  include_filters = [
+	    {
+	      key   = "project_name"
+	      value = "catlab"
+	    }
 	  ]
- }
-}
-`
+	
+		filters = [
+			{
+			  key   = "service_name"
+			  value = "frontend"
+			  operand = "contains"
+			}
+		  ]
+	}
+	}
+	`
 
 	updatedCompositeConditionConfig := `
 resource "lightstep_slack_destination" "slack" {
@@ -766,7 +766,7 @@ resource "lightstep_alert" "test" {
        name = "A"
        title = "updated too many requests"
        expression {
-	      is_no_data = true
+	     is_no_data = true
          operand  = "above"
          thresholds {
 	    	critical  = 10
@@ -784,7 +784,7 @@ resource "lightstep_alert" "test" {
        name = "B"
        title = "updated too many customers"
        expression {
-	      is_no_data = true
+	     is_no_data = true
          operand  = "above"
          thresholds {
 	    	critical  = 10
@@ -821,6 +821,71 @@ resource "lightstep_alert" "test" {
 }
 `
 
+	noDataCompositeConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+ project_name = "` + testProject + `"
+ channel = "#emergency-room"
+}
+
+resource "lightstep_alert" "test" {
+ project_name = "` + testProject + `"
+ name = "sub-alert A has no thresholds"
+ description = "A link to a playbook"
+
+ composite_alert {
+   alert {
+       name = "A"
+       title = "no thresholds"
+       expression {
+	     is_no_data = true
+         operand  = "above"
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+         query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+   }
+
+   alert {
+       name = "B"
+       title = "empty thresholds"
+       expression {
+	     is_no_data = true
+         thresholds {}
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	     query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+   }
+   alert {
+       name = "C"
+       title = "normal thresholds"
+       expression {
+	     is_no_data = false
+         operand  = "above"
+         thresholds {
+	    	critical  = 20
+	    	warning = 1
+	      }
+       }
+       query {
+         query_name          = "a"
+         hidden              = false
+	     query_string        = "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"
+       }
+   }
+ }
+
+ alerting_rule {
+   id          = lightstep_slack_destination.slack.id
+   update_interval = "1h"
+ }
+}
+`
+
 	resourceName := "lightstep_alert.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -848,9 +913,11 @@ resource "lightstep_alert" "test" {
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.operand", "above"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "false"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.thresholds.0.critical", "10"),
 				),
 			},
 			{
@@ -863,6 +930,23 @@ resource "lightstep_alert" "test" {
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "true"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string", "metric customers | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.is_no_data", "true"),
+				),
+			},
+			{
+				Config: noDataCompositeConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "sub-alert A has no thresholds"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.name", "C"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.thresholds.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.thresholds.0.critical", "20"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.name", "B"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.expression.0.thresholds.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.2.name", "A"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.2.expression.0.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.2.expression.0.thresholds.#", "0"),
 				),
 			},
 		},
