@@ -157,6 +157,8 @@ resource "lightstep_metric_condition" "test" {
 	  }
   }
 
+  custom_data = "this string could be json { example_key: \"example value\"} or anything you want"
+
   metric_query {
     metric         = "requests"
     query_name          = "a"
@@ -331,7 +333,8 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
-					resource.TestCheckNoResourceAttr(resourceName, "labels"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", ""),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
@@ -349,10 +352,12 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
 					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", `this string could be json { example_key: "example value"} or anything you want`),
 				),
 			},
 			{
@@ -361,6 +366,7 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "no data only"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", ""),
 				),
 			},
 			{
