@@ -58,6 +58,7 @@ EOT
 
 - `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
 - `composite_alert` (Block List, Max: 1) (see [below for nested schema](#nestedblock--composite_alert))
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
 - `description` (String)
 - `expression` (Block List, Max: 1) (see [below for nested schema](#nestedblock--expression))
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))

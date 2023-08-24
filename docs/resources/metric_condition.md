@@ -105,6 +105,7 @@ resource "lightstep_metric_condition" "beemo-requests" {
 ### Optional
 
 - `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
 - `description` (String)
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
