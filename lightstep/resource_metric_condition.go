@@ -38,12 +38,12 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"project_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of the project in which to create this alert",
+				Description: "The name of the [project](https://docs.lightstep.com/docs/glossary#project) in which to create this alert.",
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Title of the alert",
+				Description: "The title of the alert.",
 			},
 			"type": {
 				Type:     schema.TypeString,
@@ -52,7 +52,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional extended description for the alert (supports Markdown)",
+				Description: "Optional extended description for the alert (supports Markdown).",
 			},
 			"label": {
 				Type:        schema.TypeSet,
@@ -74,12 +74,12 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"custom_data": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional free-form string to include in alert notifications (max length 4096 bytes)",
+				Description: "Optional free-form string to include in alert notifications (max length 4096 bytes).",
 			},
 			"alerting_rule": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Optional configuration to enable alert notifications",
+				Description: "Optional configuration to receive alert notifications.",
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchemaMap(),
 				},
@@ -103,7 +103,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Optional:    true,
 			MinItems:    1,
 			MaxItems:    1,
-			Description: "Defines the configuration for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
+			Description: "Defines the configuration for a [composite alert](https://docs.lightstep.com/docs/about-alerts#customize-alerts-with-alert-templates). Mutually exclusive with { query, expression } which define the configuration for a single alert.",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
@@ -111,7 +111,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 						Required:    true,
 						MinItems:    1,
 						MaxItems:    10,
-						Description: "Defines one of the sub-alerts within a composite alert.",
+						Description: "Defines one of the sub alerts within a composite alert.",
 						Elem: &schema.Resource{
 							Schema: getCompositeSubAlertSchemaMap(),
 						},
@@ -148,15 +148,14 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 				`Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
-			Type:        schema.TypeString,
-			Required:    true,
-			Description: "ID of the corresponding destination resource",
+			Type:     schema.TypeString,
+			Required: true,
 		},
 		"include_filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Optional:    true,
-			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
+			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.",
 		},
 		"exclude_filters": {
 			Type:     schema.TypeList,
@@ -256,7 +255,7 @@ func getMetricQuerySchemaMap() map[string]*schema.Schema {
 		},
 		"timeseries_operator_input_window_ms": {
 			Type:         schema.TypeInt,
-			Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+			Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).",
 			Optional:     true,
 			ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
 		},
@@ -330,7 +329,7 @@ func getFinalWindowOperationSchema() *schema.Schema {
 				},
 				"input_window_ms": {
 					Type:         schema.TypeInt,
-					Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)",
+					Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).",
 					Optional:     true,
 					ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
 				},
@@ -344,12 +343,12 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 		"critical": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "Defines the threshold for the alert to transition to a Critical (more severe) status",
+			Description: "Defines the threshold for the alert to transition to a Critical (more severe) status.",
 		},
 		"warning": {
 			Type:        schema.TypeString,
 			Optional:    true,
-			Description: "Defines the threshold for the alert to transition to a Warning (less severe) status",
+			Description: "Defines the threshold for the alert to transition to a Warning (less severe) status.",
 		},
 	}
 }
@@ -361,7 +360,7 @@ func getUnifiedAlertExpressionSchema() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
-		Description: "Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead.",
+		Description: "Describes the conditions that trigger a single alert. For a composite alert, use the composite_alert section instead.",
 		MaxItems:    1,
 		Elem:        resource,
 	}
@@ -376,7 +375,7 @@ func getMetricConditionExpressionSchema() *schema.Schema {
 		Required:    true,
 		MaxItems:    1,
 		MinItems:    1,
-		Description: "Describes the conditions that should trigger the alert",
+		Description: "Describes the conditions that trigger the alert.",
 		Elem:        resource,
 	}
 }
@@ -386,13 +385,13 @@ func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: `Identifier for this sub-alert. Must be a single uppercase letter (examples: "A", "B", "C")`,
+			Description: `The identifier for this sub alert. Must be a single uppercase letter (examples: "A", "B", "C")`,
 		},
 		"title": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "Optional free-form title for the sub-alert",
+			Description: "Optional free-form title for this sub alert.",
 		},
 		"expression": getCompositeSubAlertExpressionSchema(),
 		"query": {
@@ -428,13 +427,13 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "If true, a notification will be sent when the alert query returns no data. If false, notifications will not be sent in this scenario.",
+				Description: "If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"", "above", "below"}, false),
-				Description:  "Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert should trigger when the value is above the threshold or below the threshold.",
+				Description:  "Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.",
 			},
 			"thresholds": {
 				Type:     schema.TypeList,
@@ -456,7 +455,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				},
 				MaxItems:    1,
 				MinItems:    0,
-				Description: "Optional values defining the thresholds at which this alert should transition into Critical or Warning states. If a particular threshold is not specified, the alert will never transition into that state.",
+				Description: "Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state.",
 				Elem: &schema.Resource{
 					Schema: getThresholdSchemaMap(),
 				},

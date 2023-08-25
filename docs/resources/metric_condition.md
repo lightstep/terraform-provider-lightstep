@@ -97,16 +97,16 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 ### Required
 
-- `expression` (Block List, Min: 1, Max: 1) Describes the conditions that trigger the alert (see [below for nested schema](#nestedblock--expression).)
-- `metric_query` (Block List, Min: 1) Defines the alert query (see [below for nested schema](#nestedblock--metric_query).)
+- `expression` (Block List, Min: 1, Max: 1) Describes the conditions that trigger the alert. (see [below for nested schema](#nestedblock--expression))
+- `metric_query` (Block List, Min: 1) Defines the alert query (see [below for nested schema](#nestedblock--metric_query))
 - `name` (String) The title of the alert.
 - `project_name` (String) The name of the [project](https://docs.lightstep.com/docs/glossary#project) in which to create this alert.
 
 ### Optional
 
-- `alerting_rule` (Block Set) Optional configuration to enable alert notifications (see [below for nested schema](#nestedblock--alerting_rule))
-- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
-- `description` (String) Optional extended description for the alert (supports Markdown)
+- `alerting_rule` (Block Set) Optional configuration to receive alert notifications. (see [below for nested schema](#nestedblock--alerting_rule))
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes).
+- `description` (String) Optional extended description for the alert (supports Markdown).
 - `label` (Block Set) Optional labels to attach to this alert. Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 
 ### Read-Only
@@ -120,15 +120,9 @@ resource "lightstep_metric_condition" "beemo-requests" {
 Optional:
 
 - `is_multi` (Boolean) When false, send a single notification whenever any number of group_by values exceeds the alert threshold. When true, send individual notifications for each distinct group_by value that exceeds the threshold.
-<<<<<<< HEAD
-- `is_no_data` (Boolean) When set to true, a notification is sent when the alert query returns no data. When false, notifications aren't sent when the alert query returns no data.
+- `is_no_data` (Boolean) If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.
 - `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
-- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (See [below for nested schema](#nestedblock--expression--thresholds).)
-=======
-- `is_no_data` (Boolean) If true, a notification will be sent when the alert query returns no data. If false, notifications will not be sent in this scenario.
-- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert should trigger when the value is above the threshold or below the threshold.
-- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert should transition into Critical or Warning states. If a particular threshold is not specified, the alert will never transition into that state. (see [below for nested schema](#nestedblock--expression--thresholds))
->>>>>>> 96ba17ab312cba9e634a14c4c00584d526dbf786
+- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (see [below for nested schema](#nestedblock--expression--thresholds))
 
 <a id="nestedblock--expression--thresholds"></a>
 ### Nested Schema for `expression.thresholds`
@@ -151,16 +145,16 @@ Required:
 Optional:
 
 - `display` (String)
-- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq).
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp).
-- `final_window_operation` (Block List, Max: 1) (See [below for nested schema](#nestedblock--metric_query--final_window_operation).)
-- `group_by` (Block List, Max: 1) (See [below for nested schema](#nestedblock--metric_query--group_by).)
-- `include_filters` (List of Map of String) Equality filters (operand: eq).
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
+- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--final_window_operation))
+- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--metric_query--group_by))
+- `include_filters` (List of Map of String) Equality filters (operand: eq)
 - `metric` (String)
-- `spans` (Block List, Max: 1, Deprecated) (See [below for nested schema](#nestedblock--metric_query--spans).)
+- `spans` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--metric_query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).
-- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead.
+- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
 
 <a id="nestedblock--metric_query--final_window_operation"></a>
 ### Nested Schema for `metric_query.final_window_operation`
@@ -199,16 +193,16 @@ Optional:
 <a id="nestedblock--alerting_rule"></a>
 ### Nested Schema for `alerting_rule`
 
-Required:
-
-- `id` (String) ID of the corresponding destination resource.
-
 Optional:
 
 - `exclude_filters` (List of Map of String)
 - `filters` (List of Map of String)
-- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.
+- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.
 - `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes. Values should be expressed as a duration (example: "2d").
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--label"></a>
