@@ -6,12 +6,13 @@ description: |-
 
 ---
 
-# NOTE: this resource will be deprecated in v2+. Use `lightstep_dashboard` instead.
+# NOTE: This resource will be deprecated in v2+. Use `lightstep_dashboard` instead.
 
 # lightstep_metric_dashboard (Resource)
 
-Provides a [Lightstep Metric Dashboard](https://api-docs.lightstep.com/reference/listmetricdashboardid). This can be used to create and manage Lightstep Metric Dashboards.
+Provides a [Lightstep Metric Dashboard](https://api-docs.lightstep.com/reference/listmetricdashboardid). Use this resource to create and manage Lightstep Metric Dashboards.
 
+Visit [Lightstep's documentation](https://docs.lightstep.com/docs/create-and-manage-dashboards) for conceptual information about dashboards.
 
 ## Example Usage
 
@@ -88,11 +89,11 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 
 ### Optional
 
-- `chart` (Block Set) (see [below for nested schema](#nestedblock--chart))
+- `chart` (Block Set) (See [below for nested schema](#nestedblock--chart).)
 - `dashboard_description` (String)
-- `group` (Block Set) (see [below for nested schema](#nestedblock--group))
-- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
-- `template_variable` (Block Set) Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable))
+- `group` (Block Set) (See [below for nested schema](#nestedblock--group).)
+- `label` (Block Set) [Labels](https://docs.lightstep.com/docs/use-labels) can be key/value pairs or standalone values. (See [below for nested schema](#nestedblock--label).)
+- `template_variable` (Block Set) Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable).)
 
 ### Read-Only
 
@@ -105,7 +106,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
 Required:
 
 - `name` (String)
-- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--chart--query))
+- `query` (Block List, Min: 1) (See [below for nested schema](#nestedblock--chart--query).)
 - `rank` (Number)
 - `type` (String)
 
@@ -114,7 +115,7 @@ Optional:
 - `height` (Number)
 - `width` (Number)
 - `x_pos` (Number)
-- `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
+- `y_axis` (Block List, Max: 1, Deprecated) (See [below for nested schema](#nestedblock--chart--y_axis).)
 - `y_pos` (Number)
 
 Read-Only:
@@ -132,23 +133,23 @@ Required:
 Optional:
 
 - `display` (String)
-- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
-- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--final_window_operation))
-- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--group_by))
-- `include_filters` (List of Map of String) Equality filters (operand: eq)
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq).
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp).
+- `final_window_operation` (Block List, Max: 1) (See [below for nested schema](#nestedblock--chart--query--final_window_operation).)
+- `group_by` (Block List, Max: 1) (See [below for nested schema](#nestedblock--chart--query--group_by).)
+- `include_filters` (List of Map of String) Equality filters (operand: eq).
 - `metric` (String)
-- `spans` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--query--spans))
+- `spans` (Block List, Max: 1, Deprecated) (See [below for nested schema](#nestedblock--chart--query--spans).)
 - `timeseries_operator` (String)
-- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
-- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
+- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).
+- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead.
 
 <a id="nestedblock--chart--query--final_window_operation"></a>
 ### Nested Schema for `chart.query.final_window_operation`
 
 Optional:
 
-- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).
 - `operator` (String)
 
 
@@ -197,8 +198,8 @@ Required:
 
 Optional:
 
-- `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
-- `text_panel` (Block List) (see [below for nested schema](#nestedblock--group--text_panel))
+- `chart` (Block Set) (See [below for nested schema](#nestedblock--group--chart).)
+- `text_panel` (Block List) (See [below for nested schema](#nestedblock--group--text_panel).)
 - `title` (String)
 
 Read-Only:
@@ -211,7 +212,7 @@ Read-Only:
 Required:
 
 - `name` (String)
-- `query` (Block List, Min: 1) (see [below for nested schema](#nestedblock--group--chart--query))
+- `query` (Block List, Min: 1) (See [below for nested schema](#nestedblock--group--chart--query).)
 - `rank` (Number)
 - `type` (String)
 
@@ -220,7 +221,7 @@ Optional:
 - `height` (Number)
 - `width` (Number)
 - `x_pos` (Number)
-- `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
+- `y_axis` (Block List, Max: 1, Deprecated) (See [below for nested schema](#nestedblock--group--chart--y_axis).)
 - `y_pos` (Number)
 
 Read-Only:
@@ -238,23 +239,23 @@ Required:
 Optional:
 
 - `display` (String)
-- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq)
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp)
-- `final_window_operation` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--final_window_operation))
-- `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--group_by))
-- `include_filters` (List of Map of String) Equality filters (operand: eq)
+- `exclude_filters` (List of Map of String) Not-equals filters (operand: neq).
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp).
+- `final_window_operation` (Block List, Max: 1) (See [below for nested schema](#nestedblock--group--chart--query--final_window_operation).)
+- `group_by` (Block List, Max: 1) (See [below for nested schema](#nestedblock--group--chart--query--group_by).)
+- `include_filters` (List of Map of String) Equality filters (operand: eq).
 - `metric` (String)
-- `spans` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--query--spans))
+- `spans` (Block List, Max: 1, Deprecated) (See [below for nested schema](#nestedblock--group--chart--query--spans).)
 - `timeseries_operator` (String)
-- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
-- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
+- `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).
+- `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead.
 
 <a id="nestedblock--group--chart--query--final_window_operation"></a>
 ### Nested Schema for `group.chart.query.final_window_operation`
 
 Optional:
 
-- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
+- `input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).
 - `operator` (String)
 
 
@@ -331,6 +332,6 @@ Optional:
 
 Required:
 
-- `default_values` (List of String) One or more values to set the template variable to by default (if none are provided, defaults to all possible values)
-- `name` (String) Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores
-- `suggestion_attribute_key` (String) Attribute key used as source for suggested template variable values appearing in Lightstep UI
+- `default_values` (List of String) One or more values to set the [template variable](https://docs.lightstep.com/docs/use-template-variables) to by default (if none are provided, defaults to all possible values).
+- `name` (String) Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores.
+- `suggestion_attribute_key` (String) Attribute key used as source for suggested template variable values appearing in Lightstep UI.

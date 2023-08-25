@@ -8,8 +8,9 @@ description: |-
 
 # lightstep_alert (Resource)
 
-Provides a [Lightstep Alert](https://api-docs.lightstep.com/reference/listalertsid). This can be used to create and manage Lightstep Alerts.
+Provides a [Lightstep alert](https://api-docs.lightstep.com/reference/listalertsid). Use this resource to create and manage Lightstep alerts.
 
+Visit [Lightstep's documentation](https://docs.lightstep.com/docs/about-alerts) for conceptual information about alerts and alert templates.
 
 ## Example Usage
 
@@ -51,18 +52,18 @@ EOT
 
 ### Required
 
-- `name` (String) Title for the alert
-- `project_name` (String) Name of the project in which to create this alert
+- `name` (String) The title of the alert.
+- `project_name` (String) The name of the [project](https://docs.lightstep.com/docs/glossary#project) in which to create this alert.
 
 ### Optional
 
-- `alerting_rule` (Block Set) Optional configuration to receive alert notifications (see [below for nested schema](#nestedblock--alerting_rule))
-- `composite_alert` (Block List, Max: 1) Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert. (see [below for nested schema](#nestedblock--composite_alert))
-- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
-- `description` (String) Optional extended description for the alert (supports Markdown)
-- `expression` (Block List, Max: 1) Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead. (see [below for nested schema](#nestedblock--expression))
-- `label` (Block Set) Optional labels to attach to this alert. Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
-- `query` (Block List) Defines the query for a single alert. For a composite alert, use the composite_alert section instead. (see [below for nested schema](#nestedblock--query))
+- `alerting_rule` (Block Set) Optional configuration to receive alert notifications (see [below for nested schema](#nestedblock--alerting_rule)).
+- `composite_alert` (Block List, Max: 1) Defines the queries and conditions for a [composite alert](https://docs.lightstep.com/docs/about-alerts#customize-alerts-with-alert-templates). Mutually exclusive with { query, expression } which define the configuration for a single alert. (See [below for nested schema](#nestedblock--composite_alert).)
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes).
+- `description` (String) Optional extended description for the alert (supports Markdown).
+- `expression` (Block List, Max: 1) Describes the conditions that trigger a single alert. For a composite alert, use the composite_alert section instead. (See [below for nested schema](#nestedblock--expression).)
+- `label` (Block Set) Optional [labels](https://docs.lightstep.com/docs/use-labels) to attach to this alert. Labels can be key/value pairs or standalone values. (See [below for nested schema](#nestedblock--label).)
+- `query` (Block List) Defines the query for a single alert. For a composite alert, use the composite_alert section instead. (See [below for nested schema](#nestedblock--query).)
 
 ### Read-Only
 
@@ -74,9 +75,9 @@ EOT
 
 Optional:
 
-- `exclude_filters` (List of Map of String) ID of the corresponding destination resource
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
-- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.
+- `exclude_filters` (List of Map of String) The ID of the corresponding destination resource.
+- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc.).
+- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.
 - `update_interval` (String)
 
 Read-Only:
@@ -89,37 +90,37 @@ Read-Only:
 
 Required:
 
-- `alert` (Block Set, Min: 1, Max: 10) Defines one of the sub-alerts within a composite alert. (see [below for nested schema](#nestedblock--composite_alert--alert))
+- `alert` (Block Set, Min: 1, Max: 10) Defines one of the sub alerts within a composite alert. (See [below for nested schema](#nestedblock--composite_alert--alert)).
 
 <a id="nestedblock--composite_alert--alert"></a>
 ### Nested Schema for `composite_alert.alert`
 
 Required:
 
-- `expression` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression))
-- `name` (String) Identifier for this sub-alert. Must be a single uppercase letter  (examples: A, B, C)
-- `query` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--query))
+- `expression` (Block List, Min: 1, Max: 1) (See [below for nested schema](#nestedblock--composite_alert--alert--expression).)
+- `name` (String) The identifier for this sub alert. Must be a single uppercase letter (examples: A, B, C).
+- `query` (Block List, Min: 1, Max: 1) (See [below for nested schema](#nestedblock--composite_alert--alert--query).)
 
 Optional:
 
-- `title` (String) Optional free-form title for the alert
+- `title` (String) Optional free-form title for the alert.
 
 <a id="nestedblock--composite_alert--alert--expression"></a>
 ### Nested Schema for `composite_alert.alert.expression`
 
 Optional:
 
-- `is_no_data` (Boolean) When set to true, a notification will be sent when the alert query returns no data. When false, notifications will not be sent when the alert query returns no data.
-- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert should trigger when the value is above the threshold or below the threshold.
-- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert should transition into Critical or Warning states. If a particular threshold is not specified, the alert will never transition into that state. (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
+- `is_no_data` (Boolean) When set to true, a notification is sent when the alert query returns no data. When false, notifications aren't sent when the alert query returns no data.
+- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
+- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (See [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds).)
 
 <a id="nestedblock--composite_alert--alert--expression--thresholds"></a>
 ### Nested Schema for `composite_alert.alert.expression.thresholds`
 
 Optional:
 
-- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status
-- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status
+- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
 
 
 
@@ -135,8 +136,8 @@ Required:
 Optional:
 
 - `display` (String)
-- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--composite_alert--alert--query--display_type_options))
-- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (See [below for nested schema](#nestedblock--composite_alert--alert--query--display_type_options).)
+- `hidden_queries` (Map of String) An optional map of sub alert names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub alerts in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--composite_alert--alert--query--display_type_options"></a>
 ### Nested Schema for `composite_alert.alert.query.display_type_options`
@@ -157,16 +158,16 @@ Optional:
 
 - `is_multi` (Boolean) When false, send a single notification whenever any number of group_by values exceeds the alert threshold. When true, send individual notifications for each distinct group_by value that exceeds the threshold.
 - `is_no_data` (Boolean) When set to true, a notification will be sent when the alert query returns no data. When false, notifications will not be sent when the alert query returns no data.
-- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert should trigger when the value is above the threshold or below the threshold.
-- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert should transition into Critical or Warning states. If a particular threshold is not specified, the alert will never transition into that state. (see [below for nested schema](#nestedblock--expression--thresholds))
+- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
+- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (See [below for nested schema](#nestedblock--expression--thresholds).)
 
 <a id="nestedblock--expression--thresholds"></a>
 ### Nested Schema for `expression.thresholds`
 
 Optional:
 
-- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status
-- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status
+- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
 
 
 
@@ -194,8 +195,8 @@ Required:
 Optional:
 
 - `display` (String)
-- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (see [below for nested schema](#nestedblock--query--display_type_options))
-- `hidden_queries` (Map of String) An optional map of sub-query names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub-queries in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
+- `display_type_options` (Block Set, Max: 1) Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description. (See [below for nested schema](#nestedblock--query--display_type_options).)
+- `hidden_queries` (Map of String) An optional map of sub alert names in the query_string to a boolean string to hide/show that query. If specified, the map must have an entry for all named sub alerts in the query_string. A value of "true" indicates the query should be hidden. Example: `hidden_queries = {  "a" = "true",  "b" = "false" }`.
 
 <a id="nestedblock--query--display_type_options"></a>
 ### Nested Schema for `query.display_type_options`
