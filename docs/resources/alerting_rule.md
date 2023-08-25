@@ -31,7 +31,7 @@ resource "lightstep_alerting_rule" "beemo_ops_alerting_rule" {
 - `condition_id` (String)
 - `destination_id` (String)
 - `project_name` (String)
-- `update_interval` (String)
+- `update_interval` (String) Represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes.Values should be expressed as a duration (example: "2d").
 
 ### Read-Only
 

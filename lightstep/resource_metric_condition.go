@@ -43,7 +43,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Title for the alert",
+				Description: "Title of the alert",
 			},
 			"type": {
 				Type:     schema.TypeString,
@@ -79,7 +79,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"alerting_rule": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Optional configuration to receive alert notifications",
+				Description: "Optional configuration to enable alert notifications",
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchemaMap(),
 				},
@@ -103,7 +103,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Optional:    true,
 			MinItems:    1,
 			MaxItems:    1,
-			Description: "Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
+			Description: "Defines the configuration for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
@@ -142,10 +142,15 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
+			Description: `An optional duration that represents the frequency at which ` +
+				`to re-send an alert notification if an alert remains in a triggered state. ` +
+				`By default, notifications will only be sent when the alert status changes. ` +
+				`Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "ID of the corresponding destination resource",
 		},
 		"include_filters": {
 			Type:        schema.TypeList,
@@ -154,16 +159,14 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
 		},
 		"exclude_filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Optional:    true,
-			Description: "ID of the corresponding destination resource",
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
 		},
 		"filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Description: "Non-equality filters (operand: contains, regexp, etc)",
-			Optional:    true,
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
 		},
 	}
 }
@@ -373,7 +376,7 @@ func getMetricConditionExpressionSchema() *schema.Schema {
 		Required:    true,
 		MaxItems:    1,
 		MinItems:    1,
-		Description: "Describes the conditions that should trigger the alert.",
+		Description: "Describes the conditions that should trigger the alert",
 		Elem:        resource,
 	}
 }
@@ -383,20 +386,13 @@ func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Identifier for this sub-alert. Must be a single uppercase letter  (examples: A, B, C)",
-			ValidateDiagFunc: func(val interface{}, _ cty.Path) diag.Diagnostics {
-				s := val.(string)
-				if len(s) != 1 || rune(s[0]) < 'A' || rune(s[0]) > 'Z' {
-					return diag.FromErr(fmt.Errorf("invalid name for sub-alert (%v): must be a single uppercase letter", s))
-				}
-				return nil
-			},
+			Description: `Identifier for this sub-alert. Must be a single uppercase letter (examples: "A", "B", "C")`,
 		},
 		"title": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "Optional free-form title for the alert",
+			Description: "Optional free-form title for the sub-alert",
 		},
 		"expression": getCompositeSubAlertExpressionSchema(),
 		"query": {
@@ -432,7 +428,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "When set to true, a notification will be sent when the alert query returns no data. When false, notifications will not be sent when the alert query returns no data.",
+				Description: "If true, a notification will be sent when the alert query returns no data. If false, notifications will not be sent in this scenario.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
