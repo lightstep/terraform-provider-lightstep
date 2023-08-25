@@ -41,6 +41,10 @@ func resourceAlertingRule() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
 				Required:     true,
 				ForceNew:     true, // API does not provide an Update method
+				Description: `Represents the frequency at which ` +
+					`to re-send an alert notification if an alert remains in a triggered state. ` +
+					`By default, notifications will only be sent when the alert status changes.` +
+					`Values should be expressed as a duration (example: "2d").`,
 			},
 		},
 	}

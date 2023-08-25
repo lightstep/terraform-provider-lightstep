@@ -8,8 +8,9 @@ description: |-
 
 # lightstep_alert (Resource)
 
-Provides a [Lightstep Alert](https://api-docs.lightstep.com/reference/listalertsid). This can be used to create and manage Lightstep Alerts.
+Provides a [Lightstep alert](https://api-docs.lightstep.com/reference/listalertsid). Use this resource to create and manage Lightstep alerts.
 
+Visit [Lightstep's documentation](https://docs.lightstep.com/docs/about-alerts) for conceptual information about alerts and alert templates.
 
 ## Example Usage
 
@@ -51,18 +52,18 @@ EOT
 
 ### Required
 
-- `name` (String)
-- `project_name` (String)
+- `name` (String) The title of the alert.
+- `project_name` (String) The name of the [project](https://docs.lightstep.com/docs/glossary#project) in which to create this alert.
 
 ### Optional
 
-- `alerting_rule` (Block Set) (see [below for nested schema](#nestedblock--alerting_rule))
-- `composite_alert` (Block List, Max: 1) (see [below for nested schema](#nestedblock--composite_alert))
-- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
-- `description` (String)
-- `expression` (Block List, Max: 1) (see [below for nested schema](#nestedblock--expression))
-- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
-- `query` (Block List) (see [below for nested schema](#nestedblock--query))
+- `alerting_rule` (Block Set) Optional configuration to receive alert notifications. (see [below for nested schema](#nestedblock--alerting_rule))
+- `composite_alert` (Block List, Max: 1) Defines the configuration for a [composite alert](https://docs.lightstep.com/docs/about-alerts#customize-alerts-with-alert-templates). Mutually exclusive with { query, expression } which define the configuration for a single alert. (see [below for nested schema](#nestedblock--composite_alert))
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes).
+- `description` (String) Optional extended description for the alert (supports Markdown).
+- `expression` (Block List, Max: 1) Describes the conditions that trigger a single alert. For a composite alert, use the composite_alert section instead. (see [below for nested schema](#nestedblock--expression))
+- `label` (Block Set) Optional labels to attach to this alert. Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
+- `query` (Block List) Defines the query for a single alert. For a composite alert, use the composite_alert section instead. (see [below for nested schema](#nestedblock--query))
 
 ### Read-Only
 
@@ -75,9 +76,9 @@ EOT
 Optional:
 
 - `exclude_filters` (List of Map of String)
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
-- `include_filters` (List of Map of String)
-- `update_interval` (String)
+- `filters` (List of Map of String)
+- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.
+- `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes. Values should be expressed as a duration (example: "2d").
 
 Read-Only:
 
@@ -89,7 +90,7 @@ Read-Only:
 
 Required:
 
-- `alert` (Block Set, Min: 1, Max: 10) (see [below for nested schema](#nestedblock--composite_alert--alert))
+- `alert` (Block Set, Min: 1, Max: 10) Defines one of the sub alerts within a composite alert. (see [below for nested schema](#nestedblock--composite_alert--alert))
 
 <a id="nestedblock--composite_alert--alert"></a>
 ### Nested Schema for `composite_alert.alert`
@@ -97,29 +98,29 @@ Required:
 Required:
 
 - `expression` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression))
-- `name` (String)
+- `name` (String) The identifier for this sub alert. Must be a single uppercase letter (examples: "A", "B", "C")
 - `query` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--query))
 
 Optional:
 
-- `title` (String)
+- `title` (String) Optional free-form title for this sub alert.
 
 <a id="nestedblock--composite_alert--alert--expression"></a>
 ### Nested Schema for `composite_alert.alert.expression`
 
 Optional:
 
-- `is_no_data` (Boolean)
-- `operand` (String)
-- `thresholds` (Block List, Max: 1) (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
+- `is_no_data` (Boolean) If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.
+- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
+- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
 
 <a id="nestedblock--composite_alert--alert--expression--thresholds"></a>
 ### Nested Schema for `composite_alert.alert.expression.thresholds`
 
 Optional:
 
-- `critical` (String)
-- `warning` (String)
+- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
 
 
 
@@ -155,18 +156,18 @@ Optional:
 
 Optional:
 
-- `is_multi` (Boolean)
-- `is_no_data` (Boolean)
-- `operand` (String)
-- `thresholds` (Block List, Max: 1) (see [below for nested schema](#nestedblock--expression--thresholds))
+- `is_multi` (Boolean) When false, send a single notification whenever any number of group_by values exceeds the alert threshold. When true, send individual notifications for each distinct group_by value that exceeds the threshold.
+- `is_no_data` (Boolean) If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.
+- `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
+- `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (see [below for nested schema](#nestedblock--expression--thresholds))
 
 <a id="nestedblock--expression--thresholds"></a>
 ### Nested Schema for `expression.thresholds`
 
 Optional:
 
-- `critical` (String)
-- `warning` (String)
+- `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
 
 
 
