@@ -58,6 +58,7 @@ EOT
 
 - `alerting_rule` (Block Set) Optional configuration to receive alert notifications (see [below for nested schema](#nestedblock--alerting_rule))
 - `composite_alert` (Block List, Max: 1) Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert. (see [below for nested schema](#nestedblock--composite_alert))
+- `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
 - `description` (String) Optional extended description for the alert (supports Markdown)
 - `expression` (Block List, Max: 1) Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead. (see [below for nested schema](#nestedblock--expression))
 - `label` (Block Set) Optional labels to attach to this alert. Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
