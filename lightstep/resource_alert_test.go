@@ -69,14 +69,6 @@ resource "lightstep_alert" "test" {
         value = "catlab"
       }
     ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
   }
 }
 `
@@ -133,7 +125,7 @@ resource "lightstep_alert" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("at least one query is required"),
+				ExpectError: regexp.MustCompile("all of `expression,query` must be specified"),
 			},
 			{
 				Config: conditionConfig,
@@ -221,14 +213,6 @@ EOT
         value = "catlab"
       }
     ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
   }
 }
 `, uqlQuery)
@@ -301,9 +285,6 @@ EOT
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
-						"filters.0.key":           "service_name",
-						"filters.0.operand":       "contains",
-						"filters.0.value":         "frontend",
 					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
@@ -578,11 +559,6 @@ EOT
       value = "catlab"
     }]
 
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
   }
 }
 `, uqlQuery)
@@ -738,14 +714,6 @@ resource "lightstep_alert" "errors" {
 	      value = "catlab"
 	    }
 	  ]
-	
-		filters = [
-			{
-			  key   = "service_name"
-			  value = "frontend"
-			  operand = "contains"
-			}
-		  ]
 	}
 	}
 	`
@@ -809,14 +777,6 @@ resource "lightstep_alert" "test" {
        value = "catlab"
      }
    ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
  }
 }
 `

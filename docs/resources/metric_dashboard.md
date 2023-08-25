@@ -138,7 +138,7 @@ Optional:
 - `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--group_by))
 - `include_filters` (List of Map of String) Equality filters (operand: eq)
 - `metric` (String)
-- `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--chart--query--spans))
+- `spans` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
 - `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead
@@ -244,7 +244,7 @@ Optional:
 - `group_by` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--group_by))
 - `include_filters` (List of Map of String) Equality filters (operand: eq)
 - `metric` (String)
-- `spans` (Block List, Max: 1) (see [below for nested schema](#nestedblock--group--chart--query--spans))
+- `spans` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--query--spans))
 - `timeseries_operator` (String)
 - `timeseries_operator_input_window_ms` (Number) Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000)
 - `tql` (String, Deprecated) Deprecated, use the query_string field in lightstep_dashboard or lightstep_alert instead

@@ -145,14 +145,15 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Required: true,
 		},
 		"include_filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Optional:    true,
+			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
 		},
 		"exclude_filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
+			Type:        schema.TypeList,
+			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Optional:    true,
 			Description: "ID of the corresponding destination resource",
 		},
 		"filters": {
@@ -160,7 +161,6 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Non-equality filters (operand: contains, regexp, etc)",
 			Optional:    true,
-			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
 		},
 	}
 }
