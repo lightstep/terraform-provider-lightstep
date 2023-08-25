@@ -36,25 +36,28 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 		},
 		Schema: map[string]*schema.Schema{
 			"project_name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Name of the project in which to create this alert",
 			},
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Title for the alert",
 			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional extended description for the alert (supports Markdown)",
 			},
 			"label": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Labels can be key/value pairs or standalone values.",
+				Description: "Optional labels to attach to this alert. Labels can be key/value pairs or standalone values.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
@@ -69,8 +72,9 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 				},
 			},
 			"alerting_rule": {
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "Optional configuration to receive alert notifications",
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchemaMap(),
 				},
@@ -81,25 +85,30 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 	if conditionSchemaType == UnifiedConditionSchema {
 		resource.Schema["expression"] = getUnifiedAlertExpressionSchema()
 		resource.Schema["query"] = &schema.Schema{
-			Type:     schema.TypeList,
-			Optional: true,
+			Type:         schema.TypeList,
+			Optional:     true,
+			RequiredWith: []string{"expression"},
+			Description:  "Defines the query for a single alert. For a composite alert, use the composite_alert section instead.",
 			Elem: &schema.Resource{
 				Schema: getUnifiedQuerySchemaMap(),
 			},
 		}
 		// Configuration for a composite alert, consists of two or more sub alerts
 		resource.Schema["composite_alert"] = &schema.Schema{
-			Type:     schema.TypeList,
-			Optional: true,
-			MinItems: 1,
-			MaxItems: 1,
+			Type:          schema.TypeList,
+			Optional:      true,
+			MinItems:      1,
+			MaxItems:      1,
+			ConflictsWith: []string{"query", "expression"},
+			Description:   "Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
-						Type:     schema.TypeSet,
-						Required: true,
-						MinItems: 1,
-						MaxItems: 10,
+						Type:        schema.TypeSet,
+						Required:    true,
+						MinItems:    1,
+						MaxItems:    10,
+						Description: "Defines one of the sub-alerts within a composite alert.",
 						Elem: &schema.Resource{
 							Schema: getCompositeSubAlertSchemaMap(),
 						},
@@ -108,10 +117,14 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			},
 		}
 	} else {
+		// mark the whole resource as deprecated
+		resource.DeprecationMessage = "This resource is deprecated. Please migrate to lightstep_alert."
+
 		resource.Schema["expression"] = getMetricConditionExpressionSchema()
 		resource.Schema["metric_query"] = &schema.Schema{
-			Type:     schema.TypeList,
-			Required: true,
+			Type:        schema.TypeList,
+			Required:    true,
+			Description: "Defines the alert query",
 			Elem: &schema.Resource{
 				Schema: getMetricQuerySchemaMap(),
 			},
@@ -140,20 +153,23 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Type:     schema.TypeList,
 			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
+			Description: "ID of the corresponding destination resource",
 		},
 		"filters": {
 			Type:        schema.TypeList,
 			Elem:        &schema.Schema{Type: schema.TypeMap},
 			Description: "Non-equality filters (operand: contains, regexp, etc)",
 			Optional:    true,
+			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
 		},
 	}
 }
 
 func getSpansQuerySchema() *schema.Schema {
 	sma := schema.Schema{
-		Type:     schema.TypeList,
-		MaxItems: 1,
+		Type:       schema.TypeList,
+		MaxItems:   1,
+		Deprecated: "This field and resource are deprecated. Please migrate to the lightstep_alerts resource type.",
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"query": {
@@ -320,12 +336,14 @@ func getFinalWindowOperationSchema() *schema.Schema {
 func getThresholdSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"critical": {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Defines the threshold for the alert to transition to a Critical (more severe) status",
 		},
 		"warning": {
-			Type:     schema.TypeString,
-			Optional: true,
+			Type:        schema.TypeString,
+			Optional:    true,
+			Description: "Defines the threshold for the alert to transition to a Warning (less severe) status",
 		},
 	}
 }
@@ -335,10 +353,12 @@ func getUnifiedAlertExpressionSchema() *schema.Schema {
 	resource := getCompositeSubAlertExpressionResource()
 	resource.Schema["is_multi"] = getIsMultiSchema()
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Optional: true,
-		MaxItems: 1,
-		Elem:     resource,
+		Type:         schema.TypeList,
+		Optional:     true,
+		RequiredWith: []string{"query"},
+		Description:  "Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead.",
+		MaxItems:     1,
+		Elem:         resource,
 	}
 }
 
@@ -347,24 +367,34 @@ func getMetricConditionExpressionSchema() *schema.Schema {
 	resource := getCompositeSubAlertExpressionResource()
 	resource.Schema["is_multi"] = getIsMultiSchema()
 	return &schema.Schema{
-		Type:     schema.TypeList,
-		Required: true,
-		MaxItems: 1,
-		MinItems: 1,
-		Elem:     resource,
+		Type:        schema.TypeList,
+		Required:    true,
+		MaxItems:    1,
+		MinItems:    1,
+		Description: "Describes the conditions that should trigger the alert.",
+		Elem:        resource,
 	}
 }
 
 func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"name": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "Identifier for this sub-alert. Must be a single uppercase letter  (examples: A, B, C)",
+			ValidateDiagFunc: func(val interface{}, _ cty.Path) diag.Diagnostics {
+				s := val.(string)
+				if len(s) != 1 || rune(s[0]) < 'A' || rune(s[0]) > 'Z' {
+					return diag.FromErr(fmt.Errorf("invalid name for sub-alert (%v): must be a single uppercase letter", s))
+				}
+				return nil
+			},
 		},
 		"title": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Default:  "",
+			Type:        schema.TypeString,
+			Optional:    true,
+			Default:     "",
+			Description: "Optional free-form title for the alert",
 		},
 		"expression": getCompositeSubAlertExpressionSchema(),
 		"query": {
@@ -397,14 +427,16 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 			// However that logic can't be expressed statically using the Required attribute so we
 			// just mark all these fields as optional and let the server handle the detailed validation.
 			"is_no_data": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "When set to true, a notification will be sent when the alert query returns no data. When false, notifications will not be sent when the alert query returns no data.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{"", "above", "below"}, false),
+				Description:  "Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert should trigger when the value is above the threshold or below the threshold.",
 			},
 			"thresholds": {
 				Type:     schema.TypeList,
@@ -424,8 +456,9 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 					}
 					return old == new
 				},
-				MaxItems: 1,
-				MinItems: 0,
+				MaxItems:    1,
+				MinItems:    0,
+				Description: "Optional values defining the thresholds at which this alert should transition into Critical or Warning states. If a particular threshold is not specified, the alert will never transition into that state.",
 				Elem: &schema.Resource{
 					Schema: getThresholdSchemaMap(),
 				},
@@ -436,9 +469,10 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 
 func getIsMultiSchema() *schema.Schema {
 	return &schema.Schema{
-		Type:     schema.TypeBool,
-		Optional: true,
-		Default:  false,
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "When false, send a single notification whenever any number of group_by values exceeds the alert threshold. When true, send individual notifications for each distinct group_by value that exceeds the threshold.",
 	}
 }
 
