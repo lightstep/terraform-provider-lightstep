@@ -142,10 +142,15 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
+			Description: `An optional duration that represents the frequency at which ` +
+				`to re-send an alert notification if an alert remains in a triggered state. ` +
+				`By default, notifications will only be sent when the alert status changes.` +
+				`Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: "ID of the corresponding destination resource",
 		},
 		"include_filters": {
 			Type:        schema.TypeList,
@@ -154,10 +159,9 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.",
 		},
 		"exclude_filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Optional:    true,
-			Description: "ID of the corresponding destination resource",
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
 		},
 		"filters": {
 			Type:        schema.TypeList,
@@ -384,19 +388,12 @@ func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Identifier for this sub-alert. Must be a single uppercase letter  (examples: A, B, C)",
-			ValidateDiagFunc: func(val interface{}, _ cty.Path) diag.Diagnostics {
-				s := val.(string)
-				if len(s) != 1 || rune(s[0]) < 'A' || rune(s[0]) > 'Z' {
-					return diag.FromErr(fmt.Errorf("invalid name for sub-alert (%v): must be a single uppercase letter", s))
-				}
-				return nil
-			},
 		},
 		"title": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Default:     "",
-			Description: "Optional free-form title for the alert",
+			Description: "Optional free-form title for the sub-alert",
 		},
 		"expression": getCompositeSubAlertExpressionSchema(),
 		"query": {

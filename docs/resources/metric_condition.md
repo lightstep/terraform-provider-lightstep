@@ -193,16 +193,16 @@ Optional:
 <a id="nestedblock--alerting_rule"></a>
 ### Nested Schema for `alerting_rule`
 
+Required:
+
+- `id` (String) ID of the corresponding destination resource
+
 Optional:
 
-- `exclude_filters` (List of Map of String) ID of the corresponding destination resource
+- `exclude_filters` (List of Map of String)
 - `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
 - `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.
-- `update_interval` (String)
-
-Read-Only:
-
-- `id` (String) The ID of this resource.
+- `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes.Values should be expressed as a duration (example: "2d").
 
 
 <a id="nestedblock--label"></a>
