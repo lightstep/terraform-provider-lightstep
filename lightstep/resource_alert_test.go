@@ -125,7 +125,7 @@ resource "lightstep_alert" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccChecLightstepAlertExists(resourceName, &condition),
 				),
-				ExpectError: regexp.MustCompile("all of `expression,query` must be specified"),
+				ExpectError: regexp.MustCompile("at least one query is required"),
 			},
 			{
 				Config: conditionConfig,
