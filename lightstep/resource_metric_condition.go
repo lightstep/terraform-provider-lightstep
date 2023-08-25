@@ -103,7 +103,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			Optional:    true,
 			MinItems:    1,
 			MaxItems:    1,
-			Description: "Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
+			Description: "Defines the configuration for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
@@ -144,7 +144,7 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
 			Description: `An optional duration that represents the frequency at which ` +
 				`to re-send an alert notification if an alert remains in a triggered state. ` +
-				`By default, notifications will only be sent when the alert status changes.` +
+				`By default, notifications will only be sent when the alert status changes. ` +
 				`Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
@@ -376,7 +376,7 @@ func getMetricConditionExpressionSchema() *schema.Schema {
 		Required:    true,
 		MaxItems:    1,
 		MinItems:    1,
-		Description: "Describes the conditions that should trigger the alert.",
+		Description: "Describes the conditions that should trigger the alert",
 		Elem:        resource,
 	}
 }
@@ -386,7 +386,7 @@ func getCompositeSubAlertSchemaMap() map[string]*schema.Schema {
 		"name": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: "Identifier for this sub-alert. Must be a single uppercase letter  (examples: A, B, C)",
+			Description: `Identifier for this sub-alert. Must be a single uppercase letter (examples: "A", "B", "C")`,
 		},
 		"title": {
 			Type:        schema.TypeString,
@@ -428,7 +428,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "When set to true, a notification will be sent when the alert query returns no data. When false, notifications will not be sent when the alert query returns no data.",
+				Description: "If true, a notification will be sent when the alert query returns no data. If false, notifications will not be sent in this scenario.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
