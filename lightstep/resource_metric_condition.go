@@ -152,20 +152,16 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Required: true,
 		},
 		"include_filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
+			Type: schema.TypeList,
+			Elem: &schema.Schema{
+				Type: schema.TypeMap,
+				Elem: &schema.Resource{
+
+					Schema: map[string]*Schema,
+				},
+			},
 			Optional:    true,
 			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.",
-		},
-		"exclude_filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
-		},
-		"filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
 		},
 	}
 }
@@ -716,10 +712,8 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			newRule.UpdateInterval = updateIntervalMilli
 		}
 
+		// N.B. the MatchOn feature in alertevaluator currently only supports include_filters (equality)
 		var includes []interface{}
-		var excludes []interface{}
-		var all []interface{}
-
 		filters := rule["include_filters"]
 		if filters != nil {
 			err := validateFilters(filters.([]interface{}), false)
@@ -728,26 +722,7 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			}
 			includes = filters.([]interface{})
 		}
-
-		filters = rule["exclude_filters"]
-		if filters != nil {
-			err := validateFilters(filters.([]interface{}), false)
-			if err != nil {
-				return nil, err
-			}
-			excludes = filters.([]interface{})
-		}
-
-		filters = rule["filters"]
-		if filters != nil {
-			err := validateFilters(filters.([]interface{}), true)
-			if err != nil {
-				return nil, err
-			}
-			all = filters.([]interface{})
-		}
-
-		newFilters := buildLabelFilters(includes, excludes, all)
+		newFilters := buildLabelFilters(includes, nil, nil)
 		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
 
 		newRules = append(newRules, newRule)
@@ -1303,13 +1278,16 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	var alertingRules []interface{}
 	for _, r := range c.Attributes.AlertingRules {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
+		// pathological check: this should never happen, but we want to know if it does
+		// because that means we have a validation loophole somewhere else
+		if len(excludeFilters) > 0 || len(allFilters) > 0 {
+			return fmt.Errorf("the match-on filters include an unsupported operand (not 'eq')")
+		}
 
 		alertingRules = append(alertingRules, map[string]interface{}{
 			"id":              r.MessageDestinationID,
 			"update_interval": GetUpdateIntervalValue(r.UpdateInterval),
 			"include_filters": includeFilters,
-			"exclude_filters": excludeFilters,
-			"filters":         allFilters,
 		})
 	}
 

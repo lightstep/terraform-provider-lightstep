@@ -59,7 +59,6 @@ resource "lightstep_metric_condition" "errors" {
   }
 }
 `
-
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
   project_name = "` + testProject + `"
@@ -119,14 +118,6 @@ resource "lightstep_metric_condition" "test" {
         value = "catlab"
       }
     ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
   }
 }
 `
@@ -340,9 +331,6 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
-						"filters.0.key":           "service_name",
-						"filters.0.operand":       "contains",
-						"filters.0.value":         "frontend",
 					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
