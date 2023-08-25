@@ -43,7 +43,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Title for the alert",
+				Description: "Title of the alert",
 			},
 			"type": {
 				Type:     schema.TypeString,
@@ -79,7 +79,7 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 			"alerting_rule": {
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Description: "Optional configuration to receive alert notifications",
+				Description: "Optional configuration to enable alert notifications",
 				Elem: &schema.Resource{
 					Schema: getAlertingRuleSchemaMap(),
 				},
@@ -164,10 +164,9 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Optional: true,
 		},
 		"filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Description: "Non-equality filters (operand: contains, regexp, etc)",
-			Optional:    true,
+			Type:     schema.TypeList,
+			Elem:     &schema.Schema{Type: schema.TypeMap},
+			Optional: true,
 		},
 	}
 }

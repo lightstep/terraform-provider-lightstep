@@ -99,12 +99,12 @@ resource "lightstep_metric_condition" "beemo-requests" {
 
 - `expression` (Block List, Min: 1, Max: 1) Describes the conditions that should trigger the alert. (see [below for nested schema](#nestedblock--expression))
 - `metric_query` (Block List, Min: 1) Defines the alert query (see [below for nested schema](#nestedblock--metric_query))
-- `name` (String) Title for the alert
+- `name` (String) Title of the alert
 - `project_name` (String) Name of the project in which to create this alert
 
 ### Optional
 
-- `alerting_rule` (Block Set) Optional configuration to receive alert notifications (see [below for nested schema](#nestedblock--alerting_rule))
+- `alerting_rule` (Block Set) Optional configuration to enable alert notifications (see [below for nested schema](#nestedblock--alerting_rule))
 - `custom_data` (String) Optional free-form string to include in alert notifications (max length 4096 bytes)
 - `description` (String) Optional extended description for the alert (supports Markdown)
 - `label` (Block Set) Optional labels to attach to this alert. Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
@@ -200,7 +200,7 @@ Required:
 Optional:
 
 - `exclude_filters` (List of Map of String)
-- `filters` (List of Map of String) Non-equality filters (operand: contains, regexp, etc)
+- `filters` (List of Map of String)
 - `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination will only receive notification for group_by results that include the set of attributes specified here.
 - `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes.Values should be expressed as a duration (example: "2d").
 
