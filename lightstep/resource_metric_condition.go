@@ -68,6 +68,11 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 					},
 				},
 			},
+			"custom_data": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional free-form string to include in alert notifications (max length 4096 bytes)",
+			},
 			"alerting_rule": {
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -629,6 +634,7 @@ func getUnifiedConditionAttributesFromResource(d *schema.ResourceData, schemaTyp
 		Description:    d.Get("description").(string),
 		Expression:     expression,
 		Labels:         labels,
+		CustomData:     d.Get("custom_data").(string),
 		AlertingRules:  alertingRules,
 		Queries:        queries,
 		CompositeAlert: compositeAlert,
@@ -1216,6 +1222,10 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	labels := extractLabels(c.Attributes.Labels)
 	if err := d.Set("label", labels); err != nil {
 		return fmt.Errorf("unable to set labels resource field: %v", err)
+	}
+
+	if err := d.Set("custom_data", c.Attributes.CustomData); err != nil {
+		return fmt.Errorf("unable to set type resource field: %v", err)
 	}
 
 	if err := d.Set("type", "metric_alert"); err != nil {
