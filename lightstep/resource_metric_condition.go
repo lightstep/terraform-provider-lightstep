@@ -85,22 +85,20 @@ func resourceUnifiedCondition(conditionSchemaType ConditionSchemaType) *schema.R
 	if conditionSchemaType == UnifiedConditionSchema {
 		resource.Schema["expression"] = getUnifiedAlertExpressionSchema()
 		resource.Schema["query"] = &schema.Schema{
-			Type:         schema.TypeList,
-			Optional:     true,
-			RequiredWith: []string{"expression"},
-			Description:  "Defines the query for a single alert. For a composite alert, use the composite_alert section instead.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			Description: "Defines the query for a single alert. For a composite alert, use the composite_alert section instead.",
 			Elem: &schema.Resource{
 				Schema: getUnifiedQuerySchemaMap(),
 			},
 		}
 		// Configuration for a composite alert, consists of two or more sub alerts
 		resource.Schema["composite_alert"] = &schema.Schema{
-			Type:          schema.TypeList,
-			Optional:      true,
-			MinItems:      1,
-			MaxItems:      1,
-			ConflictsWith: []string{"query", "expression"},
-			Description:   "Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
+			Type:        schema.TypeList,
+			Optional:    true,
+			MinItems:    1,
+			MaxItems:    1,
+			Description: "Defines the queries and conditions for a composite alert. Mutually exclusive with { query, expression } which define the configuration for a single alert.",
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"alert": {
@@ -353,12 +351,11 @@ func getUnifiedAlertExpressionSchema() *schema.Schema {
 	resource := getCompositeSubAlertExpressionResource()
 	resource.Schema["is_multi"] = getIsMultiSchema()
 	return &schema.Schema{
-		Type:         schema.TypeList,
-		Optional:     true,
-		RequiredWith: []string{"query"},
-		Description:  "Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead.",
-		MaxItems:     1,
-		Elem:         resource,
+		Type:        schema.TypeList,
+		Optional:    true,
+		Description: "Describes the conditions that should trigger a single alert. For a composite alert, use the composite_alert section instead.",
+		MaxItems:    1,
+		Elem:        resource,
 	}
 }
 
