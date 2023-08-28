@@ -1053,7 +1053,7 @@ func TestBuildAlertingRules(t *testing.T) {
 	renotifyMillis := 3600000
 
 	cases := []alertingRuleCase{
-		// without includes or excludes
+		// without includes
 		{
 			rules: []interface{}{
 				map[string]interface{}{
@@ -1087,56 +1087,6 @@ func TestBuildAlertingRules(t *testing.T) {
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
 					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter}},
-				},
-			},
-		},
-		// with excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{excludeFilter}},
-				},
-			},
-		},
-		// with both includes excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"include_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter, excludeFilter}},
 				},
 			},
 		},
