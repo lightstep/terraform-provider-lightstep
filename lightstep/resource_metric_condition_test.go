@@ -899,12 +899,6 @@ EOT
       key   = "project_name"
       value = "catlab"
     }]
-
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
   }
 }
 `, uqlQuery)
