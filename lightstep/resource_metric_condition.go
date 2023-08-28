@@ -142,26 +142,24 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
-			Description: `An optional duration that represents the frequency at which ` +
-				`to re-send an alert notification if an alert remains in a triggered state. ` +
-				`By default, notifications will only be sent when the alert status changes. ` +
-				`Values should be expressed as a duration (example: "2d").`,
+			Description: `An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. 
+By default, notifications will only be sent when the alert status changes.  
+Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 		"include_filters": {
-			Type: schema.TypeList,
+			Type:     schema.TypeList,
+			Optional: true,
 			Elem: &schema.Schema{
 				Type: schema.TypeMap,
-				Elem: &schema.Resource{
-
-					Schema: map[string]*Schema,
-				},
 			},
-			Optional:    true,
-			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.",
+			Description: `For alert queries that produce multiple group_by results, if at least one include_filters entry is specified, this destination only receives notifications for query results matching all of the specified group_by attributes.  
+Required fields:
+  * "key" = The name of the attribute to match. Must match one of the attribute names in the query group_by expression.
+  * "value" = The value of the attribute to route to this destination.`,
 		},
 	}
 }

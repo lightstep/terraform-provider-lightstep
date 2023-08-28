@@ -1,6 +1,8 @@
-# This file contains the resource-level documentation and usage examples for the lightstep_metric_condition resource.
-# The contents of this file will later be merged with the field-level documentation that is generated from
-# the `Description` attributes in the corresponding .go file to generate the corresponding .md file.
+<!---
+This file contains the resource-level documentation and usage examples for the lightstep_metric_condition resource.
+The contents of this file will later be merged with the field-level documentation that is generated from
+the `Description` attributes in the corresponding .go file to generate the corresponding .md file.
+--->
 
 ---
 page_title: "lightstep_metric_condition Resource - terraform-provider-lightstep"
@@ -198,10 +200,13 @@ Optional:
 
 Optional:
 
-- `exclude_filters` (List of Map of String)
-- `filters` (List of Map of String)
-- `include_filters` (List of Map of String) For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.
-- `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. By default, notifications will only be sent when the alert status changes. Values should be expressed as a duration (example: "2d").
+- `include_filters` (List of Map of String) For alert queries that produce multiple group_by results, if at least one include_filters entry is specified, this destination only receives notifications for query results matching all of the specified group_by attributes.  
+Required fields:
+  * "key" = The name of the attribute to match. Must match one of the attribute names in the query group_by expression.
+  * "value" = The value of the attribute to route to this destination.
+- `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. 
+By default, notifications will only be sent when the alert status changes.  
+Values should be expressed as a duration (example: "2d").
 
 Read-Only:
 
