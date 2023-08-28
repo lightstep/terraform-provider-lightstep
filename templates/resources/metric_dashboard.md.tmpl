@@ -1,9 +1,3 @@
-<!---
-This file contains the resource-level documentation and usage examples for the lightstep_metric_dashboard resource.
-The contents of this file will later be merged with the field-level documentation that is generated from
-the `Description` attributes in the corresponding .go file to generate the corresponding .md file.
---->
-
 ---
 page_title: "lightstep_metric_dashboard Resource - terraform-provider-lightstep"
 subcategory: ""
