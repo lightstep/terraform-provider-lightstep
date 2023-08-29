@@ -142,30 +142,24 @@ func getAlertingRuleSchemaMap() map[string]*schema.Schema {
 			Type:         schema.TypeString,
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(GetValidUpdateInterval(), false),
-			Description: `An optional duration that represents the frequency at which ` +
-				`to re-send an alert notification if an alert remains in a triggered state. ` +
-				`By default, notifications will only be sent when the alert status changes. ` +
-				`Values should be expressed as a duration (example: "2d").`,
+			Description: `An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. 
+By default, notifications will only be sent when the alert status changes.  
+Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
 			Type:     schema.TypeString,
 			Required: true,
 		},
 		"include_filters": {
-			Type:        schema.TypeList,
-			Elem:        &schema.Schema{Type: schema.TypeMap},
-			Optional:    true,
-			Description: "For alert queries that produce multiple group_by values, if at least one entry is specified for this field, the destination only receives notifications for group_by results that include the set of attributes specified here.",
-		},
-		"exclude_filters": {
 			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
 			Optional: true,
-		},
-		"filters": {
-			Type:     schema.TypeList,
-			Elem:     &schema.Schema{Type: schema.TypeMap},
-			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeMap,
+			},
+			Description: `For alert queries that produce multiple group_by results, if at least one include_filters entry is specified, this destination only receives notifications for query results matching all of the specified group_by attributes.  
+Required fields:
+  * "key" = The name of the attribute to match. Must match one of the attribute names in the query group_by expression.
+  * "value" = The value of the attribute to route to this destination.`,
 		},
 	}
 }
@@ -716,10 +710,8 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			newRule.UpdateInterval = updateIntervalMilli
 		}
 
+		// N.B. the MatchOn feature in alertevaluator currently only supports include_filters (equality)
 		var includes []interface{}
-		var excludes []interface{}
-		var all []interface{}
-
 		filters := rule["include_filters"]
 		if filters != nil {
 			err := validateFilters(filters.([]interface{}), false)
@@ -728,26 +720,7 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			}
 			includes = filters.([]interface{})
 		}
-
-		filters = rule["exclude_filters"]
-		if filters != nil {
-			err := validateFilters(filters.([]interface{}), false)
-			if err != nil {
-				return nil, err
-			}
-			excludes = filters.([]interface{})
-		}
-
-		filters = rule["filters"]
-		if filters != nil {
-			err := validateFilters(filters.([]interface{}), true)
-			if err != nil {
-				return nil, err
-			}
-			all = filters.([]interface{})
-		}
-
-		newFilters := buildLabelFilters(includes, excludes, all)
+		newFilters := buildLabelFilters(includes, nil, nil)
 		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
 
 		newRules = append(newRules, newRule)
@@ -1303,13 +1276,16 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	var alertingRules []interface{}
 	for _, r := range c.Attributes.AlertingRules {
 		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
+		// pathological check: this should never happen, but we want to know if it does
+		// because that means we have a validation loophole somewhere else
+		if len(excludeFilters) > 0 || len(allFilters) > 0 {
+			return fmt.Errorf("the match-on filters include an unsupported operand (not 'eq')")
+		}
 
 		alertingRules = append(alertingRules, map[string]interface{}{
 			"id":              r.MessageDestinationID,
 			"update_interval": GetUpdateIntervalValue(r.UpdateInterval),
 			"include_filters": includeFilters,
-			"exclude_filters": excludeFilters,
-			"filters":         allFilters,
 		})
 	}
 

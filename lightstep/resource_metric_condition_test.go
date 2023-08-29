@@ -59,7 +59,6 @@ resource "lightstep_metric_condition" "errors" {
   }
 }
 `
-
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
   project_name = "` + testProject + `"
@@ -119,14 +118,6 @@ resource "lightstep_metric_condition" "test" {
         value = "catlab"
       }
     ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
   }
 }
 `
@@ -340,9 +331,6 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
-						"filters.0.key":           "service_name",
-						"filters.0.operand":       "contains",
-						"filters.0.value":         "frontend",
 					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
@@ -911,12 +899,6 @@ EOT
       key   = "project_name"
       value = "catlab"
     }]
-
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
   }
 }
 `, uqlQuery)
@@ -1065,7 +1047,7 @@ func TestBuildAlertingRules(t *testing.T) {
 	renotifyMillis := 3600000
 
 	cases := []alertingRuleCase{
-		// without includes or excludes
+		// without includes
 		{
 			rules: []interface{}{
 				map[string]interface{}{
@@ -1099,56 +1081,6 @@ func TestBuildAlertingRules(t *testing.T) {
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
 					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter}},
-				},
-			},
-		},
-		// with excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{excludeFilter}},
-				},
-			},
-		},
-		// with both includes excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"include_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter, excludeFilter}},
 				},
 			},
 		},
