@@ -171,6 +171,11 @@ func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		// Alias for what we refer to as title elsewhere
 		"name": nameSchema(),
+		"description": {
+			Type:     schema.TypeString,
+			Optional: true,
+			Default:  "",
+		},
 		"x_pos": {
 			Type:         schema.TypeInt,
 			ValidateFunc: validation.IntAtLeast(0),
@@ -527,11 +532,12 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 
 	for _, chart := range charts {
 		c := client.UnifiedChart{
-			Title:     chart["name"].(string),
-			Rank:      chart["rank"].(int),
-			Position:  buildPosition(chart),
-			ID:        chart["id"].(string),
-			ChartType: chart["type"].(string),
+			Title:       chart["name"].(string),
+			Description: chart["description"].(string),
+			Rank:        chart["rank"].(int),
+			Position:    buildPosition(chart),
+			ID:          chart["id"].(string),
+			ChartType:   chart["type"].(string),
 		}
 
 		queries, err := buildQueries(chart["query"].([]interface{}))
