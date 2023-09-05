@@ -726,6 +726,7 @@ func setPanelResourceData(
 	panel client.UnifiedChart, // Panel from the API
 ) {
 	resource["name"] = panel.Title
+	resource["description"] = panel.Description
 	resource["x_pos"] = panel.Position.XPos
 	resource["y_pos"] = panel.Position.YPos
 	resource["width"] = panel.Position.Width
