@@ -59,9 +59,7 @@ func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.
 				{
 					"is_no_data": subAlertIn.Expression.IsNoData,
 					"operand":    subAlertIn.Expression.Operand,
-					"thresholds": []interface{}{
-						buildUntypedThresholdsMap(subAlertIn.Expression.Thresholds),
-					},
+					"thresholds": buildUntypedThresholds(subAlertIn.Expression.Thresholds),
 				},
 			},
 			"query": queries,

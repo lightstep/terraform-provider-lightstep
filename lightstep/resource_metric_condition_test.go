@@ -59,7 +59,6 @@ resource "lightstep_metric_condition" "errors" {
   }
 }
 `
-
 	conditionConfig := `
 resource "lightstep_slack_destination" "slack" {
   project_name = "` + testProject + `"
@@ -119,14 +118,6 @@ resource "lightstep_metric_condition" "test" {
         value = "catlab"
       }
     ]
-
-	filters = [
-		{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-		}
-	  ]
   }
 }
 `
@@ -156,6 +147,8 @@ resource "lightstep_metric_condition" "test" {
 		warning = 5
 	  }
   }
+
+  custom_data = "this string could be json { example_key: \"example value\"} or anything you want"
 
   metric_query {
     metric         = "requests"
@@ -200,6 +193,118 @@ resource "lightstep_metric_condition" "test" {
 }
 `
 
+	noDataEmptyThresholdBlockConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "` + testProject + `"
+  name = "no data empty thresholds"
+  description = "An alert with No Data enabled and an empty threshold block"
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+	  thresholds {}
+  }
+
+  metric_query {
+    metric         = "requests"
+    query_name          = "a"
+    timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden              = false
+	display             = "line"
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+    
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+	noDataOnlyConditionConfig := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "` + testProject + `"
+  name = "no data only"
+  description = "An alert with No Data as the only threshold setting"
+
+  label {
+    key = "team"
+    value = "ontology"
+  }
+
+  expression {
+	  is_no_data = true
+  }
+
+  metric_query {
+    metric         = "requests"
+    query_name          = "a"
+    timeseries_operator = "rate"
+    timeseries_operator_input_window_ms = 3600000
+    hidden              = false
+	display             = "line"
+
+    include_filters = [{
+      key   = "project_name"
+      value = "catlab"
+    }]
+
+    exclude_filters = [{
+      key   = "service"
+      value = "android"
+    }]
+
+    group_by  {
+      aggregation_method = "avg"
+      keys = ["method"]
+    }
+    
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
 	resourceName := "lightstep_metric_condition.test"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -219,15 +324,13 @@ resource "lightstep_metric_condition" "test" {
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
-					resource.TestCheckNoResourceAttr(resourceName, "labels"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", ""),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
 						"include_filters.0.key":   "project_name",
 						"include_filters.0.value": "catlab",
-						"filters.0.key":           "service_name",
-						"filters.0.operand":       "contains",
-						"filters.0.value":         "frontend",
 					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
@@ -237,10 +340,29 @@ resource "lightstep_metric_condition" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
+					resource.TestCheckResourceAttr(resourceName, "label.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "label.0.key", "team"),
 					resource.TestCheckResourceAttr(resourceName, "label.0.value", "ontology"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", `this string could be json { example_key: "example value"} or anything you want`),
+				),
+			},
+			{
+				Config: noDataOnlyConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "no data only"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
+					resource.TestCheckResourceAttr(resourceName, "custom_data", ""),
+				),
+			},
+			{
+				Config: noDataEmptyThresholdBlockConditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "no data empty thresholds"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
 		},
@@ -777,12 +899,6 @@ EOT
       key   = "project_name"
       value = "catlab"
     }]
-
-	filters = [{
-		  key   = "service_name"
-		  value = "frontend"
-		  operand = "contains"
-	}]
   }
 }
 `, uqlQuery)
@@ -931,7 +1047,7 @@ func TestBuildAlertingRules(t *testing.T) {
 	renotifyMillis := 3600000
 
 	cases := []alertingRuleCase{
-		// without includes or excludes
+		// without includes
 		{
 			rules: []interface{}{
 				map[string]interface{}{
@@ -965,56 +1081,6 @@ func TestBuildAlertingRules(t *testing.T) {
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
 					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter}},
-				},
-			},
-		},
-		// with excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{excludeFilter}},
-				},
-			},
-		},
-		// with both includes excludes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"include_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-					"exclude_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter, excludeFilter}},
 				},
 			},
 		},

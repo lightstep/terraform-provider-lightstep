@@ -58,7 +58,7 @@ type StreamAlertingRuleResponseRelationships struct {
 func (c *Client) CreateAlertingRule(
 	ctx context.Context,
 	projectName string,
-	updateInterval int,
+	updateIntervalMs int,
 	destinationID string,
 	conditionID string) (StreamAlertingRuleResponse, error) {
 
@@ -72,7 +72,7 @@ func (c *Client) CreateAlertingRule(
 			Type: "alerting_rule",
 		},
 		Attributes: StreamAlertingRuleAttributes{
-			UpdateInterval: updateInterval,
+			UpdateInterval: updateIntervalMs,
 		},
 		Relationships: StreamAlertingRuleRequestRelationships{
 			Condition: RelatedResourceObject{
