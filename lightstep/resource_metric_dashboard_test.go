@@ -247,7 +247,7 @@ resource "lightstep_metric_dashboard" "test" {
 
  chart {
    name = "CPU: Capped Target"
-   description = "VPA will adjust pods' CPU requests until the average across all replicas is <= to this value"
+   description = "VPA will adjust pods' CPU requests until the average across all replicas is less than or equal to this value"
    rank = "0"
    type = "timeseries"
 
@@ -383,7 +383,7 @@ resource "lightstep_metric_dashboard" "test" {
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*", map[string]string{
 						"name":        "CPU: Capped Target",
-						"description": "VPA will adjust pods' CPU requests until the average across all replicas is <= to this value",
+						"description": "VPA will adjust pods' CPU requests until the average across all replicas is less than or equal to this value",
 					}),
 				),
 			},
@@ -394,7 +394,7 @@ resource "lightstep_metric_dashboard" "test" {
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*", map[string]string{
 						"name":        "CPU: Capped Target",
-						"description": "VPA will adjust pods' CPU requests until the average across all replicas is <= to this value",
+						"description": "VPA will adjust pods' CPU requests until the average across all replicas is less than or equal to this value",
 					}),
 				),
 			},
