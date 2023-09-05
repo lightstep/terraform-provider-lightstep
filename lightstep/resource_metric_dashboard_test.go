@@ -393,7 +393,8 @@ resource "lightstep_metric_dashboard" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
 					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "chart.*", map[string]string{
-						"name": "CPU: Capped Target",
+						"name":        "CPU: Capped Target",
+						"description": "VPA will adjust pods' CPU requests until the average across all replicas is <= to this value",
 					}),
 				),
 			},
