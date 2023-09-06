@@ -44,6 +44,7 @@ type UnifiedChart struct {
 	Position      UnifiedPosition             `json:"position"`
 	ID            string                      `json:"id"`
 	Title         string                      `json:"title"`
+	Description   string                      `json:"description"`
 	ChartType     string                      `json:"chart-type"`
 	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
