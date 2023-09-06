@@ -111,6 +111,7 @@ Required:
 
 Optional:
 
+- `description` (String)
 - `height` (Number)
 - `width` (Number)
 - `x_pos` (Number)
@@ -217,6 +218,7 @@ Required:
 
 Optional:
 
+- `description` (String)
 - `height` (Number)
 - `width` (Number)
 - `x_pos` (Number)
@@ -302,6 +304,7 @@ Required:
 
 Optional:
 
+- `description` (String)
 - `height` (Number)
 - `name` (String)
 - `width` (Number)
