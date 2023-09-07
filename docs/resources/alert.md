@@ -148,9 +148,9 @@ Optional:
 
 - `sort_by` (String)
 - `sort_direction` (String)
-- `y_axis_log_base` (Int)
-- `y_axis_max` (Float)
-- `y_axis_min` (Float)
+- `y_axis_log_base` (Number)
+- `y_axis_max` (Number)
+- `y_axis_min` (Number)
 - `y_axis_scale` (String)
 
 
@@ -211,7 +211,7 @@ Optional:
 
 - `sort_by` (String)
 - `sort_direction` (String)
-- `y_axis_log_base` (Int)
-- `y_axis_max` (Float)
-- `y_axis_min` (Float)
+- `y_axis_log_base` (Number)
+- `y_axis_max` (Number)
+- `y_axis_min` (Number)
 - `y_axis_scale` (String)
