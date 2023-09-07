@@ -54,6 +54,9 @@ jobs:
         run: |
           rm -r docs
           /tmp/tfplugindocs
+          cat docs/resources/alert.md
+          echo "************************"
+          cat docs/resources/dashboard.md
           git diff --stat --exit-code ./docs
   terraform_lint:
 
