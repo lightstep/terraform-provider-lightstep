@@ -66,11 +66,11 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						}),
 					},
 					"y_axis_min": {
-						Type:     schema.TypeInt,
+						Type:     schema.TypeFloat,
 						Optional: true,
 					},
 					"y_axis_max": {
-						Type:     schema.TypeInt,
+						Type:     schema.TypeFloat,
 						Optional: true,
 					},
 				},

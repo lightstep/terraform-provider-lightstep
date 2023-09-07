@@ -150,7 +150,8 @@ Optional:
 - `sort_direction` (String)
 - `y_axis_scale` (String)
 - `y_axis_log_base` (Int)
-- `y_axis_min` (Int)
+- `y_axis_min` (Float)
+- `y_axis_max` (Float)
 
 
 
