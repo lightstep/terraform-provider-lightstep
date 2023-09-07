@@ -148,6 +148,9 @@ Optional:
 
 - `sort_by` (String)
 - `sort_direction` (String)
+- `y_axis_scale` (String)
+- `y_axis_log_base` (Int)
+- `y_axis_min` (Int)
 
 
 
