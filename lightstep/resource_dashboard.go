@@ -48,6 +48,31 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Optional: true,
 					},
+					"y_axis_scale": {
+						Type:     schema.TypeString,
+						Optional: true,
+						ValidateFunc: validation.StringInSlice([]string{
+							"linear",
+							"log",
+							"symlog",
+						}, false),
+					},
+					"y_axis_log_base": {
+						Type:     schema.TypeInt,
+						Optional: true,
+						ValidateFunc: validation.IntInSlice([]int{
+							2,
+							10,
+						}),
+					},
+					"y_axis_min": {
+						Type:     schema.TypeFloat,
+						Optional: true,
+					},
+					"y_axis_max": {
+						Type:     schema.TypeFloat,
+						Optional: true,
+					},
 				},
 			},
 			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",

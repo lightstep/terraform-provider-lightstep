@@ -1004,6 +1004,49 @@ func TestDisplayTypeOptions(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.sort_by", "value"),
 				),
 			},
+			{
+				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
+	display_type_options {
+			y_axis_scale = "log"
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "table"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_scale", "log"),
+				),
+			},
+			{
+				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
+	display_type_options {
+			y_axis_scale = "log"
+			y_axis_log_base = 2
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "table"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_scale", "log"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_log_base", "2"),
+				),
+			},
+			{
+				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
+	display_type_options {
+			y_axis_min = 0
+			y_axis_max = 100
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "table"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_min", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_max", "100"),
+				),
+			},
 		},
 	})
 }
