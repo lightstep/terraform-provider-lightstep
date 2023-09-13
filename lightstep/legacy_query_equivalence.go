@@ -3,6 +3,7 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 
@@ -148,7 +149,9 @@ func compareUpdatedLegacyQueries(
 	}
 	err := c.CallAPI(context.Background(), "POST", fmt.Sprintf("projects/%v/query_translation", projectName), req, &resp)
 	if err != nil {
-		return false, err
+		// don't short circuit; terraform saves invalid input in state, so we need to just assume the queries did
+		// change in this case (as long as the new ones are valid)
+		log.Printf("warning! legacy query translation failed for existsing queries: %s", err.Error())
 	}
 
 	priorUQL := make(map[string]string)

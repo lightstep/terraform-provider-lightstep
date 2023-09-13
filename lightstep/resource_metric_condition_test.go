@@ -1443,6 +1443,7 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
 				),
 			},
 			// attempt to update with an invalid query
@@ -1453,7 +1454,7 @@ resource "lightstep_metric_condition" "test" {
 				),
 				ExpectError: regexp.MustCompile(".*Invalid query predicate.*"),
 			},
-			// fix the query
+			// fix the query, apply should succeed
 			{
 				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
 				Check: resource.ComposeTestCheckFunc(
@@ -1462,6 +1463,7 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
 				),
 			},
 		},
