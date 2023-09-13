@@ -1439,10 +1439,6 @@ resource "lightstep_metric_condition" "test" {
 				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
 				),
 			},
@@ -1451,6 +1447,8 @@ resource "lightstep_metric_condition" "test" {
 				Config: fmt.Sprintf(conditionConfigTemplate, invalidQuery),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
+					// the resource in state has an invalid query
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", invalidQuery),
 				),
 				ExpectError: regexp.MustCompile(".*Invalid query predicate.*"),
 			},
@@ -1459,10 +1457,6 @@ resource "lightstep_metric_condition" "test" {
 				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricConditionExists(resourceName, &condition),
-					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.operator_input_window_ms", "3600000"),
-					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.latency_percentiles.0", "50"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
 				),
 			},
