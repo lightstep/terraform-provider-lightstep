@@ -1446,7 +1446,7 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
 				),
 			},
-			// attempt to update with an invalid query
+			// attempt to update with an invalid query, this fails but stores the invalid query in state
 			{
 				Config: fmt.Sprintf(conditionConfigTemplate, invalidQuery),
 				Check: resource.ComposeTestCheckFunc(
@@ -1454,7 +1454,7 @@ resource "lightstep_metric_condition" "test" {
 				),
 				ExpectError: regexp.MustCompile(".*Invalid query predicate.*"),
 			},
-			// fix the query, apply should succeed
+			// fix the query, apply should succeed despite the invalid query in state
 			{
 				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
 				Check: resource.ComposeTestCheckFunc(
