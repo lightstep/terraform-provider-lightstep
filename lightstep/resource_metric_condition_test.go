@@ -1377,3 +1377,89 @@ func Test_buildLatencyPercentiles(t *testing.T) {
 		})
 	}
 }
+
+func TestAccSpanLatencyConditionInvalidQuery(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	invalidQuery := "customer IN (\\\"test\\\")"
+	validQuery := "\\\"customer\\\" IN (\\\"test\\\")"
+
+	conditionConfigTemplate := `
+resource "lightstep_slack_destination" "slack" {
+  project_name = "` + testProject + `"
+  channel = "#emergency-room"
+}
+
+resource "lightstep_metric_condition" "test" {
+  project_name = "` + testProject + `"
+  name = "Span latency alert"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  metric_query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    spans {
+      query = "%s"
+      operator = "latency"
+      operator_input_window_ms = 3600000
+      latency_percentiles = [50]
+    }
+
+    final_window_operation {
+      operator = "min"
+      input_window_ms  = 30000
+    }
+  }
+
+  alerting_rule {
+    id          = lightstep_slack_destination.slack.id
+    update_interval = "1h"
+  }
+}
+`
+
+	resourceName := "lightstep_metric_condition.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			// make a valid legacy span alert
+			{
+				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
+				),
+			},
+			// attempt to update with an invalid query, this fails but stores the invalid query in state
+			{
+				Config: fmt.Sprintf(conditionConfigTemplate, invalidQuery),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					// the resource in state has an invalid query
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", invalidQuery),
+				),
+				ExpectError: regexp.MustCompile(".*Invalid query predicate.*"),
+			},
+			// fix the query, apply should succeed despite the invalid query in state
+			{
+				Config: fmt.Sprintf(conditionConfigTemplate, validQuery),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricConditionExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "metric_query.0.spans.0.query", "\"customer\" IN (\"test\")"),
+				),
+			},
+		},
+	})
+}
