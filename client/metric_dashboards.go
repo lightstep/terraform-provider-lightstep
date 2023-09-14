@@ -49,6 +49,7 @@ type UnifiedChart struct {
 	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
 	Text          string                      `json:"text"`
+	Subtitle      *string                     `json:"subtitle,omitempty"`
 }
 
 type Label struct {
