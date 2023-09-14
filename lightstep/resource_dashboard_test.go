@@ -1324,3 +1324,78 @@ resource "lightstep_dashboard" "test_text_panels" {
 		},
 	})
 }
+
+func TestSubtitle(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	resourceName := "lightstep_dashboard.test_subtitle"
+
+	configTemplate := `
+resource "lightstep_dashboard" "test_subtitle" {
+project_name   = "` + testProject + `"
+dashboard_name = "test display_type_options"
+
+group {
+	rank            = 0
+	title           = ""
+	visibility_type = "implicit"
+	
+	chart {
+		name   = "overall cpu utilization"
+		type   = "timeseries"
+		rank   = 0
+		x_pos  = 4
+		y_pos  = 0
+		width  = 4
+		height = 4
+		%s
+	
+		query {
+		  query_name   = "a"
+		  display      = "big_number"
+		  hidden       = false
+		  query_string = "metric cpu.utilization | delta | group_by[], sum"
+		}
+	  }
+	}
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// empty subtitle
+				Config: fmt.Sprintf(configTemplate, `subtitle = ""`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.subtitle", ""),
+				),
+			},
+			{
+				// subtitle too long, this should be a chart-level description or something
+				Config: fmt.Sprintf(configTemplate, `subtitle = "this number represents the percentage of CPU cycles available to us that we have actually used"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "1"),
+				),
+				ExpectError: regexp.MustCompile("expected length of group.0.chart.0.subtitle to be in the range \\(0 - 37\\).*"),
+			},
+			{
+				// normal subtitle
+				Config: fmt.Sprintf(configTemplate, `subtitle = "percent"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.subtitle", "percent"),
+				),
+			},
+		},
+	})
+}

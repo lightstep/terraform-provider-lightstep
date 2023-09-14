@@ -113,6 +113,7 @@ Optional:
 
 - `description` (String)
 - `height` (Number)
+- `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
@@ -220,6 +221,7 @@ Optional:
 
 - `description` (String)
 - `height` (Number)
+- `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))

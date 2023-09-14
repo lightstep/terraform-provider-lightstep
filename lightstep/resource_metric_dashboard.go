@@ -272,6 +272,12 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 					Schema: querySchema,
 				},
 			},
+			"subtitle": {
+				Type:         schema.TypeString,
+				Description:  "Subtitle to show beneath big number, unused in other chart types",
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(0, 37),
+			},
 		},
 	)
 }
@@ -554,6 +560,11 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 			c.YAxis = yaxis
 		}
 
+		if subtitle, hasSubtitle := chart["subtitle"]; hasSubtitle {
+			subtitleStr := subtitle.(string)
+			c.Subtitle = &subtitleStr
+		}
+
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
@@ -779,6 +790,10 @@ func assembleCharts(
 					"min": c.YAxis.Min,
 				},
 			}
+		}
+
+		if c.Subtitle != nil {
+			resource["subtitle"] = *c.Subtitle
 		}
 
 		if chartSchemaType == MetricChartSchema {
