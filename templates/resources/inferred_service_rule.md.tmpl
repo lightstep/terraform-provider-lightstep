@@ -7,9 +7,7 @@ description: |-
 
 # lightstep_inferred_service_rule (Resource)
 
-~> 🚧 This resource is under development and is not generally available yet. 🚧
-
-Provides a [Lightstep Inferred Service Rule](https://docs.lightstep.com/docs/view-service-hierarchy-and-performance#add-inferred-services) that can detect and identify inferred services.
+Provides a [Lightstep Inferred Service Rule](https://docs.lightstep.com/docs/inferred-services) that can detect and identify inferred services.
 
 
 ## Example Usage
