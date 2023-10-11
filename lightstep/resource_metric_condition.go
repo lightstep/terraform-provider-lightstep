@@ -445,7 +445,7 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 							return true
 						}
 					}
-					return old == new
+					return false // do not suppress the diff otherwise!
 				},
 				MaxItems:    1,
 				MinItems:    0,
