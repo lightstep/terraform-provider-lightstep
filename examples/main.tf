@@ -159,24 +159,11 @@ resource "lightstep_metric_condition" "beemo_requests" {
   alerting_rule {
     id              = lightstep_pagerduty_destination.pd.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "kube_instance"
-        value = "3"
-      }
-    ]
   }
 
   alerting_rule {
     id              = lightstep_webhook_destination.webhook.id
     update_interval = "1h"
-    exclude_filters = [
-      {
-        key   = "kube_instance"
-        value = "1"
-      }
-    ]
   }
 
 }
@@ -230,21 +217,6 @@ resource "lightstep_alert" "beemo_composite_alert" {
   alerting_rule {
     id              = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "BEEMO"
-      }
-    ]
-
-    filters = [
-      {
-        key     = "service_name"
-        value   = "frontend"
-        operand = "contains"
-      }
-    ]
   }
 }
 

@@ -156,10 +156,7 @@ Values should be expressed as a duration (example: "2d").`,
 			Elem: &schema.Schema{
 				Type: schema.TypeMap,
 			},
-			Description: `For alert queries that produce multiple group_by results, if at least one include_filters entry is specified, this destination only receives notifications for query results matching all of the specified group_by attributes.  
-Required fields:
-  * "key" = The name of the attribute to match. Must match one of the attribute names in the query group_by expression.
-  * "value" = The value of the attribute to route to this destination.`,
+			Description: ``,
 		},
 	}
 }
