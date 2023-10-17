@@ -94,5 +94,3 @@ resource "lightstep_user_role_binding" "proj_viewer" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-
