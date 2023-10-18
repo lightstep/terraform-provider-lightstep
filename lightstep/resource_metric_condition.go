@@ -149,7 +149,7 @@ Values should be expressed as a duration (example: "2d").`,
 		"id": {
 			Type:        schema.TypeString,
 			Required:    true,
-			Description: `The id of the destination to receive notifications for this alert.`,
+			Description: `The identifier of the destination to receive notifications for this alert.`,
 		},
 		"include_filters": {
 			Type:     schema.TypeList,

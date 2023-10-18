@@ -194,7 +194,7 @@ Optional:
 
 Required:
 
-- `id` (String) The id of the destination to receive notifications for this alert.
+- `id` (String) The identifier of the destination to receive notifications for this alert.
 
 Optional:
 
