@@ -147,8 +147,9 @@ By default, notifications will only be sent when the alert status changes.
 Values should be expressed as a duration (example: "2d").`,
 		},
 		"id": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:        schema.TypeString,
+			Required:    true,
+			Description: `The id of the destination to receive notifications for this alert.`,
 		},
 		"include_filters": {
 			Type:     schema.TypeList,
