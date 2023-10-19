@@ -72,16 +72,16 @@ EOT
 <a id="nestedblock--alerting_rule"></a>
 ### Nested Schema for `alerting_rule`
 
+Required:
+
+- `id` (String) The identifier of the destination to receive notifications for this alert.
+
 Optional:
 
 - `include_filters` (List of Map of String)
 - `update_interval` (String) An optional duration that represents the frequency at which to re-send an alert notification if an alert remains in a triggered state. 
 By default, notifications will only be sent when the alert status changes.  
 Values should be expressed as a duration (example: "2d").
-
-Read-Only:
-
-- `id` (String) The ID of this resource.
 
 
 <a id="nestedblock--composite_alert"></a>
