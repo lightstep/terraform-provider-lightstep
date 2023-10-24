@@ -251,7 +251,7 @@ resource "lightstep_alert" "web_errors_alert" {
 								streamCreatedResource1.Attributes.Name, streamCreatedResource2.Attributes.Name,
 							))
 						}
-						if streamCreatedResource2.Attributes.Name != streamResourceName2 {
+						if streamCreatedResource2.Attributes.Name != streamName2 {
 							return errors.New(fmt.Sprintf("new stream has an unexpected name: '%v' vs '%v'",
 								streamCreatedResource2.Attributes.Name, streamName2,
 							))
