@@ -51,6 +51,8 @@ func resourceStream() *schema.Resource {
 	}
 }
 
+// resourceStreamCreate creates a new stream if needed (if one doesn't exist for this query predicate)
+// or imports the existing stream resource into the terraform state
 func resourceStreamCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
@@ -144,7 +146,16 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 
 	c := m.(*client.Client)
 	if err := c.DeleteStream(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to delete stream: %v", err))
+		if apiClientError, ok := err.(client.APIResponseCarrier); ok && apiClientError.GetStatusCode() == http.StatusConflict {
+			// Lightstep didn't delete the stream itself because there are other resources
+			// (usually alerts) that depend on it. However, that relationship is often implicit,
+			// and thus opaque to the terraform user, so we do our best to satisfy the user's
+			// intent by acting as though the delete operation succeed. This will cause the stream
+			// resource to be removed from the terraform state, leaving the stream intact in Lightstep
+			// but no longer managed by terraform.
+		} else {
+			return diag.FromErr(fmt.Errorf("failed to delete stream: %v", err))
+		}
 	}
 
 	// d.SetId("") is automatically called assuming delete returns no errors, but

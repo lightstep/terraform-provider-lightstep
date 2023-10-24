@@ -929,7 +929,7 @@ func testAccCheckLightstepAlertExists(resourceName string, condition *client.Uni
 			return err
 		}
 
-		condition = cond
+		*condition = *cond
 		return nil
 	}
 }

@@ -2,8 +2,10 @@ package lightstep
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -114,6 +116,149 @@ resource "lightstep_stream" "import-stream"{
 	})
 }
 
+func TestAccDeleteStreamWithDependentResources(t *testing.T) {
+	streamConfig := `
+	resource "lightstep_stream" "web_errors" {
+	  project_name = "` + testProject + `"
+      stream_name = "web errors"
+	  query = "service IN (\"web\") AND \"error\" IN (\"true\")"
+	}
+	`
+
+	streamConfig2 := `
+	resource "lightstep_stream" "web_errors_2" {
+	  project_name = "` + testProject + `"
+      stream_name = "web errors (2)"
+	  query = "service IN (\"web\") AND \"error\" IN (\"true\")"
+	}
+	`
+
+	// the alert query should map to the stream above
+	const alertQuery = `spans count | filter service == "web" && error == true | delta 1h | group_by [], sum`
+
+	alertConfig := fmt.Sprintf(`
+resource "lightstep_alert" "web_errors_alert" {
+  project_name = "`+testProject+`"
+  name = "Span Web Errors alert"
+
+  expression {
+	  is_multi   = false
+	  is_no_data = true
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+		warning = 5
+	  }
+  }
+
+  query {
+    hidden              = false
+    query_name          = "a"
+    display = "line"
+    query_string 	= <<EOT
+%s
+EOT
+  }
+}
+`, alertQuery)
+
+	var streamCreatedResource, stream2CreatedResource, streamUpdatedResource client.Stream
+	var alertCreatedResource, alertUpdatedResource client.UnifiedCondition
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccStreamDestroy,
+		// each step is akin to running a `terraform apply`
+		Steps: []resource.TestStep{
+			// create a new stream
+			{
+				Config: streamConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStreamExists("lightstep_stream.web_errors", &streamCreatedResource),
+				),
+			},
+			// create a unified alert that implicitly depends on the stream
+			{
+				Config: streamConfig + alertConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStreamExists("lightstep_stream.web_errors", &streamUpdatedResource),
+					testAccCheckLightstepAlertExists("lightstep_alert.web_errors_alert", &alertCreatedResource),
+				),
+			},
+			// try to delete the stream
+			// (the call should succeed and remove the stream from the terraform state, but the stream should still exist)
+			{
+				Config: alertConfig,
+				Check: resource.ComposeTestCheckFunc(
+					// verify that terraform still knows about the alert and that it still exists in Lightstep
+					testAccCheckLightstepAlertExists("lightstep_alert.web_errors_alert", &alertUpdatedResource),
+
+					// make sure the stream was removed from the terraform state...
+					func(state *terraform.State) error {
+						err := testAccCheckStreamExists("lightstep_stream.web_errors", &streamUpdatedResource)(state)
+						if err != nil {
+							if strings.Contains(err.Error(), "not found: lightstep_stream.web_errors") {
+								return nil
+							}
+							return errors.New("an unexpected error occurred")
+						}
+						return errors.New("stream still exists in terraform state")
+					},
+
+					// ...but make sure the stream still exists in Lightstep
+					func(state *terraform.State) error {
+						ctx := context.Background()
+						if len(alertUpdatedResource.ID) == 0 {
+							// regression check
+							return errors.New("unexpected empty alert ID")
+						}
+
+						providerClient := testAccProvider.Meta().(*client.Client)
+						stream, err := providerClient.GetStream(ctx, testProject, streamCreatedResource.ID)
+						if err != nil {
+							return errors.New(fmt.Sprintf("stream not found: %v", err))
+						}
+						if stream.ID != streamCreatedResource.ID {
+							return errors.New("unexpected stream ID")
+						}
+						return nil
+					},
+				),
+			},
+			// delete the alert that depends on the stream
+			{
+				Config:  alertConfig,
+				Check:   resource.ComposeTestCheckFunc(),
+				Destroy: true,
+			},
+			{
+				// create a new stream resource using the original query (it should import/rename the existing stream)
+				Config: streamConfig2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckStreamExists("lightstep_stream.web_errors_2", &stream2CreatedResource),
+					func(state *terraform.State) error {
+						if len(streamCreatedResource.ID) == 0 {
+							return errors.New("unexpected empty stream ID")
+						}
+						if streamCreatedResource.ID != stream2CreatedResource.ID {
+							return errors.New(fmt.Sprintf("new stream unexpectedly created for same query, streamIDs don't match: '%v' vs '%v'",
+								streamCreatedResource.ID, stream2CreatedResource.ID,
+							))
+						}
+						if streamCreatedResource.Attributes.Name == stream2CreatedResource.Attributes.Name {
+							return errors.New(fmt.Sprintf("new stream unexpectedly has the old name: '%v' vs '%v'",
+								streamCreatedResource.Attributes.Name, stream2CreatedResource.Attributes.Name,
+							))
+						}
+						return nil
+					},
+				),
+			},
+			// the stream will be deleted automatically as part of test cleanup
+		},
+	})
+}
+
 func TestAccStreamQueryNormalization(t *testing.T) {
 	var stream client.Stream
 
@@ -192,7 +337,7 @@ func testAccCheckStreamExists(resourceName string, stream *client.Stream) resour
 			return err
 		}
 
-		stream = str
+		*stream = *str
 		return nil
 	}
 
