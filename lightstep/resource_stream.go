@@ -150,7 +150,7 @@ func resourceStreamDelete(ctx context.Context, d *schema.ResourceData, m interfa
 			// Lightstep didn't delete the stream itself because there are other resources
 			// (usually alerts) that depend on it. However, that relationship is often implicit,
 			// and thus opaque to the terraform user, so we do our best to satisfy the user's
-			// intent by acting as though the delete operation succeed. This will cause the stream
+			// intent by acting as though the delete operation succeeded. This will cause the stream
 			// resource to be removed from the terraform state, leaving the stream intact in Lightstep
 			// but no longer managed by terraform.
 		} else {

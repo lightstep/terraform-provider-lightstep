@@ -117,52 +117,53 @@ resource "lightstep_stream" "import-stream"{
 }
 
 func TestAccDeleteStreamWithDependentResources(t *testing.T) {
-	streamConfig := `
-	resource "lightstep_stream" "web_errors" {
-	  project_name = "` + testProject + `"
-      stream_name = "web errors"
-	  query = "service IN (\"web\") AND \"error\" IN (\"true\")"
+	makeStreamResource := func(resourceName, streamName string) string {
+		return fmt.Sprintf(`
+resource "lightstep_stream" "%v" {
+	project_name = "%v"
+	stream_name  = "%v"
+	query        = "service IN (\"web\") AND \"error\" IN (\"true\")"
+}
+`, resourceName, testProject, streamName)
 	}
-	`
 
-	streamConfig2 := `
-	resource "lightstep_stream" "web_errors_2" {
-	  project_name = "` + testProject + `"
-      stream_name = "web errors (2)"
-	  query = "service IN (\"web\") AND \"error\" IN (\"true\")"
-	}
-	`
+	streamResourceName1 := "web_errors_1"
+	streamName1 := "web errors (1)"
+	streamConfig1 := makeStreamResource(streamResourceName1, streamName1)
+
+	streamResourceName2 := "web_errors_2"
+	streamName2 := "web errors (2)"
+	streamConfig2 := makeStreamResource(streamResourceName2, streamName2)
 
 	// the alert query should map to the stream above
 	const alertQuery = `spans count | filter service == "web" && error == true | delta 1h | group_by [], sum`
-
 	alertConfig := fmt.Sprintf(`
 resource "lightstep_alert" "web_errors_alert" {
-  project_name = "`+testProject+`"
-  name = "Span Web Errors alert"
+	project_name = "`+testProject+`"
+	name = "Span Web Errors alert"
 
-  expression {
-	  is_multi   = false
-	  is_no_data = true
-      operand  = "above"
-	  thresholds {
-		critical  = 10
-		warning = 5
-	  }
-  }
+	expression {
+		is_multi   = false
+		is_no_data = true
+		operand    = "above"
+		thresholds {
+			critical  = 10
+			warning = 5
+		}
+	}
 
-  query {
-    hidden              = false
-    query_name          = "a"
-    display = "line"
-    query_string 	= <<EOT
-%s
-EOT
-  }
+	query {
+		hidden       = false
+		query_name   = "a"
+		display      = "line"
+		query_string = <<EOT
+			%s
+		EOT
+	}
 }
 `, alertQuery)
 
-	var streamCreatedResource, stream2CreatedResource, streamUpdatedResource client.Stream
+	var streamCreatedResource1, streamCreatedResource2, streamUpdatedResource client.Stream
 	var alertCreatedResource, alertUpdatedResource client.UnifiedCondition
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -172,16 +173,16 @@ EOT
 		Steps: []resource.TestStep{
 			// create a new stream
 			{
-				Config: streamConfig,
+				Config: streamConfig1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckStreamExists("lightstep_stream.web_errors", &streamCreatedResource),
+					testAccCheckStreamExists("lightstep_stream."+streamResourceName1, &streamCreatedResource1),
 				),
 			},
 			// create a unified alert that implicitly depends on the stream
 			{
-				Config: streamConfig + alertConfig,
+				Config: streamConfig1 + alertConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckStreamExists("lightstep_stream.web_errors", &streamUpdatedResource),
+					testAccCheckStreamExists("lightstep_stream."+streamResourceName1, &streamUpdatedResource),
 					testAccCheckLightstepAlertExists("lightstep_alert.web_errors_alert", &alertCreatedResource),
 				),
 			},
@@ -195,9 +196,9 @@ EOT
 
 					// make sure the stream was removed from the terraform state...
 					func(state *terraform.State) error {
-						err := testAccCheckStreamExists("lightstep_stream.web_errors", &streamUpdatedResource)(state)
+						err := testAccCheckStreamExists("lightstep_stream."+streamResourceName1, &streamUpdatedResource)(state)
 						if err != nil {
-							if strings.Contains(err.Error(), "not found: lightstep_stream.web_errors") {
+							if strings.Contains(err.Error(), "not found: lightstep_stream."+streamResourceName1) {
 								return nil
 							}
 							return errors.New("an unexpected error occurred")
@@ -214,11 +215,11 @@ EOT
 						}
 
 						providerClient := testAccProvider.Meta().(*client.Client)
-						stream, err := providerClient.GetStream(ctx, testProject, streamCreatedResource.ID)
+						stream, err := providerClient.GetStream(ctx, testProject, streamCreatedResource1.ID)
 						if err != nil {
 							return errors.New(fmt.Sprintf("stream not found: %v", err))
 						}
-						if stream.ID != streamCreatedResource.ID {
+						if stream.ID != streamCreatedResource1.ID {
 							return errors.New("unexpected stream ID")
 						}
 						return nil
@@ -235,19 +236,24 @@ EOT
 				// create a new stream resource using the original query (it should import/rename the existing stream)
 				Config: streamConfig2,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckStreamExists("lightstep_stream.web_errors_2", &stream2CreatedResource),
+					testAccCheckStreamExists("lightstep_stream."+streamResourceName2, &streamCreatedResource2),
 					func(state *terraform.State) error {
-						if len(streamCreatedResource.ID) == 0 {
+						if len(streamCreatedResource1.ID) == 0 {
 							return errors.New("unexpected empty stream ID")
 						}
-						if streamCreatedResource.ID != stream2CreatedResource.ID {
+						if streamCreatedResource1.ID != streamCreatedResource2.ID {
 							return errors.New(fmt.Sprintf("new stream unexpectedly created for same query, streamIDs don't match: '%v' vs '%v'",
-								streamCreatedResource.ID, stream2CreatedResource.ID,
+								streamCreatedResource1.ID, streamCreatedResource2.ID,
 							))
 						}
-						if streamCreatedResource.Attributes.Name == stream2CreatedResource.Attributes.Name {
+						if streamCreatedResource1.Attributes.Name == streamCreatedResource2.Attributes.Name {
 							return errors.New(fmt.Sprintf("new stream unexpectedly has the old name: '%v' vs '%v'",
-								streamCreatedResource.Attributes.Name, stream2CreatedResource.Attributes.Name,
+								streamCreatedResource1.Attributes.Name, streamCreatedResource2.Attributes.Name,
+							))
+						}
+						if streamCreatedResource2.Attributes.Name != streamResourceName2 {
+							return errors.New(fmt.Sprintf("new stream has an unexpected name: '%v' vs '%v'",
+								streamCreatedResource2.Attributes.Name, streamName2,
 							))
 						}
 						return nil
