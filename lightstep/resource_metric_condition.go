@@ -238,8 +238,9 @@ func getMetricQuerySchemaMap() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map", "big_number_v2", "scatter_plot"}, false),
 		},
 		"query_name": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringLenBetween(1, 128),
 		},
 		"timeseries_operator": {
 			Type:         schema.TypeString,

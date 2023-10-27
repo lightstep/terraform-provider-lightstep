@@ -1399,3 +1399,49 @@ group {
 		},
 	})
 }
+
+func TestValidationErrors(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	longName := strings.Repeat("name", 500)
+
+	// query name too long
+	dashboardWithLongQueryName := fmt.Sprintf(`
+resource "lightstep_dashboard" "test" {
+  project_name          = "%s"
+  dashboard_name        = "Acceptance Test Dashboard"
+  dashboard_description = "Dashboard to test if the terraform provider works"
+
+  chart {
+    name = "Chart Number One"
+	type = "timeseries"
+    rank = 1
+
+    query {
+      hidden              = false
+      query_name          = "%s"
+      display             = "line"
+      query_string        = <<EOT
+metric cpu.utilization | delta
+EOT
+    }
+  }
+}
+`, testProject, longName)
+
+	resourceName := "lightstep_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviderFactories,
+		CheckDestroy:      testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: dashboardWithLongQueryName,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
+				ExpectError: regexp.MustCompile("expected length of .*\\.query_name to be in the range \\(1 - \\d+\\), got " + longName),
+			},
+		},
+	})
+}
