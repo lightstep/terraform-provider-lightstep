@@ -123,14 +123,14 @@ resource "lightstep_alert" "test" {
 			{
 				Config: badAlertMissingQueryAndCompositeFields,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 				),
 				ExpectError: regexp.MustCompile("at least one query is required"),
 			},
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
@@ -140,7 +140,7 @@ resource "lightstep_alert" "test" {
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
@@ -271,14 +271,14 @@ EOT
 			{
 				Config: badCondition,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 				),
 				ExpectError: regexp.MustCompile("(Missing required argument|Insufficient metric_query blocks)"),
 			},
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
@@ -292,7 +292,7 @@ EOT
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
@@ -390,7 +390,7 @@ EOT
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
@@ -398,7 +398,7 @@ EOT
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span latency alert - updated"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery2+"\n"),
 				),
@@ -495,7 +495,7 @@ EOT
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Span rate alert"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
@@ -503,7 +503,7 @@ EOT
 			{
 				Config: updatedConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery2+"\n"),
 				),
 			},
@@ -571,7 +571,7 @@ EOT
 			{
 				Config: conditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &condition),
+					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
 				),
@@ -854,21 +854,21 @@ resource "lightstep_alert" "test" {
 			{
 				Config: missingBothSingleAndCompositeFieldsCondition,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 				),
 				ExpectError: regexp.MustCompile("at least one query is required"),
 			},
 			{
 				Config: includesBothSingleAndCompositeFieldsCondition,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 				),
 				ExpectError: regexp.MustCompile("single alert queries and composite alert cannot both be set"),
 			},
 			{
 				Config: compositeConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
@@ -882,7 +882,7 @@ resource "lightstep_alert" "test" {
 			{
 				Config: updatedCompositeConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "updated too many requests & customers"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
@@ -894,7 +894,7 @@ resource "lightstep_alert" "test" {
 			{
 				Config: noDataCompositeConditionConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "sub-alert A has no thresholds"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.name", "C"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.expression.0.is_no_data", "false"),
@@ -912,7 +912,7 @@ resource "lightstep_alert" "test" {
 	})
 }
 
-func testAccChecLightstepAlertExists(resourceName string, condition *client.UnifiedCondition) resource.TestCheckFunc {
+func testAccCheckLightstepAlertExists(resourceName string, condition *client.UnifiedCondition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		tfCondition, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -929,7 +929,7 @@ func testAccChecLightstepAlertExists(resourceName string, condition *client.Unif
 			return err
 		}
 
-		condition = cond
+		*condition = *cond
 		return nil
 	}
 }
@@ -978,10 +978,195 @@ resource "lightstep_alert" "test" {
 			{
 				Config: emptyUpdateIntervalConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccChecLightstepAlertExists(resourceName, &compositeCondition),
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests & customers"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "alerting_rule.0.update_interval", ""),
+				),
+			},
+		},
+	})
+}
+
+func TestAccUpdateCompositeAlertDiff_RegressionTest(t *testing.T) {
+	var compositeCondition client.UnifiedCondition
+
+	initialConfig := `
+resource "lightstep_alert" "composite_diff_test" {
+  project_name = "` + testProject + `"
+  name         = "Composite Alert Diff"
+
+  composite_alert {
+    alert {
+      name = "A"
+      expression {
+        is_no_data = false
+        operand    = "above"
+        thresholds {
+          warning = 95
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "metric abc|rate 30s|group_by [], sum|point value/2"
+	  }
+    }
+
+    alert {
+      name = "B"
+      expression {
+        is_no_data = false
+        operand    = "below"
+        thresholds {
+          warning = 97.000001
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "b"
+        query_string = "metric abc|rate 30s|group_by [], sum|point value/2"
+	  }
+    }
+  }
+}
+`
+
+	changeSubAlertQuery := `
+resource "lightstep_alert" "composite_diff_test" {
+  project_name = "` + testProject + `"
+  name         = "Composite Alert Diff (updated query)"
+
+  composite_alert {
+    alert {
+      name = "A"
+      expression {
+        is_no_data = false
+        operand    = "above"
+        thresholds {
+          warning = 95
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "metric abc|rate 30s|group_by [], sum|point value/2"
+	  }
+    }
+
+    alert {
+      name = "B"
+      expression {
+        is_no_data = false
+        operand    = "below"
+        thresholds {
+
+          warning = 97.000001
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "c"
+        query_string = "metric abc|rate 30s|group_by [], sum"
+      }
+    }
+  }
+}
+`
+	changeSubAlertName := `
+resource "lightstep_alert" "composite_diff_test" {
+  project_name = "` + testProject + `"
+  name         = "Composite Alert Diff (updated sub-alert name)"
+
+  composite_alert {
+    alert {
+      name = "A"
+      expression {
+        is_no_data = false
+        operand    = "above"
+        thresholds {
+          warning = 95
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "metric abc|rate 30s|group_by [], sum|point value/2"
+      }
+    }
+
+    alert {
+      name = "C"
+      expression {
+        is_no_data = false
+        operand    = "below"
+        thresholds {
+
+          warning = 97.000001
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "c"
+        query_string = "metric abc|rate 30s|group_by [], sum"
+	  }
+    }
+  }
+}
+`
+
+	resourceName := "lightstep_alert.composite_diff_test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Destroy: false,
+				Config:  initialConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Composite Alert Diff"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.name", "A"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum|point value/2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.name", "B"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum|point value/2"),
+				),
+			},
+			{
+				Config:  changeSubAlertQuery,
+				Destroy: false,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Composite Alert Diff (updated query)"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.name", "A"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum|point value/2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.name", "B"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum"),
+				),
+			},
+			{
+				Config:  changeSubAlertName,
+				Destroy: false,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &compositeCondition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Composite Alert Diff (updated sub-alert name)"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.name", "A"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.0.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum|point value/2"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.name", "C"),
+					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string",
+						"metric abc|rate 30s|group_by [], sum"),
 				),
 			},
 		},
