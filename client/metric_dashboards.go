@@ -15,13 +15,12 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name                string               `json:"name"`
-	Description         string               `json:"description"`
-	Charts              []UnifiedChart       `json:"charts"`
-	Groups              []UnifiedGroup       `json:"groups"`
-	Labels              []Label              `json:"labels"`
-	TemplateVariables   []TemplateVariable   `json:"template_variables"`
-	ServiceHealthPanels []ServiceHealthPanel `json:"service_health_panels"`
+	Name              string             `json:"name"`
+	Description       string             `json:"description"`
+	Charts            []UnifiedChart     `json:"charts"`
+	Groups            []UnifiedGroup     `json:"groups"`
+	Labels            []Label            `json:"labels"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
 }
 
 type UnifiedGroup struct {
@@ -31,6 +30,7 @@ type UnifiedGroup struct {
 	VisibilityType string         `json:"visibility_type"`
 	Charts         []UnifiedChart `json:"charts"`
 	Labels         []Label        `json:"labels"`
+	Panels         []Panel        `json:"panels"`
 }
 
 type UnifiedPosition struct {
@@ -53,23 +53,17 @@ type UnifiedChart struct {
 	Subtitle      *string                     `json:"subtitle,omitempty"`
 }
 
-type ServiceHealthPanel struct {
-	Position     UnifiedPosition           `json:"position"`
-	ID           string                    `json:"id"`
-	Title        string                    `json:"title"`
-	PanelOptions ServiceHealthPanelOptions `json:"panel_options"`
-}
-
-type ServiceHealthPanelOptions struct {
-	SortBy        string `json:"sort_by"`
-	SortDirection string `json:"sort_direction"`
-	Percentile    string `json:"percentile"`
-	ChangeSince   string `json:"change_since"`
-}
-
 type Label struct {
 	Key   string `json:"label_key"`
 	Value string `json:"label_value"`
+}
+
+type Panel struct {
+	ID       string          `json:"id"`
+	Title    string          `json:"title"`
+	Type     string          `json:"type"`
+	Position UnifiedPosition `json:"position"`
+	Body     map[string]any  `json:"body"`
 }
 
 type YAxis struct {
