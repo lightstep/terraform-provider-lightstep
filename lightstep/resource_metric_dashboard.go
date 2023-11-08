@@ -726,7 +726,6 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["chart"] = groupCharts
 			group["text_panel"] = groupTextPanels
 
-			// todo: handle service health panels
 			group["service_health_panel"] = extractServiceHealthPanels(g.Panels)
 
 			groups = append(groups, group)
