@@ -155,7 +155,7 @@ func getServiceHealthPanelSchema() map[string]*schema.Schema {
 				Default:  "Service Health Panel",
 			},
 			"panel_options": {
-				Type:        schema.TypeMap,
+				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "custom options for the service health panel",
 				Elem: &schema.Resource{
