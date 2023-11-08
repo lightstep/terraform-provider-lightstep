@@ -51,14 +51,6 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"service_health_panel": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "A dashboard panel to view the health of your services",
-				Elem: &schema.Resource{
-					Schema: getServiceHealthPanelSchema(),
-				},
-			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -140,6 +132,14 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			Computed: true, // the panels can be mutated individually; chart mutations should not trigger group updates
 			Elem: &schema.Resource{
 				Schema: getTextPanelSchema(),
+			},
+		},
+		"service_health_panel": {
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Description: "A dashboard panel to view the health of your services",
+			Elem: &schema.Resource{
+				Schema: getServiceHealthPanelSchema(),
 			},
 		},
 	}
@@ -500,22 +500,15 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		return nil, hasLegacyChartsIn, err
 	}
 
-	serviceHealthPanelSet := d.Get("service_health_panel").(*schema.Set)
-	serviceHealthPanels, err := buildServiceHealthPanels(serviceHealthPanelSet.List())
-	if err != nil {
-		return nil, hasLegacyChartsIn, err
-	}
-
 	templateVariableSet := d.Get("template_variable").(*schema.Set)
 	templateVariables := buildTemplateVariables(templateVariableSet.List())
 
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:                d.Get("dashboard_name").(string),
-		Description:         d.Get("dashboard_description").(string),
-		Groups:              groups,
-		Labels:              labels,
-		TemplateVariables:   templateVariables,
-		ServiceHealthPanels: serviceHealthPanels,
+		Name:              d.Get("dashboard_name").(string),
+		Description:       d.Get("dashboard_description").(string),
+		Groups:            groups,
+		Labels:            labels,
+		TemplateVariables: templateVariables,
 	}
 
 	return attributes, hasLegacyChartsIn, nil
@@ -552,6 +545,10 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
+		serviceHealthPanels, err := buildServiceHealthPanels(group["service_health_panel"].([]interface{}))
+		if err != nil {
+			return nil, hasLegacyChartsIn, err
+		}
 
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
@@ -559,6 +556,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 			Title:          group["title"].(string),
 			VisibilityType: group["visibility_type"].(string),
 			Charts:         append(chartPanels, textPanels...),
+			Panels:         serviceHealthPanels,
 		}
 		newGroups = append(newGroups, g)
 	}
@@ -728,16 +726,14 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["chart"] = groupCharts
 			group["text_panel"] = groupTextPanels
 
+			// todo: handle service health panels
+			group["service_health_panel"] = extractServiceHealthPanels(g.Panels)
+
 			groups = append(groups, group)
 		}
 		if err := d.Set("group", groups); err != nil {
 			return fmt.Errorf("unable to set group resource field: %v", err)
 		}
-	}
-
-	serviceHealthPanels := extractServiceHealthPanels(dash.Attributes.ServiceHealthPanels)
-	if err := d.Set("service_health_panel", serviceHealthPanels); err != nil {
-		return fmt.Errorf("unable to set service_health_panel resource field: %v", err)
 	}
 
 	labels := extractLabels(dash.Attributes.Labels)
@@ -960,58 +956,50 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 
 }
 
-func buildServiceHealthPanelOptions(panelOptionsJSON map[string]interface{}) client.ServiceHealthPanelOptions {
-	panelOptions := client.ServiceHealthPanelOptions{}
-	sortBy, ok := panelOptionsJSON["sort_by"]
-	if ok {
-		panelOptions.SortBy, ok = sortBy.(string)
-	}
-	sortDirection, ok := panelOptionsJSON["sort_direction"]
-	if ok {
-		panelOptions.SortDirection = sortDirection.(string)
-	}
-	percentile, ok := panelOptionsJSON["percentile"]
-	if ok {
-		panelOptions.Percentile = percentile.(string)
-	}
-	changeSince, ok := panelOptionsJSON["change_since"]
-	if ok {
-		panelOptions.ChangeSince = changeSince.(string)
-	}
-	return panelOptions
-}
-
 // buildServiceHealthPanels transforms service_health_panels from the TF resource
-// into service health panels for the API request.
-func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.ServiceHealthPanel, error) {
-	var serviceHealthPanels []client.ServiceHealthPanel
+// into panels for the API request.
+func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Panel, error) {
+	var serviceHealthPanels []client.Panel
 
 	for _, s := range serviceHealthPanelsIn {
 		serviceHealthPanel, ok := s.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("bad format, %v", s)
 		}
-		panelOptions, ok := serviceHealthPanel["panel_options"].(map[string]interface{})
-		if !ok {
-			return nil, fmt.Errorf("bad format, %v", s)
+		p := client.Panel{
+			ID:       serviceHealthPanel["id"].(string),
+			Title:    serviceHealthPanel["name"].(string),
+			Position: buildPosition(serviceHealthPanel),
 		}
-		p := client.ServiceHealthPanel{
-			ID:           serviceHealthPanel["id"].(string),
-			Title:        serviceHealthPanel["name"].(string),
-			Position:     buildPosition(serviceHealthPanel),
-			PanelOptions: buildServiceHealthPanelOptions(panelOptions),
+		// N.B. panel_options are optional, so we don't return an error if not found
+		if panelOptions, ok := serviceHealthPanel["panel_options"].(map[string]interface{}); ok {
+			displayOptions := make(map[string]interface{})
+			if sortBy, ok := panelOptions["sort_by"]; ok {
+				displayOptions["sort_by"] = sortBy
+			}
+			if sortDirection, ok := panelOptions["sort_direction"]; ok {
+				displayOptions["sort_direction"] = sortDirection
+			}
+			if percentile, ok := panelOptions["percentile"]; ok {
+				displayOptions["percentile"] = percentile
+			}
+			if changeSince, ok := panelOptions["change_since"]; ok {
+				displayOptions["change_since"] = changeSince
+			}
+			p.Body = map[string]interface{}{
+				"display_options": displayOptions,
+			}
 		}
+
 		serviceHealthPanels = append(serviceHealthPanels, p)
 	}
 
 	return serviceHealthPanels, nil
 }
 
-// assemblePanel copies the data common to all panels (both charts and text panels)
-// into the resource interface
 func setServiceHealthPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
-	panel client.ServiceHealthPanel, // Panel from the API
+	panel client.Panel, // Panel from the API
 ) {
 	resource["name"] = panel.Title
 	resource["x_pos"] = panel.Position.XPos
@@ -1019,21 +1007,37 @@ func setServiceHealthPanelResourceData(
 	resource["width"] = panel.Position.Width
 	resource["height"] = panel.Position.Height
 	resource["id"] = panel.ID
-	resource["panel_options"] = map[string]interface{}{
-		"sort_by":        panel.PanelOptions.SortBy,
-		"sort_direction": panel.PanelOptions.SortDirection,
-		"percentile":     panel.PanelOptions.Percentile,
-		"change_since":   panel.PanelOptions.ChangeSince,
+	// N.B. the panel body might be nil. panel_options are optional for the service health panel.
+	if panel.Body != nil {
+		if maybeDisplayOptions, ok := panel.Body["display_options"]; ok {
+			displayOptions := maybeDisplayOptions.(map[string]interface{})
+			panelOptions := make(map[string]interface{})
+			if sortBy, ok := displayOptions["sort_by"]; ok {
+				panelOptions["sort_by"] = sortBy
+			}
+			if sortDirection, ok := displayOptions["sort_direction"]; ok {
+				panelOptions["sort_direction"] = sortDirection
+			}
+			if percentile, ok := displayOptions["percentile"]; ok {
+				panelOptions["percentile"] = percentile
+			}
+			if changeSince, ok := displayOptions["change_since"]; ok {
+				panelOptions["change_since"] = changeSince
+			}
+			resource["panel_options"] = panelOptions
+		}
 	}
 }
 
 // extractServiceHealthPanels transforms service health panels from the API call into TF resource service health panels
-func extractServiceHealthPanels(apiServiceHealthPanels []client.ServiceHealthPanel) []interface{} {
+func extractServiceHealthPanels(apiPanels []client.Panel) []interface{} {
 	var serviceHealthPanelResources []interface{}
-	for _, p := range apiServiceHealthPanels {
-		resource := map[string]interface{}{}
-		setServiceHealthPanelResourceData(resource, p)
-		serviceHealthPanelResources = append(serviceHealthPanelResources, resource)
+	for _, p := range apiPanels {
+		if p.Type == "service_health" {
+			resource := map[string]interface{}{}
+			setServiceHealthPanelResourceData(resource, p)
+			serviceHealthPanelResources = append(serviceHealthPanelResources, resource)
+		}
 	}
 	return serviceHealthPanelResources
 }
