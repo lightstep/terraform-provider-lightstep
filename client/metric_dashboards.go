@@ -15,12 +15,13 @@ type UnifiedDashboard struct {
 }
 
 type UnifiedDashboardAttributes struct {
-	Name              string             `json:"name"`
-	Description       string             `json:"description"`
-	Charts            []UnifiedChart     `json:"charts"`
-	Groups            []UnifiedGroup     `json:"groups"`
-	Labels            []Label            `json:"labels"`
-	TemplateVariables []TemplateVariable `json:"template_variables"`
+	Name                string               `json:"name"`
+	Description         string               `json:"description"`
+	Charts              []UnifiedChart       `json:"charts"`
+	Groups              []UnifiedGroup       `json:"groups"`
+	Labels              []Label              `json:"labels"`
+	TemplateVariables   []TemplateVariable   `json:"template_variables"`
+	ServiceHealthPanels []ServiceHealthPanel `json:"service_health_panels"`
 }
 
 type UnifiedGroup struct {
@@ -50,6 +51,20 @@ type UnifiedChart struct {
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
 	Text          string                      `json:"text"`
 	Subtitle      *string                     `json:"subtitle,omitempty"`
+}
+
+type ServiceHealthPanel struct {
+	Position     UnifiedPosition           `json:"position"`
+	ID           string                    `json:"id"`
+	Title        string                    `json:"title"`
+	PanelOptions ServiceHealthPanelOptions `json:"panel_options"`
+}
+
+type ServiceHealthPanelOptions struct {
+	SortBy        string `json:"sort_by"`
+	SortDirection string `json:"sort_direction"`
+	Percentile    string `json:"percentile"`
+	ChangeSince   string `json:"change_since"`
 }
 
 type Label struct {

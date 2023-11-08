@@ -51,6 +51,14 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"service_health_panel": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "A dashboard panel to view the health of your services",
+				Elem: &schema.Resource{
+					Schema: getServiceHealthPanelSchema(),
+				},
+			},
 			"type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -137,6 +145,48 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 	}
 }
 
+func getServiceHealthPanelSchema() map[string]*schema.Schema {
+	return mergeSchemas(
+		getPositionSchema(),
+		map[string]*schema.Schema{
+			"name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "Service Health Panel",
+			},
+			"panel_options": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "custom options for the service health panel",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"sort_by": {
+							Type:        schema.TypeString,
+							Description: "service/latency/error/rate",
+							Optional:    true,
+						},
+						"sort_direction": {
+							Type:        schema.TypeString,
+							Description: "asc/desc",
+							Optional:    true,
+						},
+						"percentile": {
+							Type:        schema.TypeString,
+							Description: "p50/p90/p95/p99",
+							Optional:    true,
+						},
+						"change_since": {
+							Type:        schema.TypeString,
+							Description: "1h/1d/3d",
+							Optional:    true,
+						},
+					},
+				},
+			},
+		},
+	)
+}
+
 func getTextPanelSchema() map[string]*schema.Schema {
 	return mergeSchemas(
 		getPanelSchema(false),
@@ -168,14 +218,26 @@ func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 		}
 	}
 
-	return map[string]*schema.Schema{
-		// Alias for what we refer to as title elsewhere
-		"name": nameSchema(),
-		"description": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Default:  "",
+	return mergeSchemas(
+		getPositionSchema(),
+		map[string]*schema.Schema{
+			// Alias for what we refer to as title elsewhere
+			"name": nameSchema(),
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
+	)
+}
+
+func getPositionSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
 		"x_pos": {
 			Type:         schema.TypeInt,
 			ValidateFunc: validation.IntAtLeast(0),
@@ -199,10 +261,6 @@ func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 			ValidateFunc: validation.IntAtLeast(0),
 			Default:      0,
 			Optional:     true,
-		},
-		"id": {
-			Type:     schema.TypeString,
-			Computed: true,
 		},
 	}
 }
@@ -442,15 +500,22 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		return nil, hasLegacyChartsIn, err
 	}
 
+	serviceHealthPanelSet := d.Get("service_health_panel").(*schema.Set)
+	serviceHealthPanels, err := buildServiceHealthPanels(serviceHealthPanelSet.List())
+	if err != nil {
+		return nil, hasLegacyChartsIn, err
+	}
+
 	templateVariableSet := d.Get("template_variable").(*schema.Set)
 	templateVariables := buildTemplateVariables(templateVariableSet.List())
 
 	attributes := &client.UnifiedDashboardAttributes{
-		Name:              d.Get("dashboard_name").(string),
-		Description:       d.Get("dashboard_description").(string),
-		Groups:            groups,
-		Labels:            labels,
-		TemplateVariables: templateVariables,
+		Name:                d.Get("dashboard_name").(string),
+		Description:         d.Get("dashboard_description").(string),
+		Groups:              groups,
+		Labels:              labels,
+		TemplateVariables:   templateVariables,
+		ServiceHealthPanels: serviceHealthPanels,
 	}
 
 	return attributes, hasLegacyChartsIn, nil
@@ -668,6 +733,11 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 		if err := d.Set("group", groups); err != nil {
 			return fmt.Errorf("unable to set group resource field: %v", err)
 		}
+	}
+
+	serviceHealthPanels := extractServiceHealthPanels(dash.Attributes.ServiceHealthPanels)
+	if err := d.Set("service_health_panel", serviceHealthPanels); err != nil {
+		return fmt.Errorf("unable to set service_health_panel resource field: %v", err)
 	}
 
 	labels := extractLabels(dash.Attributes.Labels)
@@ -888,6 +958,84 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardImport(ctx context
 
 	return []*schema.ResourceData{d}, nil
 
+}
+
+func buildServiceHealthPanelOptions(panelOptionsJSON map[string]interface{}) client.ServiceHealthPanelOptions {
+	panelOptions := client.ServiceHealthPanelOptions{}
+	sortBy, ok := panelOptionsJSON["sort_by"]
+	if ok {
+		panelOptions.SortBy, ok = sortBy.(string)
+	}
+	sortDirection, ok := panelOptionsJSON["sort_direction"]
+	if ok {
+		panelOptions.SortDirection = sortDirection.(string)
+	}
+	percentile, ok := panelOptionsJSON["percentile"]
+	if ok {
+		panelOptions.Percentile = percentile.(string)
+	}
+	changeSince, ok := panelOptionsJSON["change_since"]
+	if ok {
+		panelOptions.ChangeSince = changeSince.(string)
+	}
+	return panelOptions
+}
+
+// buildServiceHealthPanels transforms service_health_panels from the TF resource
+// into service health panels for the API request.
+func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.ServiceHealthPanel, error) {
+	var serviceHealthPanels []client.ServiceHealthPanel
+
+	for _, s := range serviceHealthPanelsIn {
+		serviceHealthPanel, ok := s.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("bad format, %v", s)
+		}
+		panelOptions, ok := serviceHealthPanel["panel_options"].(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("bad format, %v", s)
+		}
+		p := client.ServiceHealthPanel{
+			ID:           serviceHealthPanel["id"].(string),
+			Title:        serviceHealthPanel["name"].(string),
+			Position:     buildPosition(serviceHealthPanel),
+			PanelOptions: buildServiceHealthPanelOptions(panelOptions),
+		}
+		serviceHealthPanels = append(serviceHealthPanels, p)
+	}
+
+	return serviceHealthPanels, nil
+}
+
+// assemblePanel copies the data common to all panels (both charts and text panels)
+// into the resource interface
+func setServiceHealthPanelResourceData(
+	resource map[string]interface{}, // Terraform resource
+	panel client.ServiceHealthPanel, // Panel from the API
+) {
+	resource["name"] = panel.Title
+	resource["x_pos"] = panel.Position.XPos
+	resource["y_pos"] = panel.Position.YPos
+	resource["width"] = panel.Position.Width
+	resource["height"] = panel.Position.Height
+	resource["id"] = panel.ID
+	resource["panel_options"] = map[string]interface{}{
+		"sort_by":        panel.PanelOptions.SortBy,
+		"sort_direction": panel.PanelOptions.SortDirection,
+		"percentile":     panel.PanelOptions.Percentile,
+		"change_since":   panel.PanelOptions.ChangeSince,
+	}
+}
+
+// extractServiceHealthPanels transforms service health panels from the API call into TF resource service health panels
+func extractServiceHealthPanels(apiServiceHealthPanels []client.ServiceHealthPanel) []interface{} {
+	var serviceHealthPanelResources []interface{}
+	for _, p := range apiServiceHealthPanels {
+		resource := map[string]interface{}{}
+		setServiceHealthPanelResourceData(resource, p)
+		serviceHealthPanelResources = append(serviceHealthPanelResources, resource)
+	}
+	return serviceHealthPanelResources
 }
 
 // buildLabels transforms labels from the TF resource into labels for the API request
