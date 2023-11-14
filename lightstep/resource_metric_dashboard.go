@@ -1000,6 +1000,7 @@ func setServiceHealthPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
 	panel client.Panel, // Panel from the API
 ) {
+	// Alias for what we refer to as title elsewhere
 	resource["name"] = panel.Title
 	resource["x_pos"] = panel.Position.XPos
 	resource["y_pos"] = panel.Position.YPos
