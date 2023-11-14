@@ -402,6 +402,64 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
+func TestAccDashboardServiceHealthPanel(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardServiceHealthPanel)"
+	dashboard_description = "Dashboard to test the service health panel"
+
+	service_health_panel {
+		name = "test_service_health_panel"
+
+		x_pos = 0
+		y_pos = 0
+		width = 10
+		height = 10
+
+		panel_options {
+			sort_by 			= "service"
+			sort_direction		= "asc"
+			percentile 			= "p50"
+			change_since 		= "1h"
+		}
+	}
+}
+`
+	// Change the chart name and metric name
+	updatedConfig := strings.Replace(dashboardConfig, "p50", "p90", -1)
+
+	resourceName := "lightstep_metric_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial dashboard with a service health panel. verify the name and panel_options.percentile
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.panel_options.percentile", "p50"),
+				),
+			},
+			{
+				// Updated config will contain the new metric and chart name
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.panel_options.percentile", "p90"),
+				),
+			},
+		},
+	})
+}
+
 func Test_buildLabels(t *testing.T) {
 	tests := []struct {
 		name        string
