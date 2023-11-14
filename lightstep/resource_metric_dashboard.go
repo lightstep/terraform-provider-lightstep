@@ -972,21 +972,8 @@ func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Pan
 		}
 		// N.B. panel_options are optional, so we don't return an error if not found
 		if panelOptions, ok := serviceHealthPanel["panel_options"].(map[string]interface{}); ok {
-			displayOptions := make(map[string]interface{})
-			if sortBy, ok := panelOptions["sort_by"]; ok {
-				displayOptions["sort_by"] = sortBy
-			}
-			if sortDirection, ok := panelOptions["sort_direction"]; ok {
-				displayOptions["sort_direction"] = sortDirection
-			}
-			if percentile, ok := panelOptions["percentile"]; ok {
-				displayOptions["percentile"] = percentile
-			}
-			if changeSince, ok := panelOptions["change_since"]; ok {
-				displayOptions["change_since"] = changeSince
-			}
 			p.Body = map[string]interface{}{
-				"display_options": displayOptions,
+				"display_options": assignPanelOptions(panelOptions),
 			}
 		}
 
@@ -1011,20 +998,7 @@ func setServiceHealthPanelResourceData(
 	if panel.Body != nil {
 		if maybeDisplayOptions, ok := panel.Body["display_options"]; ok {
 			displayOptions := maybeDisplayOptions.(map[string]interface{})
-			panelOptions := make(map[string]interface{})
-			if sortBy, ok := displayOptions["sort_by"]; ok {
-				panelOptions["sort_by"] = sortBy
-			}
-			if sortDirection, ok := displayOptions["sort_direction"]; ok {
-				panelOptions["sort_direction"] = sortDirection
-			}
-			if percentile, ok := displayOptions["percentile"]; ok {
-				panelOptions["percentile"] = percentile
-			}
-			if changeSince, ok := displayOptions["change_since"]; ok {
-				panelOptions["change_since"] = changeSince
-			}
-			resource["panel_options"] = panelOptions
+			resource["panel_options"] = assignPanelOptions(displayOptions)
 		}
 	}
 }
@@ -1093,4 +1067,25 @@ func extractLabels(apiLabels []client.Label) []interface{} {
 		labels = append(labels, label)
 	}
 	return labels
+}
+
+// assignPanelOptions is a helper function to convert between an API response and a Terraform resource.
+// We do this conversion explicitly to have control over the fields that are set. For example, we may
+// add a new panel option "some_panel_option". We do not want that panel option to automatically be
+// available in Terraform.
+func assignPanelOptions(from map[string]interface{}) map[string]interface{} {
+	to := make(map[string]interface{})
+	if sortBy, ok := from["sort_by"]; ok {
+		to["sort_by"] = sortBy
+	}
+	if sortDirection, ok := from["sort_direction"]; ok {
+		to["sort_direction"] = sortDirection
+	}
+	if percentile, ok := from["percentile"]; ok {
+		to["percentile"] = percentile
+	}
+	if changeSince, ok := from["change_since"]; ok {
+		to["change_since"] = changeSince
+	}
+	return to
 }
