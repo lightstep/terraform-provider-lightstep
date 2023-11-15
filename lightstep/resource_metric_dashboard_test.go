@@ -411,19 +411,24 @@ resource "lightstep_metric_dashboard" "test" {
 	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardServiceHealthPanel)"
 	dashboard_description = "Dashboard to test the service health panel"
 
-	service_health_panel {
-		name = "test_service_health_panel"
+	group {
+		rank = 0
+		visibility_type = "implicit"
 
-		x_pos = 0
-		y_pos = 0
-		width = 10
-		height = 10
+		service_health_panel {
+			name = "test_service_health_panel"
 
-		panel_options {
-			sort_by 			= "service"
-			sort_direction		= "asc"
-			percentile 			= "p50"
-			change_since 		= "1h"
+			x_pos = 0
+			y_pos = 0
+			width = 10
+			height = 10
+
+			panel_options {
+				sort_by 			= "service"
+				sort_direction		= "asc"
+				percentile 			= "p50"
+				change_since 		= "1h"
+			}
 		}
 	}
 }
