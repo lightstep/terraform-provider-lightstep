@@ -971,9 +971,12 @@ func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Pan
 			Position: buildPosition(serviceHealthPanel),
 		}
 		// N.B. panel_options are optional, so we don't return an error if not found
-		if panelOptions, ok := serviceHealthPanel["panel_options"].(map[string]interface{}); ok {
-			p.Body = map[string]interface{}{
-				"display_options": assignPanelOptions(panelOptions),
+		if maybePanelOptions, ok := serviceHealthPanel["panel_options"]; ok {
+			displayOptions, ok := maybePanelOptions.(map[string]interface{})
+			if ok {
+				p.Body = map[string]interface{}{
+					"display_options": assignPanelOptions(displayOptions),
+				}
 			}
 		}
 
@@ -997,8 +1000,10 @@ func setServiceHealthPanelResourceData(
 	// N.B. the panel body might be nil. panel_options are optional for the service health panel.
 	if panel.Body != nil {
 		if maybeDisplayOptions, ok := panel.Body["display_options"]; ok {
-			displayOptions := maybeDisplayOptions.(map[string]interface{})
-			resource["panel_options"] = assignPanelOptions(displayOptions)
+			displayOptions, ok := maybeDisplayOptions.(map[string]interface{})
+			if ok {
+				resource["panel_options"] = assignPanelOptions(displayOptions)
+			}
 		}
 	}
 }
