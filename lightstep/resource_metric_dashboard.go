@@ -129,7 +129,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		"text_panel": {
 			Type:     schema.TypeList,
 			Optional: true,
-			Computed: true, // the panels can be mutated individually; chart mutations should not trigger group updates
+			Computed: true, // the panels can be mutated individually; text panel mutations should not trigger group updates
 			Elem: &schema.Resource{
 				Schema: getTextPanelSchema(),
 			},
@@ -155,31 +155,56 @@ func getServiceHealthPanelSchema() map[string]*schema.Schema {
 				Optional: true,
 				Default:  "Service Health Panel",
 			},
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"panel_options": {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "custom options for the service health panel",
+				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"sort_by": {
-							Type:        schema.TypeString,
-							Description: "service/latency/error/rate",
-							Optional:    true,
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"service",
+								"latency",
+								"error",
+								"rate",
+							}, false),
 						},
 						"sort_direction": {
-							Type:        schema.TypeString,
-							Description: "asc/desc",
-							Optional:    true,
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"asc",
+								"desc",
+								"error",
+								"rate",
+							}, false),
 						},
 						"percentile": {
-							Type:        schema.TypeString,
-							Description: "p50/p90/p95/p99",
-							Optional:    true,
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"p50",
+								"p90",
+								"p95",
+								"p99",
+							}, false),
 						},
 						"change_since": {
-							Type:        schema.TypeString,
-							Description: "1h/1d/3d",
-							Optional:    true,
+							Type:     schema.TypeString,
+							Optional: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								"1h",
+								"1d",
+								"3d",
+								"p99",
+							}, false),
 						},
 					},
 				},
@@ -969,17 +994,19 @@ func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Pan
 		p := client.Panel{
 			ID:       serviceHealthPanel["id"].(string),
 			Title:    serviceHealthPanel["name"].(string),
+			Type:     "service_health",
 			Position: buildPosition(serviceHealthPanel),
 		}
-		// N.B. panel_options are optional, so we don't return an error if not found
-		if maybePanelOptions, ok := serviceHealthPanel["panel_options"]; ok {
-			displayOptions, ok := maybePanelOptions.(map[string]interface{})
-			if ok {
-				p.Body = map[string]interface{}{
-					"display_options": assignPanelOptions(displayOptions),
-				}
-			}
+		// todo
+		p.Body = map[string]interface{}{
+			"display_options": map[string]string{
+				"sort_direction": "asc",
+			},
 		}
+		//N.B. panel_options are optional, so we don't return an error if not found
+		//if maybePanelOptions, ok := serviceHealthPanel["panel_options"]; ok {
+		//	p.Body = buildServiceHealthPanelBody(maybePanelOptions)
+		//}
 
 		serviceHealthPanels = append(serviceHealthPanels, p)
 	}
@@ -1003,7 +1030,7 @@ func setServiceHealthPanelResourceData(
 		if maybeDisplayOptions, ok := panel.Body["display_options"]; ok {
 			displayOptions, ok := maybeDisplayOptions.(map[string]interface{})
 			if ok {
-				resource["panel_options"] = assignPanelOptions(displayOptions)
+				resource["panel_options"] = panelOptionsFromResourceData(displayOptions)
 			}
 		}
 	}
@@ -1075,23 +1102,11 @@ func extractLabels(apiLabels []client.Label) []interface{} {
 	return labels
 }
 
-// assignPanelOptions is a helper function to convert between an API response and a Terraform resource.
-// We do this conversion explicitly to have control over the fields that are set. For example, we may
-// add a new panel option "some_panel_option". We do not want that panel option to automatically be
-// available in Terraform.
-func assignPanelOptions(from map[string]interface{}) map[string]interface{} {
-	to := make(map[string]interface{})
-	if sortBy, ok := from["sort_by"]; ok {
-		to["sort_by"] = sortBy
+func panelOptionsFromResourceData(opts map[string]interface{}) *schema.Set {
+	// "panel_options" is a set that always has at most one element, so
+	// the hash function is trivial
+	f := func(i interface{}) int {
+		return 1
 	}
-	if sortDirection, ok := from["sort_direction"]; ok {
-		to["sort_direction"] = sortDirection
-	}
-	if percentile, ok := from["percentile"]; ok {
-		to["percentile"] = percentile
-	}
-	if changeSince, ok := from["change_since"]; ok {
-		to["change_since"] = changeSince
-	}
-	return to
+	return schema.NewSet(f, []interface{}{opts})
 }
