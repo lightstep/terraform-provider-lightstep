@@ -545,7 +545,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
-		serviceHealthPanels, err := buildServiceHealthPanels(group["service_health_panel"].([]interface{}))
+		serviceHealthPanels, err := buildServiceHealthPanels(group["service_health_panel"].(*schema.Set).List())
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
