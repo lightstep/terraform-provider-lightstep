@@ -727,7 +727,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["chart"] = groupCharts
 			group["text_panel"] = groupTextPanels
 
-			group["service_health_panel"] = extractServiceHealthPanels(g.Panels)
+			group["service_health_panel"] = assembleServiceHealthPanels(g.Panels)
 
 			groups = append(groups, group)
 		}
@@ -1009,8 +1009,8 @@ func setServiceHealthPanelResourceData(
 	}
 }
 
-// extractServiceHealthPanels transforms service health panels from the API call into TF resource service health panels
-func extractServiceHealthPanels(apiPanels []client.Panel) []interface{} {
+// assembleServiceHealthPanels transforms service health panels from the API call into TF resource service health panels
+func assembleServiceHealthPanels(apiPanels []client.Panel) []interface{} {
 	var serviceHealthPanelResources []interface{}
 	for _, p := range apiPanels {
 		if p.Type == "service_health" {
