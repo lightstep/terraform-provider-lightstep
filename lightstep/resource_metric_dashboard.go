@@ -137,6 +137,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		"service_health_panel": {
 			Type:        schema.TypeSet,
 			Optional:    true,
+			Computed:    true, // the panels can be mutated individually; panel mutations should not trigger group updates
 			Description: "A dashboard panel to view the health of your services",
 			Elem: &schema.Resource{
 				Schema: getServiceHealthPanelSchema(),
