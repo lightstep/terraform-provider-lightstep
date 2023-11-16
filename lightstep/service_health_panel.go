@@ -112,11 +112,11 @@ func convertServiceHealthFromResourceToApiRequest(serviceHealthPanelsIn interfac
 			list := opts.List()
 			count := len(list)
 			if count > 1 {
-				return nil, fmt.Errorf("display_type_options must be defined only once")
+				return nil, fmt.Errorf("panel_options must be defined only once")
 			} else if count == 1 {
 				m, ok := list[0].(map[string]interface{})
 				if !ok {
-					return nil, fmt.Errorf("unexpected format for display_type_options")
+					return nil, fmt.Errorf("unexpected format for panel_options")
 				}
 				// The API treats panel_options as an opaque blob, so we can pass what we have along directly
 				p.Body["display_options"] = m
