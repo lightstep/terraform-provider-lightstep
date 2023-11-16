@@ -424,7 +424,7 @@ resource "lightstep_metric_dashboard" "test" {
 			height = 10 
 
             panel_options {
-              sort_direction = "assc"
+              sort_direction = "asc"
               sort_by = "latency"
             }
 		}
@@ -432,7 +432,7 @@ resource "lightstep_metric_dashboard" "test" {
 }
 `
 	// Change the chart name and metric name
-	//updatedConfig := strings.Replace(dashboardConfig, "p50", "p90", -1)
+	updatedConfig := strings.Replace(dashboardConfig, "asc", "desc", -1)
 
 	resourceName := "lightstep_metric_dashboard.test"
 
@@ -446,25 +446,20 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					//resource.TestCheckTypeSetElemNestedAttrs(resourceName, "group.0.service_health_panel.0.*",
-					//	map[string]string{
-					//		"name": "test_service_health_panel",
-					//		//"panel_options.percentile": "p50",
-					//	},
-					//),
-					//resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.name", "test_service_health_panel"),
-					//resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.percentile", "p50"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_by", "latency"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_direction", "asc"),
 				),
 			},
-			//{
-			//	// Updated config will contain the new metric and chart name
-			//	Config: updatedConfig,
-			//	Check: resource.ComposeTestCheckFunc(
-			//		testAccCheckMetricDashboardExists(resourceName, &dashboard),
-			//		resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.name", "test_service_health_panel"),
-			//		resource.TestCheckResourceAttr(resourceName, "service_health_panel.0.panel_options.percentile", "p90"),
-			//	),
-			//},
+			{
+				// Updated config will contain the new metric and chart name
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_direction", "desc"),
+				),
+			},
 		},
 	})
 }

@@ -131,7 +131,7 @@ func getQueriesFromUnifiedDashboardResourceData(
 		qs := map[string]interface{}{
 			"hidden":                 q.Hidden,
 			"display":                q.Display,
-			"display_type_options":   displayTypeOptionsFromResourceData(q.DisplayTypeOptions),
+			"display_type_options":   convertNestedMapToSchemaSet(q.DisplayTypeOptions),
 			"query_name":             q.Name,
 			"query_string":           q.TQLQuery,
 			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
@@ -153,15 +153,6 @@ func getQueriesFromUnifiedDashboardResourceData(
 		queries = append(queries, qs)
 	}
 	return queries, nil
-}
-
-func displayTypeOptionsFromResourceData(opts map[string]interface{}) *schema.Set {
-	// "display_type_options" is a set that always has at most one element, so
-	// the hash function is trivial
-	f := func(i interface{}) int {
-		return 1
-	}
-	return schema.NewSet(f, []interface{}{opts})
 }
 
 func getDependencyMapOptions(options *client.DependencyMapOptions) []interface{} {
