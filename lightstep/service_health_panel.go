@@ -107,22 +107,28 @@ func convertServiceHealthFromResourceToApiRequest(serviceHealthPanelsIn interfac
 		}
 
 		p.Body = map[string]interface{}{}
-		//N.B. panel_options are optional, so we don't return an error if not found
+		// N.B. panel_options are optional, so we don't return an error if not found
 		if opts, ok := serviceHealthPanel["panel_options"].(*schema.Set); ok {
 			list := opts.List()
 			count := len(list)
 			if count > 1 {
 				return nil, fmt.Errorf("panel_options must be defined only once")
 			} else if count == 1 {
-				m, ok := list[0].(map[string]interface{})
+				resourceDisplayOptions, ok := list[0].(map[string]interface{})
 				if !ok {
 					return nil, fmt.Errorf("unexpected format for panel_options")
 				}
-				// The API treats panel_options as an opaque blob, so we can pass what we have along directly
-				p.Body["display_options"] = m
+				for k, v := range resourceDisplayOptions {
+					// don't want to send 'sort_by: ""' to the API etc.
+					if v == "" {
+						delete(resourceDisplayOptions, k)
+					}
+				}
+				if len(resourceDisplayOptions) > 0 {
+					p.Body["display_options"] = resourceDisplayOptions
+				}
 			}
 		}
-
 		serviceHealthPanels = append(serviceHealthPanels, p)
 	}
 
