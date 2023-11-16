@@ -200,6 +200,7 @@ Required:
 Optional:
 
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
+- `service_health_panel` (Block Set) A dashboard panel to view the health of your services (see [below for nested schema](#nestedblock--group--service_health_panel))
 - `text_panel` (Block List) (see [below for nested schema](#nestedblock--group--text_panel))
 - `title` (String)
 
@@ -294,6 +295,34 @@ Required:
 
 - `max` (Number)
 - `min` (Number)
+
+
+
+<a id="nestedblock--group--service_health_panel"></a>
+### Nested Schema for `group.service_health_panel`
+
+Optional:
+
+- `height` (Number)
+- `name` (String)
+- `panel_options` (Block Set, Max: 1) custom options for the service health panel (see [below for nested schema](#nestedblock--group--service_health_panel--panel_options))
+- `width` (Number)
+- `x_pos` (Number)
+- `y_pos` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--service_health_panel--panel_options"></a>
+### Nested Schema for `group.service_health_panel.panel_options`
+
+Optional:
+
+- `change_since` (String)
+- `percentile` (String)
+- `sort_by` (String)
+- `sort_direction` (String)
 
 
 
