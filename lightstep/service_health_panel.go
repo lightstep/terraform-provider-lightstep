@@ -90,10 +90,11 @@ func getServiceHealthPanelSchema() *schema.Schema {
 	}
 }
 
-func fromResourceToApiRequest(serviceHealthPanelsIn []interface{}) ([]client.Panel, error) {
+func convertServiceHealthFromResourceToApiRequest(serviceHealthPanelsIn interface{}) ([]client.Panel, error) {
+	in := serviceHealthPanelsIn.(*schema.Set).List()
 	var serviceHealthPanels []client.Panel
 
-	for _, s := range serviceHealthPanelsIn {
+	for _, s := range in {
 		serviceHealthPanel, ok := s.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("bad format, %v", s)
@@ -128,7 +129,7 @@ func fromResourceToApiRequest(serviceHealthPanelsIn []interface{}) ([]client.Pan
 	return serviceHealthPanels, nil
 }
 
-func fromApiRequestToResource(apiPanels []client.Panel) []interface{} {
+func convertServiceHealthfromApiRequestToResource(apiPanels []client.Panel) []interface{} {
 	var serviceHealthPanelResources []interface{}
 	for _, p := range apiPanels {
 		if p.Type == ServiceHealthType {

@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lightstep/terraform-provider-lightstep/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 type ChartSchemaType int
@@ -496,7 +496,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
-		serviceHealthPanels, err := fromResourceToApiRequest(group["service_health_panel"].(*schema.Set).List())
+		serviceHealthPanels, err := convertServiceHealthFromResourceToApiRequest(group[ServiceHealthPanel])
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
@@ -677,7 +677,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["chart"] = groupCharts
 			group["text_panel"] = groupTextPanels
 
-			group["service_health_panel"] = fromApiRequestToResource(g.Panels)
+			group[ServiceHealthPanel] = convertServiceHealthfromApiRequestToResource(g.Panels)
 
 			groups = append(groups, group)
 		}
