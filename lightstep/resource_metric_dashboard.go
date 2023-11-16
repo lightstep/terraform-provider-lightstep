@@ -825,7 +825,7 @@ func assembleDashboardPanels(
 // into the resource interface
 func setPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
-	panel client.UnifiedChart, // Panel from the API
+	panel client.UnifiedChart,       // Panel from the API
 ) {
 	resource["name"] = panel.Title
 	resource["description"] = panel.Description
@@ -997,16 +997,23 @@ func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Pan
 			Type:     "service_health",
 			Position: buildPosition(serviceHealthPanel),
 		}
-		// todo
-		p.Body = map[string]interface{}{
-			"display_options": map[string]string{
-				"sort_direction": "asc",
-			},
-		}
+
+		p.Body = map[string]interface{}{}
 		//N.B. panel_options are optional, so we don't return an error if not found
-		//if maybePanelOptions, ok := serviceHealthPanel["panel_options"]; ok {
-		//	p.Body = buildServiceHealthPanelBody(maybePanelOptions)
-		//}
+		if opts, ok := serviceHealthPanel["panel_options"].(*schema.Set); ok {
+			list := opts.List()
+			count := len(list)
+			if count > 1 {
+				return nil, fmt.Errorf("display_type_options must be defined only once")
+			} else if count == 1 {
+				m, ok := list[0].(map[string]interface{})
+				if !ok {
+					return nil, fmt.Errorf("unexpected format for display_type_options")
+				}
+				// The API treats panel_options as an opaque blob, so we can pass what we have along directly
+				p.Body["display_options"] = m
+			}
+		}
 
 		serviceHealthPanels = append(serviceHealthPanels, p)
 	}
@@ -1016,7 +1023,7 @@ func buildServiceHealthPanels(serviceHealthPanelsIn []interface{}) ([]client.Pan
 
 func setServiceHealthPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
-	panel client.Panel, // Panel from the API
+	panel client.Panel,              // Panel from the API
 ) {
 	// Alias for what we refer to as title elsewhere
 	resource["name"] = panel.Title

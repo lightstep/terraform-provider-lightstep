@@ -422,6 +422,11 @@ resource "lightstep_metric_dashboard" "test" {
 			y_pos = 0
 			width = 10
 			height = 10 
+
+            panel_options {
+              sort_direction = "assc"
+              sort_by = "latency"
+            }
 		}
 	}
 }
