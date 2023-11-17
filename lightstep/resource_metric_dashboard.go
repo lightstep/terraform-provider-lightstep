@@ -63,7 +63,7 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				},
 			},
 			"group": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: getGroupSchema(chartSchemaType),
@@ -430,8 +430,8 @@ func (p *resourceUnifiedDashboardImp) resourceUnifiedDashboardRead(ctx context.C
 
 func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.UnifiedDashboardAttributes, bool, error) {
 	chartSet := d.Get("chart").(*schema.Set)
-	groupSet := d.Get("group").(*schema.Set)
-	groups, hasLegacyChartsIn, err := buildGroups(groupSet.List(), chartSet.List())
+	groupSet := d.Get("group").([]interface{})
+	groups, hasLegacyChartsIn, err := buildGroups(groupSet, chartSet.List())
 	if err != nil {
 		return nil, hasLegacyChartsIn, err
 	}
