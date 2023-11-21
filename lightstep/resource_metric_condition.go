@@ -338,10 +338,22 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Defines the threshold for the alert to transition to a Critical (more severe) status.",
 		},
+		"critical_duration_ms": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     false,
+			Description: "Critical threshold must be breached for this duration before the status changes.",
+		},
 		"warning": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Defines the threshold for the alert to transition to a Warning (less severe) status.",
+		},
+		"warning_duration_ms": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Default:     false,
+			Description: "Critical threshold must be breached for this duration before the status changes.",
 		},
 	}
 }
@@ -421,6 +433,12 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.",
+			},
+			"no_data_duration_ms": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     false,
+				Description: "No data must be seen for this duration before the status changes.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
@@ -678,11 +696,21 @@ func buildSubAlertExpression(singleExpression map[string]interface{}) (*client.S
 		return nil, err
 	}
 
-	return &client.SubAlertExpression{
+	e := &client.SubAlertExpression{
 		IsNoData:   singleExpression["is_no_data"].(bool),
 		Operand:    singleExpression["operand"].(string),
 		Thresholds: thresholds,
-	}, nil
+	}
+
+	noDataDuration := singleExpression["no_data_duration_ms"]
+	if noDataDuration != "" {
+		d, err := strconv.ParseUint(noDataDuration.(string), 64, strconv.IntSize)
+		if err != nil {
+			return e, err
+		}
+		e.NoDataDurationMs = &d
+	}
+	return e, nil
 }
 
 func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, error) {
@@ -1014,6 +1042,24 @@ func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds
 		t.Warning = &w
 	}
 
+	criticalDuration := singleExpression["critical_duration_ms"]
+	if criticalDuration != "" {
+		d, err := strconv.ParseUint(criticalDuration.(string), 64, strconv.IntSize)
+		if err != nil {
+			return t, err
+		}
+		t.CriticalDurationMs = &d
+	}
+
+	warningDuration := singleExpression["warning_duration_ms"]
+	if criticalDuration != "" {
+		d, err := strconv.ParseUint(warningDuration.(string), 64, strconv.IntSize)
+		if err != nil {
+			return t, err
+		}
+		t.WarningDurationMs = &d
+	}
+
 	return t, nil
 }
 
@@ -1231,14 +1277,16 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	}
 
 	if c.Attributes.Expression != nil {
-		if err := d.Set("expression", []map[string]interface{}{
-			{
-				"is_multi":   c.Attributes.Expression.IsMulti,
-				"is_no_data": c.Attributes.Expression.IsNoData,
-				"operand":    c.Attributes.Expression.Operand,
-				"thresholds": buildUntypedThresholds(c.Attributes.Expression.Thresholds),
-			},
-		}); err != nil {
+		expressionMap := map[string]interface{}{
+			"is_multi":   c.Attributes.Expression.IsMulti,
+			"is_no_data": c.Attributes.Expression.IsNoData,
+			"operand":    c.Attributes.Expression.Operand,
+			"thresholds": buildUntypedThresholds(c.Attributes.Expression.Thresholds),
+		}
+		if c.Attributes.Expression.NoDataDurationMs != nil {
+			expressionMap["no_data_duration_ms"] = c.Attributes.Expression.NoDataDurationMs
+		}
+		if err := d.Set("expression", expressionMap); err != nil {
 			return fmt.Errorf("unable to set expression resource field: %v", err)
 		}
 	}
@@ -1313,6 +1361,13 @@ func buildUntypedThresholds(thresholds client.Thresholds) []map[string]interface
 
 	if thresholds.Warning != nil {
 		outputMap["warning"] = strconv.FormatFloat(*thresholds.Warning, 'f', -1, 64)
+	}
+
+	if thresholds.CriticalDurationMs != nil {
+		outputMap["critical_duration_ms"] = thresholds.CriticalDurationMs
+	}
+	if thresholds.WarningDurationMs != nil {
+		outputMap["warning_duration_ms"] = thresholds.WarningDurationMs
 	}
 	return []map[string]interface{}{
 		outputMap,
