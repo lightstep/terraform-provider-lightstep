@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/lightstep/terraform-provider-lightstep/client"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
 type ChartSchemaType int
@@ -129,11 +129,12 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 		"text_panel": {
 			Type:     schema.TypeList,
 			Optional: true,
-			Computed: true, // the panels can be mutated individually; chart mutations should not trigger group updates
+			Computed: true, // the panels can be mutated individually; text panel mutations should not trigger group updates
 			Elem: &schema.Resource{
 				Schema: getTextPanelSchema(),
 			},
 		},
+		ServiceHealthPanel: getServiceHealthPanelSchema(),
 	}
 }
 
@@ -168,14 +169,26 @@ func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 		}
 	}
 
-	return map[string]*schema.Schema{
-		// Alias for what we refer to as title elsewhere
-		"name": nameSchema(),
-		"description": {
-			Type:     schema.TypeString,
-			Optional: true,
-			Default:  "",
+	return mergeSchemas(
+		getPositionSchema(),
+		map[string]*schema.Schema{
+			// Alias for what we refer to as title elsewhere
+			"name": nameSchema(),
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "",
+			},
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
+	)
+}
+
+func getPositionSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
 		"x_pos": {
 			Type:         schema.TypeInt,
 			ValidateFunc: validation.IntAtLeast(0),
@@ -199,10 +212,6 @@ func getPanelSchema(isNameRequired bool) map[string]*schema.Schema {
 			ValidateFunc: validation.IntAtLeast(0),
 			Default:      0,
 			Optional:     true,
-		},
-		"id": {
-			Type:     schema.TypeString,
-			Computed: true,
 		},
 	}
 }
@@ -487,6 +496,10 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
+		serviceHealthPanels, err := convertServiceHealthFromResourceToApiRequest(group[ServiceHealthPanel])
+		if err != nil {
+			return nil, hasLegacyChartsIn, err
+		}
 
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
@@ -494,6 +507,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 			Title:          group["title"].(string),
 			VisibilityType: group["visibility_type"].(string),
 			Charts:         append(chartPanels, textPanels...),
+			Panels:         serviceHealthPanels,
 		}
 		newGroups = append(newGroups, g)
 	}
@@ -662,6 +676,8 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			}
 			group["chart"] = groupCharts
 			group["text_panel"] = groupTextPanels
+
+			group[ServiceHealthPanel] = convertServiceHealthfromApiRequestToResource(g.Panels)
 
 			groups = append(groups, group)
 		}

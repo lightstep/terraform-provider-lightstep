@@ -30,6 +30,7 @@ type UnifiedGroup struct {
 	VisibilityType string         `json:"visibility_type"`
 	Charts         []UnifiedChart `json:"charts"`
 	Labels         []Label        `json:"labels"`
+	Panels         []Panel        `json:"panels"`
 }
 
 type UnifiedPosition struct {
@@ -55,6 +56,14 @@ type UnifiedChart struct {
 type Label struct {
 	Key   string `json:"label_key"`
 	Value string `json:"label_value"`
+}
+
+type Panel struct {
+	ID       string          `json:"id"`
+	Title    string          `json:"title"`
+	Type     string          `json:"type"`
+	Position UnifiedPosition `json:"position"`
+	Body     map[string]any  `json:"body"`
 }
 
 type YAxis struct {

@@ -402,6 +402,68 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
+func TestAccDashboardServiceHealthPanel(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardServiceHealthPanel)"
+	dashboard_description = "Dashboard to test the service health panel"
+
+	group {
+		rank = 0
+		visibility_type = "implicit"
+
+		service_health_panel {
+			name = "test_service_health_panel"
+
+			x_pos = 0
+			y_pos = 0
+			width = 10
+			height = 10 
+
+            panel_options {
+              sort_direction = "asc"
+              sort_by = "latency"
+            }
+		}
+	}
+}
+`
+	// Change the chart name and metric name
+	updatedConfig := strings.Replace(dashboardConfig, "asc", "desc", -1)
+
+	resourceName := "lightstep_metric_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial dashboard with a service health panel. verify the name and panel_options.percentile
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_by", "latency"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_direction", "asc"),
+				),
+			},
+			{
+				// Updated config will contain the new metric and chart name
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.name", "test_service_health_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.service_health_panel.0.panel_options.0.sort_direction", "desc"),
+				),
+			},
+		},
+	})
+}
+
 func Test_buildLabels(t *testing.T) {
 	tests := []struct {
 		name        string
