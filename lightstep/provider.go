@@ -63,6 +63,7 @@ func Provider() *schema.Provider {
 			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),
 			"lightstep_user_role_binding":      resourceUserRoleBinding(),
 			"lightstep_inferred_service_rule":  resourceInferredServiceRule(),
+			"lightstep_saml_group_mappings":    resourceSAMLGroupMappings(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
