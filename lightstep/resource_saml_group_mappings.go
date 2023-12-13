@@ -3,6 +3,8 @@ package lightstep
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -57,6 +59,7 @@ func resourceSAMLGroupMappings() *schema.Resource {
 										Required:    true,
 										Description: "Organization Role. Only 'Organization Editor' and 'Organization Viewer' are supported.",
 										ValidateFunc: validation.StringInSlice([]string{
+											"Organization Restricted Member",
 											"Organization Editor",
 											"Organization Viewer",
 										}, false),
@@ -68,10 +71,9 @@ func resourceSAMLGroupMappings() *schema.Resource {
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
 										},
-										ValidateFunc: validation.StringInSlice([]string{
-											"Project Editor",
-											"Project Viewer",
-										}, false),
+										ValidateDiagFunc: validation.MapValueMatch(
+											regexp.MustCompile("Project Editor|Project Viewer"),
+											"Project roles must be either 'Project Editor' or 'Project Viewer'"),
 									},
 								},
 							},
@@ -102,6 +104,24 @@ func resourceSAMLGroupMappingsCreateOrUpdate(ctx context.Context, d *schema.Reso
 	mappings, err := getSAMLGroupMappingsResource(d)
 	if err != nil {
 		return diag.FromErr(err)
+	}
+
+	type attribute struct {
+		key   string
+		value string
+	}
+	unique := make(map[attribute]bool)
+	for _, mapping := range mappings.Mappings {
+		attr := attribute{
+			key:   mapping.SAMLAttributeKey,
+			value: mapping.SAMLAttributeValue,
+		}
+
+		if unique[attr] {
+			return diag.FromErr(errors.New(fmt.Sprintf("duplicate SAML attribute key/value pair: %s:%s", attr.key, attr.value)))
+		}
+
+		unique[attr] = true
 	}
 
 	// Update SAML Group Mappings.

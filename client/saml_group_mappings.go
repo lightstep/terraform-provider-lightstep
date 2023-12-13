@@ -25,7 +25,7 @@ type (
 func (c *Client) ListSAMLGroupMappings(ctx context.Context) (SAMLGroupMappings, error) {
 	var resp genericAPIResponse[updateSAMLGroupMappingsRequest]
 
-	err := c.CallAPI(ctx, "GET", "saml_group_mappings", nil, &resp)
+	err := c.CallAPI(ctx, "GET", "saml-group-mappings", nil, &resp)
 	if err != nil {
 		return SAMLGroupMappings{}, err
 	}
@@ -39,5 +39,5 @@ func (c *Client) UpdateSAMLGroupMappings(ctx context.Context, mappings SAMLGroup
 		return err
 	}
 
-	return c.CallAPI(ctx, "POST", "saml_group_mappings", Envelope{Data: bytes}, nil)
+	return c.CallAPI(ctx, "POST", "saml-group-mappings", Envelope{Data: bytes}, nil)
 }
