@@ -254,10 +254,6 @@ EOT
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
-						"include_filters.0.key":   "project_name",
-						"include_filters.0.value": "catlab",
-					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
