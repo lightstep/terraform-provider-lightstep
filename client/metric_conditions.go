@@ -51,14 +51,14 @@ type SubAlertExpression struct {
 	Thresholds       Thresholds `json:"thresholds"`
 	Operand          string     `json:"operand"`
 	IsNoData         bool       `json:"enable-no-data-alert,omitempty"`
-	NoDataDurationMs *uint64    `json:"no-data-duration-ms,omitempty"`
+	NoDataDurationMs *int       `json:"no-data-duration-ms,omitempty"`
 }
 
 type Thresholds struct {
 	Warning            *float64 `json:"warning,omitempty"`
-	WarningDurationMs  *uint64  `json:"warning-duration-ms,omitempty"`
+	WarningDurationMs  *int     `json:"warning-duration-ms,omitempty"`
 	Critical           *float64 `json:"critical,omitempty"`
-	CriticalDurationMs *uint64  `json:"critical-duration-ms,omitempty"`
+	CriticalDurationMs *int     `json:"critical-duration-ms,omitempty"`
 }
 
 type DependencyMapOptions struct {

@@ -703,9 +703,9 @@ func buildSubAlertExpression(singleExpression map[string]interface{}) (*client.S
 	}
 
 	noDataDuration := singleExpression["no_data_duration_ms"]
-	if noDataDuration != "" {
-		d, err := strconv.ParseUint(noDataDuration.(string), 64, strconv.IntSize)
-		if err != nil {
+	if noDataDuration != nil && noDataDuration != "" && noDataDuration != 0 {
+		d, ok := noDataDuration.(int)
+		if !ok {
 			return e, err
 		}
 		e.NoDataDurationMs = &d
@@ -1042,20 +1042,20 @@ func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds
 		t.Warning = &w
 	}
 
-	criticalDuration := singleExpression["critical_duration_ms"]
-	if criticalDuration != "" {
-		d, err := strconv.ParseUint(criticalDuration.(string), 64, strconv.IntSize)
-		if err != nil {
-			return t, err
+	criticalDuration := thresholdsObj["critical_duration_ms"]
+	if criticalDuration != nil && criticalDuration != "" && criticalDuration != 0 {
+		d, ok := criticalDuration.(int)
+		if !ok {
+			return t, fmt.Errorf("unexpected format for critical_duration_ms")
 		}
 		t.CriticalDurationMs = &d
 	}
 
-	warningDuration := singleExpression["warning_duration_ms"]
-	if criticalDuration != "" {
-		d, err := strconv.ParseUint(warningDuration.(string), 64, strconv.IntSize)
-		if err != nil {
-			return t, err
+	warningDuration := thresholdsObj["warning_duration_ms"]
+	if warningDuration != nil && warningDuration != "" && criticalDuration != 0 {
+		d, ok := warningDuration.(int)
+		if !ok {
+			return t, fmt.Errorf("unexpected format for warning_duration_ms")
 		}
 		t.WarningDurationMs = &d
 	}
@@ -1286,7 +1286,8 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 		if c.Attributes.Expression.NoDataDurationMs != nil {
 			expressionMap["no_data_duration_ms"] = c.Attributes.Expression.NoDataDurationMs
 		}
-		if err := d.Set("expression", expressionMap); err != nil {
+		expressionSlice := []map[string]interface{}{expressionMap}
+		if err := d.Set("expression", expressionSlice); err != nil {
 			return fmt.Errorf("unable to set expression resource field: %v", err)
 		}
 	}
