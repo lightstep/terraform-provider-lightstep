@@ -542,7 +542,8 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
 	}
 
-	cond, err := c.GetUnifiedCondition(ctx, d.Get("project_name").(string), d.Id())
+	projectName := d.Get("project_name").(string)
+	cond, err := c.GetUnifiedCondition(ctx, projectName, d.Id())
 	if err != nil {
 		apiErr, ok := err.(client.APIResponseCarrier)
 		if !ok {
@@ -557,7 +558,6 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 
-	projectName := d.Get("project_name").(string)
 	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &cond.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
@@ -566,7 +566,8 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		cond.Attributes.Queries = prevAttrs.Queries
 	}
 
-	if err := setResourceDataFromUnifiedCondition(d.Get("project_name").(string), *cond, d, p.conditionSchemaType); err != nil {
+	err = setResourceDataFromUnifiedCondition(projectName, *cond, d, p.conditionSchemaType)
+	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err))
 	}
 
