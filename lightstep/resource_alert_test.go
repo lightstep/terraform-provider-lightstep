@@ -62,13 +62,6 @@ resource "lightstep_alert" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -103,13 +96,6 @@ resource "lightstep_alert" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -206,13 +192,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `, uqlQuery)
@@ -251,13 +230,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `, uqlQuery)
@@ -553,11 +525,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
   }
 }
 `, uqlQuery)
@@ -706,13 +673,6 @@ resource "lightstep_alert" "errors" {
 	alerting_rule {
 	  id          = lightstep_slack_destination.slack.id
 	  update_interval = "1h"
-	
-	  include_filters = [
-	    {
-	      key   = "project_name"
-	      value = "catlab"
-	    }
-	  ]
 	}
 	}
 	`
@@ -769,13 +729,6 @@ resource "lightstep_alert" "test" {
  alerting_rule {
    id          = lightstep_slack_destination.slack.id
    update_interval = "1h"
-
-   include_filters = [
-     {
-       key   = "project_name"
-       value = "catlab"
-     }
-   ]
  }
 }
 `
