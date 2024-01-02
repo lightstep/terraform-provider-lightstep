@@ -73,7 +73,7 @@ test-staging:
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_ENV="staging" \
-	go test -v ./lightstep -test.run TestAccSAMLGroupMappings -count=1
+	go test -v ./lightstep
 
 .PHONY: ensure-clean-repo
 ensure-clean-repo:
