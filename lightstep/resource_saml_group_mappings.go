@@ -57,7 +57,7 @@ func resourceSAMLGroupMappings() *schema.Resource {
 									"organization_role": {
 										Type:        schema.TypeString,
 										Required:    true,
-										Description: "Organization Role. Only 'Organization Editor' and 'Organization Viewer' are supported.",
+										Description: "Organization Role. Only 'Organization Editor', 'Organization Viewer' and 'Organization Restricted Member'  are supported.",
 										ValidateFunc: validation.StringInSlice([]string{
 											"Organization Restricted Member",
 											"Organization Editor",
