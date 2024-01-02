@@ -175,8 +175,8 @@ func getSAMLGroupMappingsResource(d *schema.ResourceData) (client.SAMLGroupMappi
 		if !ok {
 			return mappings, errors.New("missing required field 'match'")
 		}
-		rawNatchSlice := rawMatch.([]any)
-		matchMap := rawNatchSlice[0].(map[string]any)
+		rawMatchSlice := rawMatch.([]any)
+		matchMap := rawMatchSlice[0].(map[string]any)
 
 		mapping.SAMLAttributeKey = matchMap["attribute_key"].(string)
 		mapping.SAMLAttributeValue = matchMap["attribute_value"].(string)
