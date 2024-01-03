@@ -1137,9 +1137,9 @@ resource "lightstep_alert" "test" {
       operand  = "above"
 	  thresholds {
 		critical  = 10
-        critical_duration_ms = 120000
+        critical_duration_ms = 180000
 		warning = 5
-        warning_duration_ms = 180000
+        warning_duration_ms = 120000
 	  }
   }
 
@@ -1147,7 +1147,7 @@ resource "lightstep_alert" "test" {
 	query_name                          = "a"
 	hidden                              = false
     display                             = "line"
-	query_string                        = "metric requests | rate 1h | filter "service_name" == "frontend" | group_by ["method"], mean"
+	query_string                        = "metric requests | rate 1h | filter service_name == frontend | group_by [method], mean"
   }
 }
 `
