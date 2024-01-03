@@ -341,7 +341,6 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 		"critical_duration_ms": {
 			Type:        schema.TypeInt,
 			Optional:    true,
-			Default:     false,
 			Description: "Critical threshold must be breached for this duration before the status changes.",
 		},
 		"warning": {
@@ -352,7 +351,6 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 		"warning_duration_ms": {
 			Type:        schema.TypeInt,
 			Optional:    true,
-			Default:     false,
 			Description: "Critical threshold must be breached for this duration before the status changes.",
 		},
 	}
@@ -437,7 +435,6 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 			"no_data_duration_ms": {
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Default:     false,
 				Description: "No data must be seen for this duration before the status changes.",
 			},
 			"operand": {

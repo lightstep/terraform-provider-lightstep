@@ -68,7 +68,7 @@ func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.
 		if subAlertIn.Expression.NoDataDurationMs != nil {
 			subAlertExpressionMap["no_data_duration_ms"] = subAlertIn.Expression.NoDataDurationMs
 		}
-		subAlerts = append(subAlerts, map[string]interface{}{})
+		subAlerts = append(subAlerts, subAlertExpressionMap)
 	}
 
 	return []map[string][]map[string]interface{}{{
