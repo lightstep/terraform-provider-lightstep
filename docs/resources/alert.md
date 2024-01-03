@@ -110,6 +110,7 @@ Optional:
 Optional:
 
 - `is_no_data` (Boolean) If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.
+- `no_data_duration_ms` (Number) No data must be seen for this duration before the status changes.
 - `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
 - `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (see [below for nested schema](#nestedblock--composite_alert--alert--expression--thresholds))
 
@@ -119,7 +120,9 @@ Optional:
 Optional:
 
 - `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `critical_duration_ms` (Number) Critical threshold must be breached for this duration before the status changes.
 - `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
+- `warning_duration_ms` (Number) Critical threshold must be breached for this duration before the status changes.
 
 
 
@@ -161,6 +164,7 @@ Optional:
 
 - `is_multi` (Boolean) When false, send a single notification whenever any number of group_by values exceeds the alert threshold. When true, send individual notifications for each distinct group_by value that exceeds the threshold.
 - `is_no_data` (Boolean) If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.
+- `no_data_duration_ms` (Number) No data must be seen for this duration before the status changes.
 - `operand` (String) Required when at least one threshold (Critical, Warning) is defined. Indicates whether the alert triggers when the value is above the threshold or below the threshold.
 - `thresholds` (Block List, Max: 1) Optional values defining the thresholds at which this alert transitions into Critical or Warning states. If a particular threshold is not specified, the alert never transitions into that state. (see [below for nested schema](#nestedblock--expression--thresholds))
 
@@ -170,7 +174,9 @@ Optional:
 Optional:
 
 - `critical` (String) Defines the threshold for the alert to transition to a Critical (more severe) status.
+- `critical_duration_ms` (Number) Critical threshold must be breached for this duration before the status changes.
 - `warning` (String) Defines the threshold for the alert to transition to a Warning (less severe) status.
+- `warning_duration_ms` (Number) Critical threshold must be breached for this duration before the status changes.
 
 
 

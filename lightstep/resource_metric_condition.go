@@ -338,10 +338,20 @@ func getThresholdSchemaMap() map[string]*schema.Schema {
 			Optional:    true,
 			Description: "Defines the threshold for the alert to transition to a Critical (more severe) status.",
 		},
+		"critical_duration_ms": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "Critical threshold must be breached for this duration before the status changes.",
+		},
 		"warning": {
 			Type:        schema.TypeString,
 			Optional:    true,
 			Description: "Defines the threshold for the alert to transition to a Warning (less severe) status.",
+		},
+		"warning_duration_ms": {
+			Type:        schema.TypeInt,
+			Optional:    true,
+			Description: "Critical threshold must be breached for this duration before the status changes.",
 		},
 	}
 }
@@ -421,6 +431,11 @@ func getCompositeSubAlertExpressionResource() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				Description: "If true, a notification is sent when the alert query returns no data. If false, notifications aren't sent in this scenario.",
+			},
+			"no_data_duration_ms": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "No data must be seen for this duration before the status changes.",
 			},
 			"operand": {
 				Type:         schema.TypeString,
@@ -524,7 +539,8 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to translate resource attributes: %v", err))
 	}
 
-	cond, err := c.GetUnifiedCondition(ctx, d.Get("project_name").(string), d.Id())
+	projectName := d.Get("project_name").(string)
+	cond, err := c.GetUnifiedCondition(ctx, projectName, d.Id())
 	if err != nil {
 		apiErr, ok := err.(client.APIResponseCarrier)
 		if !ok {
@@ -539,7 +555,6 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		return diag.FromErr(fmt.Errorf("failed to get metric condition: %v", apiErr))
 	}
 
-	projectName := d.Get("project_name").(string)
 	legacy, err := metricConditionHasEquivalentLegacyQueries(ctx, c, projectName, prevAttrs, &cond.Attributes)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to compare legacy queries: %v", err))
@@ -548,7 +563,8 @@ func (p *resourceUnifiedConditionImp) resourceUnifiedConditionRead(ctx context.C
 		cond.Attributes.Queries = prevAttrs.Queries
 	}
 
-	if err := setResourceDataFromUnifiedCondition(d.Get("project_name").(string), *cond, d, p.conditionSchemaType); err != nil {
+	err = setResourceDataFromUnifiedCondition(projectName, *cond, d, p.conditionSchemaType)
+	if err != nil {
 		return diag.FromErr(fmt.Errorf("failed to set metric condition from API response to terraform state: %v", err))
 	}
 
@@ -678,11 +694,21 @@ func buildSubAlertExpression(singleExpression map[string]interface{}) (*client.S
 		return nil, err
 	}
 
-	return &client.SubAlertExpression{
+	e := &client.SubAlertExpression{
 		IsNoData:   singleExpression["is_no_data"].(bool),
 		Operand:    singleExpression["operand"].(string),
 		Thresholds: thresholds,
-	}, nil
+	}
+
+	noDataDuration := singleExpression["no_data_duration_ms"]
+	if noDataDuration != nil && noDataDuration != "" && noDataDuration != 0 {
+		d, ok := noDataDuration.(int)
+		if !ok {
+			return e, err
+		}
+		e.NoDataDurationMs = &d
+	}
+	return e, nil
 }
 
 func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, error) {
@@ -1014,6 +1040,24 @@ func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds
 		t.Warning = &w
 	}
 
+	criticalDuration := thresholdsObj["critical_duration_ms"]
+	if criticalDuration != nil && criticalDuration != "" && criticalDuration != 0 {
+		d, ok := criticalDuration.(int)
+		if !ok {
+			return t, fmt.Errorf("unexpected format for critical_duration_ms")
+		}
+		t.CriticalDurationMs = &d
+	}
+
+	warningDuration := thresholdsObj["warning_duration_ms"]
+	if warningDuration != nil && warningDuration != "" && criticalDuration != 0 {
+		d, ok := warningDuration.(int)
+		if !ok {
+			return t, fmt.Errorf("unexpected format for warning_duration_ms")
+		}
+		t.WarningDurationMs = &d
+	}
+
 	return t, nil
 }
 
@@ -1231,14 +1275,17 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 	}
 
 	if c.Attributes.Expression != nil {
-		if err := d.Set("expression", []map[string]interface{}{
-			{
-				"is_multi":   c.Attributes.Expression.IsMulti,
-				"is_no_data": c.Attributes.Expression.IsNoData,
-				"operand":    c.Attributes.Expression.Operand,
-				"thresholds": buildUntypedThresholds(c.Attributes.Expression.Thresholds),
-			},
-		}); err != nil {
+		expressionMap := map[string]interface{}{
+			"is_multi":   c.Attributes.Expression.IsMulti,
+			"is_no_data": c.Attributes.Expression.IsNoData,
+			"operand":    c.Attributes.Expression.Operand,
+			"thresholds": buildUntypedThresholds(c.Attributes.Expression.Thresholds),
+		}
+		if c.Attributes.Expression.NoDataDurationMs != nil {
+			expressionMap["no_data_duration_ms"] = c.Attributes.Expression.NoDataDurationMs
+		}
+		expressionSlice := []map[string]interface{}{expressionMap}
+		if err := d.Set("expression", expressionSlice); err != nil {
 			return fmt.Errorf("unable to set expression resource field: %v", err)
 		}
 	}
@@ -1313,6 +1360,13 @@ func buildUntypedThresholds(thresholds client.Thresholds) []map[string]interface
 
 	if thresholds.Warning != nil {
 		outputMap["warning"] = strconv.FormatFloat(*thresholds.Warning, 'f', -1, 64)
+	}
+
+	if thresholds.CriticalDurationMs != nil {
+		outputMap["critical_duration_ms"] = thresholds.CriticalDurationMs
+	}
+	if thresholds.WarningDurationMs != nil {
+		outputMap["warning_duration_ms"] = thresholds.WarningDurationMs
 	}
 	return []map[string]interface{}{
 		outputMap,
