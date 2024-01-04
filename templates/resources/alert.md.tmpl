@@ -53,7 +53,7 @@ resource "lightstep_alert" "high_error_rate_with_sustained_traffic" {
   project_name = var.project
   name         = "Error rates are high for my operation with sustained traffic"
   description  = <<EOF
-Fires when over 20% of requests are erroring, but only when requests are above 75 spans over an hour window. This prevents firing when we have very low traffic and get a few error requests.
+Fires when over 20% of requests have errors, but only when request count is above 75 over an hour window. This prevents firing when we have very low traffic and get a few error requests.
 EOF
 
   label {
