@@ -11,7 +11,7 @@ Provides a [Lightstep alert](https://api-docs.lightstep.com/reference/listalerts
 
 Visit [Lightstep's documentation](https://docs.lightstep.com/docs/about-alerts) for conceptual information about alerts and alert templates.
 
-## Example Usage
+## Example Usage (single alert)
 
 ```hcl
 resource "lightstep_alert" "beemo-requests" {
@@ -19,7 +19,7 @@ resource "lightstep_alert" "beemo-requests" {
   name         = "Frontend latency"
 
   expression {
-    is_multi   = true
+    is_multi   = false
     is_no_data = true
     operand    = "above"
     thresholds {
@@ -42,6 +42,67 @@ EOT
 
   alerting_rule {
       id = lightstep_pagerduty_destination.my_destination.id
+  }
+}
+```
+
+## Example Usage (composite alert)
+
+```hcl
+resource "lightstep_alert" "high_error_rate_with_sustained_traffic" {
+  project_name = var.project
+  name         = "Error rates are high for my operation with sustained traffic"
+  description  = <<EOF
+Fires when over 20% of requests have errors, but only when request count is above 75 over an hour window. This prevents firing when we have very low traffic and get a few error requests.
+EOF
+
+  label {
+    key   = "team"
+    value = "my_team"
+  }
+  composite_alert {
+    alert {
+      name  = "A"
+      title = "Span Error %"
+      expression {
+        operand = "above"
+        thresholds {
+          critical = 20
+        }
+      }
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "with\n\terrors = spans count | delta 1h | filter my_tag == my_value && error == true | group_by [], sum;\n\ttotal = spans count | delta 1h | filter my_tag == my_value | group_by [], sum;\njoin 100*errors / total, errors=0, total=0"
+        display      = "line"
+        hidden_queries = {
+          "a" = false
+        }
+      }
+    }
+
+    alert {
+      name  = "B"
+      title = "Span Count"
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "spans count | delta 1h | filter my_tag == my_value | group_by [], sum"
+        display      = "line"
+        hidden_queries = {
+          "a" = false
+        }
+      }
+      expression {
+        operand = "above"
+        thresholds {
+          critical = 75
+        }
+      }
+    }
+  }
+  alerting_rule {
+    id = lightstep_pagerduty_destination.my_destination.id
   }
 }
 ```
