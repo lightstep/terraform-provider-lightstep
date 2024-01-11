@@ -34,11 +34,17 @@ func getQueriesFromUnifiedConditionResourceData(
 			)
 		}
 
+		hq := make(map[string]string, len(q.HiddenQueries))
+		for k, v := range q.HiddenQueries {
+			hq[k] = fmt.Sprintf("%t", v)
+		}
+
 		qs := map[string]interface{}{
-			"hidden":       q.Hidden,
-			"display":      q.Display,
-			"query_name":   q.Name,
-			"query_string": q.TQLQuery,
+			"hidden":         q.Hidden,
+			"display":        q.Display,
+			"query_name":     q.Name,
+			"query_string":   q.TQLQuery,
+			"hidden_queries": hq,
 		}
 		queries = append(queries, qs)
 	}
