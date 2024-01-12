@@ -135,6 +135,7 @@ func getGroupSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 			},
 		},
 		ServiceHealthPanel: getServiceHealthPanelSchema(),
+		AlertsListPanel:    getAlertsListPanelSchema(),
 	}
 }
 
@@ -500,6 +501,10 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 		if err != nil {
 			return nil, hasLegacyChartsIn, err
 		}
+		alertsListPanels, err := convertAlertsListFromResourceToApiRequest(group[AlertsListPanel])
+		if err != nil {
+			return nil, hasLegacyChartsIn, err
+		}
 
 		g := client.UnifiedGroup{
 			ID:             group["id"].(string),
@@ -507,7 +512,7 @@ func buildGroups(groupsIn []interface{}, legacyChartsIn []interface{}) ([]client
 			Title:          group["title"].(string),
 			VisibilityType: group["visibility_type"].(string),
 			Charts:         append(chartPanels, textPanels...),
-			Panels:         serviceHealthPanels,
+			Panels:         append(serviceHealthPanels, alertsListPanels...),
 		}
 		newGroups = append(newGroups, g)
 	}
@@ -678,6 +683,7 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			group["text_panel"] = groupTextPanels
 
 			group[ServiceHealthPanel] = convertServiceHealthfromApiRequestToResource(g.Panels)
+			group[AlertsListPanel] = convertAlertsListFromApiRequestToResource(g.Panels)
 
 			groups = append(groups, group)
 		}
