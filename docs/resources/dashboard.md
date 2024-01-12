@@ -159,6 +159,7 @@ Required:
 
 Optional:
 
+- `alerts_list_panel` (Block Set) A dashboard panel to view a list of your alerts and their status (see [below for nested schema](#nestedblock--group--alerts_list_panel))
 - `chart` (Block Set) (see [below for nested schema](#nestedblock--group--chart))
 - `service_health_panel` (Block Set) A dashboard panel to view the health of your services (see [below for nested schema](#nestedblock--group--service_health_panel))
 - `text_panel` (Block List) (see [below for nested schema](#nestedblock--group--text_panel))
@@ -167,6 +168,62 @@ Optional:
 Read-Only:
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--alerts_list_panel"></a>
+### Nested Schema for `group.alerts_list_panel`
+
+Optional:
+
+- `filter_by` (Block Set, Max: 1) a list of predicates that are implicitly ANDed together to filter alerts (see [below for nested schema](#nestedblock--group--alerts_list_panel--filter_by))
+- `height` (Number)
+- `name` (String)
+- `panel_options` (Block Set, Max: 1) custom options for the service health panel (see [below for nested schema](#nestedblock--group--alerts_list_panel--panel_options))
+- `width` (Number)
+- `x_pos` (Number)
+- `y_pos` (Number)
+
+Read-Only:
+
+- `id` (String) The ID of this resource.
+
+<a id="nestedblock--group--alerts_list_panel--filter_by"></a>
+### Nested Schema for `group.alerts_list_panel.filter_by`
+
+Optional:
+
+- `predicate` (Block Set) a single predicate (see [below for nested schema](#nestedblock--group--alerts_list_panel--filter_by--predicate))
+
+<a id="nestedblock--group--alerts_list_panel--filter_by--predicate"></a>
+### Nested Schema for `group.alerts_list_panel.filter_by.predicate`
+
+Optional:
+
+- `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--group--alerts_list_panel--filter_by--predicate--label))
+- `operator` (String)
+
+<a id="nestedblock--group--alerts_list_panel--filter_by--predicate--label"></a>
+### Nested Schema for `group.alerts_list_panel.filter_by.predicate.label`
+
+Required:
+
+- `value` (String)
+
+Optional:
+
+- `key` (String)
+
+
+
+
+<a id="nestedblock--group--alerts_list_panel--panel_options"></a>
+### Nested Schema for `group.alerts_list_panel.panel_options`
+
+Optional:
+
+- `sort_by` (String)
+- `sort_direction` (String)
+
+
 
 <a id="nestedblock--group--chart"></a>
 ### Nested Schema for `group.chart`
