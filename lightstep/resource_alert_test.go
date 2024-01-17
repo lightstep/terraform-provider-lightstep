@@ -57,9 +57,6 @@ resource "lightstep_alert" "test" {
     query_name          = "a"
     hidden              = false
 	query_string        = "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"
-	hidden_queries      = {
-		"a" = false
-	}
   }
 
   alerting_rule {
@@ -124,7 +121,6 @@ resource "lightstep_alert" "test" {
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"android\" | group_by[\"method\"], mean | reduce 30s, min"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
-					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.a", "false"),
 				),
 			},
 			{
@@ -135,7 +131,6 @@ resource "lightstep_alert" "test" {
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a fresh playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", "metric requests | rate 1h, 30s | filter \"project_name\" == \"catlab\" && \"service\" != \"iOS\" | group_by[\"method\"], mean | reduce 30s, min"),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "false"),
-					resource.TestCheckNoResourceAttr(resourceName, "query.0.hidden_queries.a"),
 				),
 			},
 		},
