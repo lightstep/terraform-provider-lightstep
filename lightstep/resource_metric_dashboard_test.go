@@ -464,6 +464,98 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
+func TestAccDashboardAlertsListPanel(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardAlertsListPanel)"
+	dashboard_description = "Dashboard to test the alerts list panel"
+
+	group {
+		rank = 0
+		visibility_type = "implicit"
+
+		alerts_list_panel {
+			name = "test_alerts_list_panel"
+
+			x_pos = 0
+			y_pos = 0
+			width = 10
+			height = 10 
+
+            panel_options {
+                sort_direction = "asc"
+                sort_by = "status"
+            }
+            filter_by {
+				predicate {
+				    operator = "eq"
+                    label {
+                        key = "food"
+                        value = "pizza"
+                    }
+                    label {
+                        key = "food"
+                        value = "burger"
+                    }
+                }
+				predicate {
+				    operator = "neq"
+                    label {
+                        key = "drink"
+                        value = "coke"
+                    }
+                }
+            }
+		}
+	}
+}
+`
+	// Change the chart name and metric name
+	updatedConfig := strings.Replace(dashboardConfig, "asc", "desc", -1)
+	updatedConfig = strings.Replace(updatedConfig, "coke", "pepsi", -1)
+
+	resourceName := "lightstep_metric_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial dashboard with a service health panel. verify the name and panel_options.percentile
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.name", "test_alerts_list_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.panel_options.0.sort_by", "status"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.panel_options.0.sort_direction", "asc"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.1.operator", "eq"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.1.label.0.key", "food"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.1.label.0.value", "burger"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.1.label.1.key", "food"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.1.label.1.value", "pizza"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.0.operator", "neq"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.0.label.0.key", "drink"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.0.label.0.value", "coke"),
+				),
+			},
+			{
+				// Updated config will contain the new metric and chart name
+				Config: updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.name", "test_alerts_list_panel"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.panel_options.0.sort_direction", "desc"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.alerts_list_panel.0.filter_by.0.predicate.0.label.0.value", "pepsi"),
+				),
+			},
+		},
+	})
+}
+
 func Test_buildLabels(t *testing.T) {
 	tests := []struct {
 		name        string
