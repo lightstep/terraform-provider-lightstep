@@ -50,7 +50,7 @@ resource "lightstep_saml_group_mappings" "group_mappings" {
 
 ### Required
 
-- `mapping` (Block List, Min: 1) List of SAML Group Mappings. (see [below for nested schema](#nestedblock--mapping))
+- `mapping` (Block Set, Min: 1) List of SAML Group Mappings. (see [below for nested schema](#nestedblock--mapping))
 
 ### Read-Only
 

@@ -63,7 +63,7 @@ test-local:
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_RATE_LIMIT=100 \
 	LIGHTSTEP_ENV="public" \
-	go test -v ./lightstep
+	go test -v ./lightstep -test.run TestAccSAMLGroupMappings
 
 .PHONY: test-staging
 test-staging:

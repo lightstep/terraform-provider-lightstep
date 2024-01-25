@@ -22,7 +22,7 @@ func resourceSAMLGroupMappings() *schema.Resource {
 		DeleteContext: resourceSAMLGroupMappingsDelete,
 		Schema: map[string]*schema.Schema{
 			"mapping": {
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "List of SAML Group Mappings.",
 				Elem: &schema.Resource{
@@ -166,7 +166,7 @@ func getSAMLGroupMappingsResource(d *schema.ResourceData) (client.SAMLGroupMappi
 		return mappings, nil
 	}
 
-	for _, rawMapping := range rawMappings.([]any) {
+	for _, rawMapping := range rawMappings.(*schema.Set).List() {
 		var mapping client.SAMLGroupMapping
 
 		rawMappingMap := rawMapping.(map[string]any)
