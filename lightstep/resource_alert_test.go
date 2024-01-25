@@ -62,13 +62,6 @@ resource "lightstep_alert" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -103,13 +96,6 @@ resource "lightstep_alert" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -206,13 +192,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `, uqlQuery)
@@ -251,13 +230,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `, uqlQuery)
@@ -282,10 +254,6 @@ EOT
 					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
 					resource.TestCheckResourceAttr(resourceName, "description", "A link to a playbook"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.query_string", uqlQuery+"\n"),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
-						"include_filters.0.key":   "project_name",
-						"include_filters.0.value": "catlab",
-					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
@@ -553,11 +521,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
   }
 }
 `, uqlQuery)
@@ -706,13 +669,6 @@ resource "lightstep_alert" "errors" {
 	alerting_rule {
 	  id          = lightstep_slack_destination.slack.id
 	  update_interval = "1h"
-	
-	  include_filters = [
-	    {
-	      key   = "project_name"
-	      value = "catlab"
-	    }
-	  ]
 	}
 	}
 	`
@@ -769,13 +725,6 @@ resource "lightstep_alert" "test" {
  alerting_rule {
    id          = lightstep_slack_destination.slack.id
    update_interval = "1h"
-
-   include_filters = [
-     {
-       key   = "project_name"
-       value = "catlab"
-     }
-   ]
  }
 }
 `
@@ -1167,6 +1116,56 @@ resource "lightstep_alert" "composite_diff_test" {
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.name", "C"),
 					resource.TestCheckResourceAttr(resourceName, "composite_alert.0.alert.1.query.0.query_string",
 						"metric abc|rate 30s|group_by [], sum"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAlertWithThresholdDurations(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_alert" "test" {
+  project_name = "` + testProject + `"
+  name = "Too many requests"
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      no_data_duration_ms = 60000
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+        critical_duration_ms = 180000
+		warning = 5
+        warning_duration_ms = 120000
+	  }
+  }
+
+  query {
+	query_name                          = "a"
+	hidden                              = false
+    display                             = "line"
+	query_string                        = "metric requests | rate 1h | filter service_name == frontend | group_by [method], mean"
+  }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.no_data_duration_ms", "60000"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.thresholds.0.warning_duration_ms", "120000"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.thresholds.0.critical_duration_ms", "180000"),
 				),
 			},
 		},

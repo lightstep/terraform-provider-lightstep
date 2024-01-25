@@ -2,6 +2,7 @@ package lightstep
 
 import (
 	"fmt"
+
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
 
@@ -52,7 +53,7 @@ func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.
 			return nil, err
 		}
 
-		subAlerts = append(subAlerts, map[string]interface{}{
+		subAlertExpressionMap := map[string]interface{}{
 			"name":  subAlertIn.Name,
 			"title": subAlertIn.Title,
 			"expression": []map[string]interface{}{
@@ -63,7 +64,11 @@ func getCompositeAlertFromUnifiedConditionResourceData(compositeAlertIn *client.
 				},
 			},
 			"query": queries,
-		})
+		}
+		if subAlertIn.Expression.NoDataDurationMs != nil {
+			subAlertExpressionMap["no_data_duration_ms"] = subAlertIn.Expression.NoDataDurationMs
+		}
+		subAlerts = append(subAlerts, subAlertExpressionMap)
 	}
 
 	return []map[string][]map[string]interface{}{{
