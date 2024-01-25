@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"regexp"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
 )
@@ -176,6 +175,9 @@ func getSAMLGroupMappingsResource(d *schema.ResourceData) (client.SAMLGroupMappi
 			return mappings, errors.New("missing required field 'match'")
 		}
 		rawMatchSlice := rawMatch.([]any)
+		if len(rawMatchSlice) == 0 {
+			continue
+		}
 		matchMap := rawMatchSlice[0].(map[string]any)
 
 		mapping.SAMLAttributeKey = matchMap["attribute_key"].(string)
@@ -186,6 +188,9 @@ func getSAMLGroupMappingsResource(d *schema.ResourceData) (client.SAMLGroupMappi
 			return mappings, errors.New("missing required field 'roles'")
 		}
 		rolesMapSlice := rawRoles.([]any)
+		if len(rolesMapSlice) == 0 {
+			continue
+		}
 		rolesMap := rolesMapSlice[0].(map[string]any)
 
 		mapping.OrganizationRole = rolesMap["organization_role"].(string)
