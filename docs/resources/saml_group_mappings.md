@@ -3,12 +3,12 @@
 page_title: "lightstep_saml_group_mappings Resource - terraform-provider-lightstep"
 subcategory: ""
 description: |-
-  Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit Lightstep's documentation https://docs.lightstep.com/docs/TBD.
+  Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit Lightstep's documentation https://docs.lightstep.com/docs/map-saml-attributes.
 ---
 
 # lightstep_saml_group_mappings (Resource)
 
-Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit [Lightstep's documentation](https://docs.lightstep.com/docs/TBD).
+Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit [Lightstep's documentation](https://docs.lightstep.com/docs/map-saml-attributes).
 
 ## Example Usage
 

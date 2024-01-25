@@ -15,7 +15,7 @@ import (
 
 func resourceSAMLGroupMappings() *schema.Resource {
 	return &schema.Resource{
-		Description:   `Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit [Lightstep's documentation](https://docs.lightstep.com/docs/TBD).`,
+		Description:   `Provides a Lightstep SAML Group Mapping to automatically update user's roles based on their SAML attributes. For conceptual information about managing SAML group mappings, visit [Lightstep's documentation](https://docs.lightstep.com/docs/map-saml-attributes).`,
 		CreateContext: resourceSAMLGroupMappingsCreateOrUpdate,
 		ReadContext:   resourceSAMLGroupMappingsRead,
 		UpdateContext: resourceSAMLGroupMappingsCreateOrUpdate,
