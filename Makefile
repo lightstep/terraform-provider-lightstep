@@ -29,6 +29,10 @@ test:
 fmt:
 	go fmt
 
+.PHONY: docs
+docs:
+	tfplugindocs
+
 .PHONY: install-golangci-lint
 install-golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.23.8
@@ -59,7 +63,7 @@ test-local:
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_RATE_LIMIT=100 \
 	LIGHTSTEP_ENV="public" \
-	go test -v ./lightstep
+	go test -v ./lightstep -test.run TestAccSAMLGroupMappings
 
 .PHONY: test-staging
 test-staging:
