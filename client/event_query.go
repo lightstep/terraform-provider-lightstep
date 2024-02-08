@@ -52,6 +52,24 @@ func (c *Client) CreateEventQuery(ctx context.Context, projectName string, attri
 	return dest, err
 }
 
+func (c *Client) UpdateEventQuery(ctx context.Context, projectName string, eventQueryID string, attributes EventQueryAttributes) (*EventQueryAttributes, error) {
+	var (
+		dest *EventQueryAttributes
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(attributes)
+	if err != nil {
+		return dest, err
+	}
+	if err := c.CallAPI(ctx, "PUT",
+		fmt.Sprintf("/projects/%v/event_queries/%v", eventQueryID, projectName), bytes, &resp); err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(resp.Data, &dest)
+	return dest, err
+}
+
 func (c *Client) DeleteEventQuery(ctx context.Context, projectName string, eventQueryID string) error {
 	err := c.CallAPI(ctx, "DELETE",
 		fmt.Sprintf("/projects/%v/event_queries/%v", projectName, eventQueryID),

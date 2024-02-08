@@ -17,11 +17,18 @@ func resourceEventQuery() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceEventQueryCreate,
 		ReadContext:   resourceEventQueryRead,
+		UpdateContext: resourceEventQueryUpdate,
 		DeleteContext: resourceDestinationDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceEventQueryImport,
 		},
 		Schema: map[string]*schema.Schema{
+			"project_name": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Lightstep project name",
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -124,4 +131,22 @@ func resourceEventQueryImport(ctx context.Context, d *schema.ResourceData, m int
 		return nil, fmt.Errorf("unable to set query string: %v", err)
 	}
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceEventQueryUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	c := m.(*client.Client)
+
+	attrs := client.EventQueryAttributes{
+		Type:        d.Get("type").(string),
+		Name:        d.Get("name").(string),
+		Source:      d.Get("source").(string),
+		QueryString: d.Get("query_string").(string),
+	}
+	eq, err := c.UpdateEventQuery(ctx, d.Get("project_name").(string), d.Id(), attrs)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("failed to create event query %v: %v", attrs.Name, err))
+	}
+
+	d.SetId(eq.ID)
+	return resourceDestinationRead(ctx, d, m)
 }
