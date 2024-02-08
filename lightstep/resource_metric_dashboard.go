@@ -94,6 +94,12 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				},
 				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
 			},
+			"event_query_id": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "IDs of the event queries to display on this dashboard",
+			},
 		},
 	}
 }
