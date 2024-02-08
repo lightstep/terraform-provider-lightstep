@@ -14,7 +14,6 @@ func TestAccEventQuery(t *testing.T) {
 
 	eventQueryConfig := `
 resource "lightstep_event_query" "terraform" {
-  project_name = "` + testProject + `"
   name = "test-name"
   type = "test-type"
   source = "test-source"
@@ -49,7 +48,6 @@ func TestAccEventQueryImport(t *testing.T) {
 			{
 				Config: `
 resource "lightstep_event_query" "imported" {
-  project_name = "` + testProject + `"
   name = "test-name-imported"
   type = "test-type-imported"
   source = "test-source-imported"
