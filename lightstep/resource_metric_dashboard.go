@@ -286,7 +286,7 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 				Type:         schema.TypeString,
 				Description:  "Subtitle to show beneath big number, unused in other chart types",
 				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(0, 37),
+				ValidateFunc: validation.StringLenBetween(0, 256),
 			},
 		},
 	)
