@@ -53,6 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git switch ${{ steps.extract_branch.outputs.branch }}
           rm -r docs
           /tmp/tfplugindocs
       - name: Commit And Push
