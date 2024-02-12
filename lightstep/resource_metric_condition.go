@@ -1427,7 +1427,7 @@ func getQueriesFromMetricConditionData(queriesIn []client.MetricQueryWithAttribu
 			"exclude_filters":     excludeFilters,
 			"filters":             allFilters,
 			"group_by":            groupBy,
-			"query_string":        q.QueryString,
+			"tql":                 q.QueryString,
 		}
 		if q.Query.TimeseriesOperatorInputWindowMs != nil {
 			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs
