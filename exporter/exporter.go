@@ -170,10 +170,10 @@ func Run(args ...string) error {
 
 	// default to public API environment
 	lightstepUrl := "https://api.lightstep.com"
-	if len(os.Getenv("LIGHTSTEP_API_BASE_URL")) > 0 {
-		lightstepUrl = os.Getenv("LIGHTSTEP_API_BASE_URL")
-	} else if len(os.Getenv("LIGHTSTEP_API_URL")) > 0 {
+	if len(os.Getenv("LIGHTSTEP_API_URL")) > 0 {
 		lightstepUrl = os.Getenv("LIGHTSTEP_API_URL")
+	} else if len(os.Getenv("LIGHTSTEP_API_BASE_URL")) > 0 {
+		lightstepUrl = os.Getenv("LIGHTSTEP_API_BASE_URL")
 	}
 
 	if len(args) < 4 {
