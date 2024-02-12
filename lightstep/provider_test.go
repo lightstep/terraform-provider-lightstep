@@ -24,7 +24,7 @@ func init() {
 
 	testProject = os.Getenv("LIGHTSTEP_PROJECT")
 	if testProject == "" {
-		testProject = "terraform-provider-tests"
+		testProject = "terraform-provider-test"
 	}
 }
 

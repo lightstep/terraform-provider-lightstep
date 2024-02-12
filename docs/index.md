@@ -35,4 +35,5 @@ provider "lightstep" {
 
 - `api_key` (String) The API Key for a Lightstep organization.
 - `api_key_env_var` (String) Environment variable for Lightstep API key.
-- `environment` (String) The name of the Lightstep environment, must be one of: staging, meta, public.
+- `api_url` (String) The base URL for the Lightstep API. This setting takes precedent over 'environment'. For example, https://api.lightstep.com
+- `environment` (String, Deprecated) The name of the Lightstep environment, must be one of: staging, meta, public. Deprecated in favor of `api_url`

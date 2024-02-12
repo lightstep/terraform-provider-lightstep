@@ -30,7 +30,14 @@ func Provider() *schema.Provider {
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("LIGHTSTEP_ENV", "public"),
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^(staging|meta|public)$`), "Must be one of: staging, meta, public"),
-				Description:  "The name of the Lightstep environment, must be one of: staging, meta, public.",
+				Description:  "The name of the Lightstep environment, must be one of: staging, meta, public. Deprecated in favor of `api_url`",
+				Deprecated:   "This field is deprecated and will be removed in a future release. Please use the `api_url` field instead.",
+			},
+			"api_url": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_API_BASE_URL", ""),
+				Description: "The base URL for the Lightstep API. This setting takes precedent over 'environment'. For example, https://api.lightstep.com",
 			},
 			"api_key": {
 				Type:        schema.TypeString,
@@ -63,6 +70,7 @@ func Provider() *schema.Provider {
 			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),
 			"lightstep_user_role_binding":      resourceUserRoleBinding(),
 			"lightstep_inferred_service_rule":  resourceInferredServiceRule(),
+			"lightstep_saml_group_mappings":    resourceSAMLGroupMappings(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -92,10 +100,24 @@ func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, 
 		apiKey = apiKeyEnv
 	}
 
+	var baseUrl string
+	optionalUrl := d.Get("api_url").(string)
+	if len(optionalUrl) > 0 {
+		baseUrl = optionalUrl
+	} else {
+		// get the url from the `environment` provider attribute
+		env := d.Get("environment").(string)
+		if env == "public" {
+			baseUrl = "https://api.lightstep.com"
+		} else {
+			baseUrl = fmt.Sprintf("https://api-%v.lightstep.com", env)
+		}
+	}
+
 	client := client.NewClientWithUserAgent(
 		apiKey,
 		d.Get("organization").(string),
-		d.Get("environment").(string),
+		baseUrl,
 		fmt.Sprintf("%s/%s (terraform %s)", "terraform-provider-lightstep", version.ProviderVersion, meta.SDKVersionString()),
 	)
 

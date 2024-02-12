@@ -169,9 +169,9 @@ func Run(args ...string) error {
 	}
 
 	// default to public API environment
-	lightstepEnv := "public"
-	if len(os.Getenv("LIGHTSTEP_ENV")) > 0 {
-		lightstepEnv = os.Getenv("LIGHTSTEP_ENV")
+	lightstepUrl := "https://api.lightstep.com"
+	if len(os.Getenv("LIGHTSTEP_API_BASE_URL")) > 0 {
+		lightstepUrl = os.Getenv("LIGHTSTEP_API_BASE_URL")
 	}
 
 	if len(args) < 4 {
@@ -182,7 +182,7 @@ func Run(args ...string) error {
 		log.Fatalf("error: only dashboard resources are supported at this time")
 	}
 
-	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepEnv)
+	c := client.NewClient(os.Getenv("LIGHTSTEP_API_KEY"), os.Getenv("LIGHTSTEP_ORG"), lightstepUrl)
 	d, err := c.GetUnifiedDashboard(context.Background(), args[3], args[4])
 	if err != nil {
 		log.Fatalf("error: could not get dashboard: %v", err)

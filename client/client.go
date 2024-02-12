@@ -74,25 +74,11 @@ type Client struct {
 }
 
 // NewClient gets a client for the public API
-func NewClient(apiKey string, orgName string, env string) *Client {
-	return NewClientWithUserAgent(apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+func NewClient(apiKey string, orgName string, url string) *Client {
+	return NewClientWithUserAgent(apiKey, orgName, url, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
 }
 
-func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
-	// Let the user override the API base URL.
-	// e.g. http://localhost:8080
-	envBaseURL := os.Getenv("LIGHTSTEP_API_BASE_URL")
-
-	var baseURL string
-	if envBaseURL != "" {
-		// User specified a base URL, let that take priority.
-		baseURL = envBaseURL
-	} else if env == "public" {
-		baseURL = "https://api.lightstep.com"
-	} else {
-		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
-	}
-
+func NewClientWithUserAgent(apiKey string, orgName string, baseURL string, userAgent string) *Client {
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 
 	rateLimitStr := os.Getenv("LIGHTSTEP_API_RATE_LIMIT")

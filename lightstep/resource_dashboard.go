@@ -29,6 +29,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"scatter_plot",
 				"ordered_list",
 				"table",
+				"traces_list",
 			}, false),
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
