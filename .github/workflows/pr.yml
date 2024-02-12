@@ -36,6 +36,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
       - uses: actions/setup-go@v4
         with:
           go-version: '1.20.5' # tfplugindocs requires go >= 1.18
@@ -53,7 +55,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git switch -c ${{ steps.extract_branch.outputs.branch }}
           rm -r docs
           /tmp/tfplugindocs
       - name: Commit And Push
