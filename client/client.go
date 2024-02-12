@@ -79,7 +79,7 @@ func NewClient(apiKey string, orgName string, baseUrl string) *Client {
 }
 
 func NewClientWithUserAgent(apiKey string, orgName string, baseUrl string, userAgent string) *Client {
-	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseUrl, orgName)
+	fullBaseUrl := fmt.Sprintf("%s/public/v0.2/%v", baseUrl, orgName)
 
 	rateLimitStr := os.Getenv("LIGHTSTEP_API_RATE_LIMIT")
 	rateLimit, err := strconv.Atoi(rateLimitStr)
@@ -94,7 +94,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, baseUrl string, userA
 	return &Client{
 		apiKey:      apiKey,
 		orgName:     orgName,
-		baseUrl:     fullBaseURL,
+		baseUrl:     fullBaseUrl,
 		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(rateLimit), 1),
 		client:      newClient,
