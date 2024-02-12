@@ -70,7 +70,7 @@ jobs:
           /tmp/tfplugindocs
           git add .
           git commit -m "added terraform docs"
-          git push origin ${{ steps.extract_branch.outputs.branch }}
+          git push
 
   terraform_lint:
 
