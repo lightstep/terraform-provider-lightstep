@@ -75,7 +75,7 @@ type MetricQueryWithAttributes struct {
 	Query                MetricQuery            `json:"metric-query"`
 	SpansQuery           SpansQuery             `json:"spans-query,omitempty"`
 	CompositeQuery       CompositeQuery         `json:"composite-query,omitempty"`
-	TQLQuery             string                 `json:"tql-query"`
+	QueryString          string                 `json:"query-string"`
 	DependencyMapOptions *DependencyMapOptions  `json:"dependency-map-options,omitempty"`
 	HiddenQueries        map[string]bool        `json:"hidden-queries,omitempty"`
 }

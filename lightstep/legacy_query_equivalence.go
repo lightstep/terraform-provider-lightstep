@@ -125,7 +125,7 @@ func compareUpdatedLegacyQueries(
 	if len(priorQueries) == len(updatedQueries) &&
 		hasOnlyTQLQueries(priorQueries) && hasOnlyTQLQueries(updatedQueries) {
 		for i, pq := range priorQueries {
-			if pq.TQLQuery != updatedQueries[i].TQLQuery {
+			if pq.QueryString != updatedQueries[i].QueryString {
 				return false, nil
 			}
 		}
@@ -165,7 +165,7 @@ func compareUpdatedLegacyQueries(
 		if q.Type != "tql" {
 			return false, nil
 		}
-		updatedUQL[simplifyQueryName(q.Name)] = q.TQLQuery
+		updatedUQL[simplifyQueryName(q.Name)] = q.QueryString
 	}
 
 	// Step 3: compare the queries are equivalent

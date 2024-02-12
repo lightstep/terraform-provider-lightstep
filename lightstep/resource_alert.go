@@ -38,7 +38,7 @@ func getQueriesFromUnifiedConditionResourceData(
 			"hidden":       q.Hidden,
 			"display":      q.Display,
 			"query_name":   q.Name,
-			"query_string": q.TQLQuery,
+			"query_string": q.QueryString,
 		}
 		queries = append(queries, qs)
 	}
