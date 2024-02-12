@@ -70,7 +70,7 @@ jobs:
           /tmp/tfplugindocs
           git add .
           git commit -m "added terraform docs"
-          git remote add origin
+          git remote add origin https://github.com/lightstep/terraform-provider-lightstep.git
           git push
 
   terraform_lint:
