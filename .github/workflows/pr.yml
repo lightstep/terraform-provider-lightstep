@@ -60,7 +60,7 @@ jobs:
           /tmp/tfplugindocs
           git add .
           git commit -m "added terraform docs"
-          git push
+          git push origin ${{ github.ref_name }}
   terraform_lint:
 
     name: Run terraform-lint
