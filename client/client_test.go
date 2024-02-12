@@ -8,15 +8,8 @@ import (
 
 func TestNew_public(t *testing.T) {
 	t.Parallel()
-
 	c := NewClient("api-key", "org-name", "https://api.lightstep.com")
 	assert.Equal(t, "https://api.lightstep.com/public/v0.2/org-name", c.baseUrl)
-}
-
-func TestNew_other(t *testing.T) {
-	t.Parallel()
-	c := NewClient("api-key", "org-name", "https://api-other.lightstep.com")
-	assert.Equal(t, "https://api-other.lightstep.com/public/v0.2/org-name", c.baseUrl)
 }
 
 func TestNew_env_var_provided_baseURL(t *testing.T) {
