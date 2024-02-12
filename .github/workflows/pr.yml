@@ -55,6 +55,11 @@ jobs:
           unzip tfplugindocs.zip
           chmod +x tfplugindocs
 
+      - name: Checkout PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr checkout ${{ github.event.pull_request.number }}
+
       - name: Generate files with checked in files
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +68,6 @@ jobs:
           git config --local user.name "Dan Bot"
           rm -r docs
           /tmp/tfplugindocs
-          git checkout ${{ steps.extract_branch.outputs.branch }}
           git add .
           git commit -m "added terraform docs"
           git push origin ${{ steps.extract_branch.outputs.branch }}
