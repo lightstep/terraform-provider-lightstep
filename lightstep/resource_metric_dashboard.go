@@ -94,6 +94,12 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				},
 				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
 			},
+			"event_query_ids": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: "IDs of the event queries to display on this dashboard",
+			},
 		},
 	}
 }
@@ -455,12 +461,16 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	templateVariableSet := d.Get("template_variable").(*schema.Set)
 	templateVariables := buildTemplateVariables(templateVariableSet.List())
 
+	eventQueriesSet := d.Get("event_query_ids").(*schema.Set)
+	eventQueries := buildStringSlice(eventQueriesSet.List())
+
 	attributes := &client.UnifiedDashboardAttributes{
 		Name:              d.Get("dashboard_name").(string),
 		Description:       d.Get("dashboard_description").(string),
 		Groups:            groups,
 		Labels:            labels,
 		TemplateVariables: templateVariables,
+		EventQueryIDs:     eventQueries,
 	}
 
 	return attributes, hasLegacyChartsIn, nil
@@ -619,7 +629,7 @@ func buildTemplateVariables(templateVariablesIn []interface{}) []client.Template
 		tvMap := tv.(map[string]interface{})
 		name := tvMap["name"].(string)
 		suggestionAttributeKey := tvMap["suggestion_attribute_key"].(string)
-		defaultValues := buildDefaultValues(tvMap["default_values"].([]interface{}))
+		defaultValues := buildStringSlice(tvMap["default_values"].([]interface{}))
 
 		newTemplateVariables = append(newTemplateVariables, client.TemplateVariable{
 			Name:                   name,
@@ -630,12 +640,12 @@ func buildTemplateVariables(templateVariablesIn []interface{}) []client.Template
 	return newTemplateVariables
 }
 
-func buildDefaultValues(valuesIn []interface{}) []string {
-	defaultValues := make([]string, 0, len(valuesIn))
+func buildStringSlice(valuesIn []interface{}) []string {
+	vals := make([]string, 0, len(valuesIn))
 	for _, v := range valuesIn {
-		defaultValues = append(defaultValues, v.(string))
+		vals = append(vals, v.(string))
 	}
-	return defaultValues
+	return vals
 }
 
 func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(project string, dash client.UnifiedDashboard, d *schema.ResourceData, hasLegacyChartsIn bool) error {
@@ -708,6 +718,9 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 	if err := d.Set("template_variable", templateVariables); err != nil {
 		return fmt.Errorf("unable to set template variables resource field: %v", err)
+	}
+	if err := d.Set("event_query_ids", dash.Attributes.EventQueryIDs); err != nil {
+		return fmt.Errorf("unable to set event_query_ids resource field: %v", err)
 	}
 
 	return nil
