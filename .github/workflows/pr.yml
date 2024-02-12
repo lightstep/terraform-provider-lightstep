@@ -70,6 +70,7 @@ jobs:
           /tmp/tfplugindocs
           git add .
           git commit -m "added terraform docs"
+          git remote add origin
           git push
 
   terraform_lint:
