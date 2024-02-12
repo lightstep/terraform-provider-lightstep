@@ -43,6 +43,11 @@ jobs:
         with:
           go-version: '1.20.5' # tfplugindocs requires go >= 1.18
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> $GITHUB_OUTPUT
+        id: extract_branch
+
       - name: Setup tfplugindocs
         run: |
           cd /tmp
@@ -60,7 +65,7 @@ jobs:
           /tmp/tfplugindocs
           git add .
           git commit -m "added terraform docs"
-          git push origin ${{ github.ref_name }}
+          git push origin ${{ steps.extract_branch.outputs.branch }}
   terraform_lint:
 
     name: Run terraform-lint
