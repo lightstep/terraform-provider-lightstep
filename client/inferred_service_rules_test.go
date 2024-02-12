@@ -44,8 +44,7 @@ func Test_InferredServiceRule_GetInferredServiceRulesReturnsRule(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	apiClient := NewClient("api", "blars", "staging")
+	apiClient := NewClient("api", "blars", server.URL)
 	inferredServiceRule, err := apiClient.GetInferredServiceRule(
 		context.Background(),
 		"terraform-provider-tests",
