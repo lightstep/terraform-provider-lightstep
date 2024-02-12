@@ -63,8 +63,10 @@ The `exporter` utility is built-in to the provider binary and requires certain e
 For the LIGHTSTEP_ENV variable:
 
 - public = app.lightstep.com
+- eu-public = app.eu.lightstep.com
 - meta = app-meta.lightstep.com
 - staging = app-staging.lightstep.com
+- eu-staging = app.eu-staging.lightstep.com
 
 ```
 $ export LIGHTSTEP_API_KEY=....

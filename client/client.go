@@ -78,7 +78,7 @@ func NewClient(apiKey string, orgName string, env string) *Client {
 	return NewClientWithUserAgent(apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
 }
 
-func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
+func resolveBaseURL(env string) string {
 	// Let the user override the API base URL.
 	// e.g. http://localhost:8080
 	envBaseURL := os.Getenv("LIGHTSTEP_API_BASE_URL")
@@ -89,9 +89,19 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 		baseURL = envBaseURL
 	} else if env == "public" {
 		baseURL = "https://api.lightstep.com"
+	} else if env == "eu-public" {
+		baseURL = "https://api.eu.lightstep.com"
+	} else if env == "eu-staging" {
+		baseURL = "https://api.eu-staging.lightstep.com"
 	} else {
 		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
 	}
+
+	return baseURL
+}
+
+func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
+	baseURL := resolveBaseURL(env)
 
 	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
 

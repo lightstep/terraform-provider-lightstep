@@ -170,8 +170,9 @@ func Run(args ...string) error {
 
 	// default to public API environment
 	lightstepEnv := "public"
-	if len(os.Getenv("LIGHTSTEP_ENV")) > 0 {
-		lightstepEnv = os.Getenv("LIGHTSTEP_ENV")
+	userEnv := os.Getenv("LIGHTSTEP_ENV")
+	if len(userEnv) > 0 {
+		lightstepEnv = userEnv
 	}
 
 	if len(args) < 4 {
