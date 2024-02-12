@@ -36,7 +36,7 @@ func Provider() *schema.Provider {
 			"api_url": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("LIGHTSTEP_API_BASE_URL", ""),
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{"LIGHTSTEP_API_URL", "LIGHTSTEP_API_BASE_URL"}, ""),
 				Description: "The base URL for the Lightstep API. This setting takes precedent over 'environment'. For example, https://api.lightstep.com",
 			},
 			"api_key": {
