@@ -66,7 +66,7 @@ jobs:
           git checkout ${{ steps.extract_branch.outputs.branch }}
           git add .
           git commit -m "added terraform docs"
-          git push
+          git push origin ${{ steps.extract_branch.outputs.branch }}
   terraform_lint:
 
     name: Run terraform-lint
