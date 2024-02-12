@@ -14,7 +14,7 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
@@ -68,7 +68,7 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
@@ -92,7 +92,7 @@ jobs:
           go-version: '1.20.5'
       
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup terraform CLI
         uses: hashicorp/setup-terraform@v1
@@ -121,7 +121,7 @@ jobs:
           go-version: '1.20.5'
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup terraform CLI
         uses: hashicorp/setup-terraform@v1
