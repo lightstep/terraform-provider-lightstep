@@ -34,8 +34,8 @@ resource "lightstep_metric_dashboard" "exported_dashboard" {
          group_by_keys = [{{range .SpansQuery.GroupByKeys}}"{{.}}",{{end}}]{{if eq .SpansQuery.Operator "latency"}}
          latency_percentiles = [{{range .SpansQuery.LatencyPercentiles}}{{.}},{{end}}]{{end}}
       }
-{{end}}{{if .TQLQuery}}
-      tql                 = {{escapeHeredocString .TQLQuery}}
+{{end}}{{if .QueryString}}
+      tql                 = {{escapeHeredocString .QueryString}}
 {{end}}{{if .Query.Metric}}
       metric              = "{{.Query.Metric}}"
       timeseries_operator = "{{.Query.TimeseriesOperator}}"
@@ -75,7 +75,7 @@ resource "lightstep_dashboard" "exported_dashboard" {
       query_name          = "{{.Name}}"
       display             = "{{.Display}}"
       hidden              = {{.Hidden}}
-      query_string        = {{escapeHeredocString .TQLQuery}}
+      query_string        = {{escapeHeredocString .QueryString}}
 {{- if .DependencyMapOptions}}
       dependency_map_options {
         scope    = "{{.DependencyMapOptions.Scope}}"
@@ -124,7 +124,7 @@ func dashboardUsesLegacyQuery(d *client.UnifiedDashboard) bool {
 			// Assume if a chart is defined but has query string defined, it uses a legacy query.  This
 			// isn't strictly correct if the chart has *no* query but a chart with no query is not
 			// meaningful to begin with.
-			if len(q.TQLQuery) == 0 {
+			if len(q.QueryString) == 0 {
 				return true
 			}
 		}

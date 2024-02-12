@@ -824,7 +824,7 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 				Type:                 "tql",
 				Hidden:               query["hidden"].(bool),
 				Display:              query["display"].(string),
-				TQLQuery:             queryString,
+				QueryString:          queryString,
 				DependencyMapOptions: buildDependencyMapOptions(query["dependency_map_options"]),
 			}
 
@@ -1427,7 +1427,7 @@ func getQueriesFromMetricConditionData(queriesIn []client.MetricQueryWithAttribu
 			"exclude_filters":     excludeFilters,
 			"filters":             allFilters,
 			"group_by":            groupBy,
-			"tql":                 q.TQLQuery, // deprecated
+			"query_string":        q.QueryString,
 		}
 		if q.Query.TimeseriesOperatorInputWindowMs != nil {
 			qs["timeseries_operator_input_window_ms"] = *q.Query.TimeseriesOperatorInputWindowMs
