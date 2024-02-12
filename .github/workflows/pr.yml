@@ -71,6 +71,7 @@ jobs:
           git add .
           git commit -m "added terraform docs"
           git remote set-url origin https://github.com/lightstep/terraform-provider-lightstep.git
+          git remote -v
           git push
 
   terraform_lint:
