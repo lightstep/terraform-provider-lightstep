@@ -39,8 +39,7 @@ func TestSAMLGroupMappings(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	sgm, err := c.ListSAMLGroupMappings(context.Background())
 	assert.NoError(t, err)
 

@@ -18,8 +18,7 @@ func Test_DeleteDestionation_when_connection_is_closed(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	err := c.DeleteDestination(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)
@@ -36,8 +35,7 @@ func Test_DeleteDestination_when_connection_has_wrong_content_length(t *testing.
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	err := c.DeleteDestination(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)

@@ -51,7 +51,7 @@ endif
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_API_KEY_PUBLIC} \
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
-	LIGHTSTEP_ENV="public" \
+	LIGHTSTEP_API_BASE_URL="https://api.lightstep.com" \
 	go test -v ./lightstep
 
 .PHONY: test-local
@@ -62,7 +62,7 @@ test-local:
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_RATE_LIMIT=100 \
-	LIGHTSTEP_ENV="public" \
+	LIGHTSTEP_API_BASE_URL="https://api.lightstep.com" \
 	go test -v ./lightstep -test.run TestAccSAMLGroupMappings
 
 .PHONY: test-staging
@@ -72,7 +72,7 @@ test-staging:
 	LIGHTSTEP_API_KEY=${LIGHTSTEP_STAGING_API_KEY} \
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
-	LIGHTSTEP_ENV="staging" \
+	LIGHTSTEP_API_BASE_URL="https://api-staging.lightstep.com" \
 	go test -v ./lightstep
 
 .PHONY: ensure-clean-repo

@@ -65,7 +65,7 @@ type genericAPIResponse[T any] struct {
 
 type Client struct {
 	apiKey      string
-	baseURL     string
+	baseUrl     string
 	orgName     string
 	client      *retryablehttp.Client
 	rateLimiter *rate.Limiter
@@ -74,26 +74,12 @@ type Client struct {
 }
 
 // NewClient gets a client for the public API
-func NewClient(apiKey string, orgName string, env string) *Client {
-	return NewClientWithUserAgent(apiKey, orgName, env, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+func NewClient(apiKey string, orgName string, baseUrl string) *Client {
+	return NewClientWithUserAgent(apiKey, orgName, baseUrl, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
 }
 
-func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent string) *Client {
-	// Let the user override the API base URL.
-	// e.g. http://localhost:8080
-	envBaseURL := os.Getenv("LIGHTSTEP_API_BASE_URL")
-
-	var baseURL string
-	if envBaseURL != "" {
-		// User specified a base URL, let that take priority.
-		baseURL = envBaseURL
-	} else if env == "public" {
-		baseURL = "https://api.lightstep.com"
-	} else {
-		baseURL = fmt.Sprintf("https://api-%v.lightstep.com", env)
-	}
-
-	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
+func NewClientWithUserAgent(apiKey string, orgName string, baseUrl string, userAgent string) *Client {
+	fullBaseUrl := fmt.Sprintf("%s/public/v0.2/%v", baseUrl, orgName)
 
 	rateLimitStr := os.Getenv("LIGHTSTEP_API_RATE_LIMIT")
 	rateLimit, err := strconv.Atoi(rateLimitStr)
@@ -108,7 +94,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, env string, userAgent
 	return &Client{
 		apiKey:      apiKey,
 		orgName:     orgName,
-		baseURL:     fullBaseURL,
+		baseUrl:     fullBaseUrl,
 		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(rateLimit), 1),
 		client:      newClient,
@@ -121,7 +107,7 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 	return callAPI(
 		ctx,
 		c,
-		fmt.Sprintf("%v/%v", c.baseURL, suffix),
+		fmt.Sprintf("%v/%v", c.baseUrl, suffix),
 		httpMethod,
 		Headers{
 			"Authorization":   fmt.Sprintf("bearer %v", c.apiKey),

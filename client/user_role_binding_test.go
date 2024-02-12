@@ -35,8 +35,7 @@ func Test_UserRoleBinding(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	rb, err := c.ListRoleBinding(context.Background(), "project with spaces", "project editor")
 	assert.NoError(t, err)
 
