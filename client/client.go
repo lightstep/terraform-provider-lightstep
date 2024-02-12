@@ -65,7 +65,7 @@ type genericAPIResponse[T any] struct {
 
 type Client struct {
 	apiKey      string
-	baseURL     string
+	baseUrl     string
 	orgName     string
 	client      *retryablehttp.Client
 	rateLimiter *rate.Limiter
@@ -74,12 +74,12 @@ type Client struct {
 }
 
 // NewClient gets a client for the public API
-func NewClient(apiKey string, orgName string, url string) *Client {
-	return NewClientWithUserAgent(apiKey, orgName, url, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
+func NewClient(apiKey string, orgName string, baseUrl string) *Client {
+	return NewClientWithUserAgent(apiKey, orgName, baseUrl, fmt.Sprintf("%s/%s", DefaultUserAgent, version.ProviderVersion))
 }
 
-func NewClientWithUserAgent(apiKey string, orgName string, baseURL string, userAgent string) *Client {
-	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseURL, orgName)
+func NewClientWithUserAgent(apiKey string, orgName string, baseUrl string, userAgent string) *Client {
+	fullBaseURL := fmt.Sprintf("%s/public/v0.2/%v", baseUrl, orgName)
 
 	rateLimitStr := os.Getenv("LIGHTSTEP_API_RATE_LIMIT")
 	rateLimit, err := strconv.Atoi(rateLimitStr)
@@ -94,7 +94,7 @@ func NewClientWithUserAgent(apiKey string, orgName string, baseURL string, userA
 	return &Client{
 		apiKey:      apiKey,
 		orgName:     orgName,
-		baseURL:     fullBaseURL,
+		baseUrl:     fullBaseURL,
 		userAgent:   userAgent,
 		rateLimiter: rate.NewLimiter(rate.Limit(rateLimit), 1),
 		client:      newClient,
@@ -107,7 +107,7 @@ func (c *Client) CallAPI(ctx context.Context, httpMethod string, suffix string, 
 	return callAPI(
 		ctx,
 		c,
-		fmt.Sprintf("%v/%v", c.baseURL, suffix),
+		fmt.Sprintf("%v/%v", c.baseUrl, suffix),
 		httpMethod,
 		Headers{
 			"Authorization":   fmt.Sprintf("bearer %v", c.apiKey),

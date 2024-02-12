@@ -100,6 +100,7 @@ func configureProvider(_ context.Context, d *schema.ResourceData) (interface{}, 
 		apiKey = apiKeyEnv
 	}
 
+	// TODO remove this code once `environment` is fully deprecated
 	var baseUrl string
 	optionalUrl := d.Get("api_url").(string)
 	if len(optionalUrl) > 0 {
