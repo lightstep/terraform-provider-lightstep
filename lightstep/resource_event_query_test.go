@@ -69,19 +69,19 @@ resource "lightstep_event_query" "imported" {
 
 func testAccCheckEventQueryExists(resourceName string, attrs *client.EventQueryAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		// get destination from TF state
-		tfDestination, ok := s.RootModule().Resources[resourceName]
+		// get event from TF state
+		tfEvent, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", resourceName)
 		}
 
-		if tfDestination.Primary.ID == "" {
+		if tfEvent.Primary.ID == "" {
 			return fmt.Errorf("id is not set")
 		}
 
-		// get destination from LS
+		// get event from LS
 		client := testAccProvider.Meta().(*client.Client)
-		eq, err := client.GetEventQuery(context.Background(), testProject, tfDestination.Primary.ID)
+		eq, err := client.GetEventQuery(context.Background(), testProject, tfEvent.Primary.ID)
 		if err != nil {
 			return err
 		}

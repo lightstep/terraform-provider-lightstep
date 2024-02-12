@@ -18,7 +18,7 @@ func resourceEventQuery() *schema.Resource {
 		CreateContext: resourceEventQueryCreate,
 		ReadContext:   resourceEventQueryRead,
 		UpdateContext: resourceEventQueryUpdate,
-		DeleteContext: resourceDestinationDelete,
+		DeleteContext: resourceEventQueryDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceEventQueryImport,
 		},
@@ -97,7 +97,7 @@ func resourceEventQueryCreate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	d.SetId(eq.ID)
-	return resourceDestinationRead(ctx, d, m)
+	return resourceEventQueryRead(ctx, d, m)
 }
 
 func resourceEventQueryImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -148,5 +148,16 @@ func resourceEventQueryUpdate(ctx context.Context, d *schema.ResourceData, m int
 	}
 
 	d.SetId(eq.ID)
-	return resourceDestinationRead(ctx, d, m)
+	return resourceEventQueryRead(ctx, d, m)
+}
+
+func resourceEventQueryDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	client := m.(*client.Client)
+	if err := client.DeleteEventQuery(ctx, d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to delete event query: %v", err))
+	}
+
+	return diags
 }
