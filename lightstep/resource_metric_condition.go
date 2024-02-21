@@ -1050,7 +1050,7 @@ func buildThresholds(singleExpression map[string]interface{}) (client.Thresholds
 	}
 
 	warningDuration := thresholdsObj["warning_duration_ms"]
-	if warningDuration != nil && warningDuration != "" && criticalDuration != 0 {
+	if warningDuration != nil && warningDuration != "" && warningDuration != 0 {
 		d, ok := warningDuration.(int)
 		if !ok {
 			return t, fmt.Errorf("unexpected format for warning_duration_ms")
