@@ -28,7 +28,7 @@ resource "lightstep_event_query" "terraform" {
   name = "updated name"
   type = "test-type"
   source = "test-source"
-  query_string = "logs"
+  query_string = "logs | filter foo == bar"
 }
 `
 	resource.Test(t, resource.TestCase{
@@ -51,6 +51,9 @@ resource "lightstep_event_query" "terraform" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckEventQueryExists("lightstep_event_query.terraform", &eventQuery),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "name", "updated name"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "type", "test-type"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "source", "test-source"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "query_string", "logs | filter foo == bar"),
 				),
 			},
 		},
