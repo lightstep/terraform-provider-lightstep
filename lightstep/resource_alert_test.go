@@ -1171,3 +1171,97 @@ resource "lightstep_alert" "test" {
 		},
 	})
 }
+
+func TestAccAlertWithOnlyWarningThresholdDurations(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_alert" "test" {
+  project_name = "` + testProject + `"
+  name = "Too many requests"
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      no_data_duration_ms = 60000
+      operand  = "above"
+	  thresholds {
+		warning = 5
+        warning_duration_ms = 120000
+	  }
+  }
+
+  query {
+	query_name                          = "a"
+	hidden                              = false
+    display                             = "line"
+	query_string                        = "metric requests | rate 1h | filter service_name == frontend | group_by [method], mean"
+  }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.no_data_duration_ms", "60000"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.thresholds.0.warning_duration_ms", "120000"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAlertWithOnlyCriticalThresholdDurations(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_alert" "test" {
+  project_name = "` + testProject + `"
+  name = "Too many requests"
+
+  expression {
+	  is_multi   = true
+	  is_no_data = true
+      no_data_duration_ms = 60000
+      operand  = "above"
+	  thresholds {
+		critical  = 10
+        critical_duration_ms = 180000
+	  }
+  }
+
+  query {
+	query_name                          = "a"
+	hidden                              = false
+    display                             = "line"
+	query_string                        = "metric requests | rate 1h | filter service_name == frontend | group_by [method], mean"
+  }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "Too many requests"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.no_data_duration_ms", "60000"),
+					resource.TestCheckResourceAttr(resourceName, "expression.0.thresholds.0.critical_duration_ms", "180000"),
+				),
+			},
+		},
+	})
+}
