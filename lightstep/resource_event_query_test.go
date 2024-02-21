@@ -21,6 +21,16 @@ resource "lightstep_event_query" "terraform" {
   query_string = "logs"
 }
 `
+
+	updatedEventQueryConfig := `
+resource "lightstep_event_query" "terraform" {
+  project_name = "` + testProject + `"
+  name = "updated name"
+  type = "test-type"
+  source = "test-source"
+  query_string = "logs"
+}
+`
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -34,6 +44,13 @@ resource "lightstep_event_query" "terraform" {
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "type", "test-type"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "source", "test-source"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "query_string", "logs"),
+				),
+			},
+			{
+				Config: updatedEventQueryConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEventQueryExists("lightstep_event_query.terraform", &eventQuery),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "name", "updated name"),
 				),
 			},
 		},
