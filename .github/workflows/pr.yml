@@ -157,7 +157,7 @@ jobs:
       - name: Check version availability
         run: |
           VERSION_TAG=$(cat .go-version)
-          if [ $(git tag -l "$VERSION_TAG") ]; then
-              echo "Version tag $VERSION_TAG already exists, please update .go-version with the version you intend to publish"
+          if [ $(git tag -l "v$VERSION_TAG") ]; then
+              echo "Version tag v$VERSION_TAG already exists, please update .go-version with the version you intend to publish"
               exit 1
           fi
