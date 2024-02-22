@@ -156,6 +156,7 @@ jobs:
 
       - name: Check version availability
         run: |
+          git fetch --tags
           VERSION_TAG=$(cat .go-version)
           if [ $(git tag -l "v$VERSION_TAG") ]; then
               echo "Version tag v$VERSION_TAG already exists, please update .go-version with the version you intend to publish"
