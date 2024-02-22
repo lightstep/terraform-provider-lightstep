@@ -60,12 +60,13 @@ func (c *Client) UpdateEventQuery(ctx context.Context, projectName string, event
 		resp  Envelope
 	)
 
-	bytes, err := json.Marshal(attributes)
+	body := WireEventQueryAttributes{Attributes: attributes}
+	bytes, err := json.Marshal(body)
 	if err != nil {
 		return event, err
 	}
 	if err := c.CallAPI(ctx, "PUT",
-		fmt.Sprintf("projects/%v/event_queries/%v", eventQueryID, projectName), bytes, &resp); err != nil {
+		fmt.Sprintf("projects/%v/event_queries/%v", projectName, eventQueryID), Envelope{Data: bytes}, &resp); err != nil {
 		return nil, err
 	}
 	err = json.Unmarshal(resp.Data, &event)
