@@ -160,4 +160,6 @@ jobs:
           if [ $(git tag -l "v$VERSION_TAG") ]; then
               echo "Version tag v$VERSION_TAG already exists, please update .go-version with the version you intend to publish"
               exit 1
+          else
+            echo "Version v$VERSION_TAG is available"
           fi
