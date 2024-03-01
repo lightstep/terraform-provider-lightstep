@@ -28,6 +28,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"big_number_v2",
 				"scatter_plot",
 				"ordered_list",
+				"pie",
 				"table",
 				"traces_list",
 			}, false),
