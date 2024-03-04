@@ -464,6 +464,61 @@ resource "lightstep_metric_dashboard" "test" {
 	})
 }
 
+func TestAccDashboardEventQueries(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+	var eventQuery client.EventQueryAttributes
+
+	eventQueryConfig := `
+resource "lightstep_event_query" "terraform" {
+  project_name = "` + testProject + `"
+  name = "test-name"
+  type = "test-type"
+  source = "test-source"
+  query_string = "logs"
+}
+`
+	dashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardServiceHealthPanel)"
+	dashboard_description = "Dashboard to test the service health panel"
+	event_query_ids 	  = [lightstep_event_query.terraform.id]
+}
+`
+	updatedDashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardServiceHealthPanel)"
+	dashboard_description = "Dashboard to test the service health panel"
+	event_query_ids 	  = []
+}
+`
+	resourceName := "lightstep_metric_dashboard.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				// Create the initial dashboard with a list of event_query_ids
+				Config: dashboardConfig + "\n" + eventQueryConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckEventQueryExists("lightstep_event_query.terraform", &eventQuery),
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "event_query_ids.#", "1"),
+				),
+			},
+			{
+				// Updated config will contain the new metric and chart name
+				Config: updatedDashboardConfig + "\n" + eventQueryConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "event_query_ids.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDashboardAlertsListPanel(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 

@@ -21,6 +21,7 @@ type UnifiedDashboardAttributes struct {
 	Groups            []UnifiedGroup     `json:"groups"`
 	Labels            []Label            `json:"labels"`
 	TemplateVariables []TemplateVariable `json:"template_variables"`
+	EventQueryIDs     []string           `json:"event_query_ids"`
 }
 
 type UnifiedGroup struct {
@@ -112,6 +113,7 @@ func (c *Client) CreateUnifiedDashboard(
 			Groups:            dashboard.Attributes.Groups,
 			Labels:            dashboard.Attributes.Labels,
 			TemplateVariables: dashboard.Attributes.TemplateVariables,
+			EventQueryIDs:     dashboard.Attributes.EventQueryIDs,
 		},
 	})
 

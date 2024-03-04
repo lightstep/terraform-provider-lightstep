@@ -134,7 +134,7 @@ func getQueriesFromUnifiedDashboardResourceData(
 			"display":                q.Display,
 			"display_type_options":   convertNestedMapToSchemaSet(q.DisplayTypeOptions),
 			"query_name":             q.Name,
-			"query_string":           q.TQLQuery,
+			"query_string":           q.QueryString,
 			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
 		}
 		if len(q.HiddenQueries) > 0 {

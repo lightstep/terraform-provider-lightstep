@@ -18,8 +18,7 @@ func Test_DeleteUnifiedCondition_when_connection_is_closed(t *testing.T) {
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	err := c.DeleteUnifiedCondition(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)
@@ -36,8 +35,7 @@ func Test_DeleteUnifiedCondition_when_connection_has_wrong_content_length(t *tes
 	}))
 	defer server.Close()
 
-	t.Setenv("LIGHTSTEP_API_BASE_URL", server.URL)
-	c := NewClient("api", "blars", "staging")
+	c := NewClient("api", "blars", server.URL)
 	err := c.DeleteUnifiedCondition(context.Background(), "tacoman", "hi")
 
 	assert.NotNil(t, err)

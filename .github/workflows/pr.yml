@@ -14,7 +14,7 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
@@ -31,30 +31,42 @@ jobs:
     name: Run tfplugindocs
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-
+      contents: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: false
-
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
       - uses: actions/setup-go@v4
         with:
           go-version: '1.20.5' # tfplugindocs requires go >= 1.18
-
       - name: Setup tfplugindocs
         run: |
           cd /tmp
           curl -L -o tfplugindocs.zip https://github.com/hashicorp/terraform-plugin-docs/releases/download/v0.15.0/tfplugindocs_0.15.0_linux_amd64.zip
           unzip tfplugindocs.zip
           chmod +x tfplugindocs
-
-      - name: Compare generated files with checked in files
+      - name: Generate tf docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           rm -r docs
           /tmp/tfplugindocs
-          git diff --stat --exit-code ./docs
+      - name: Commit And Push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config --local user.email "${{ github.actor }}@users.noreply.github.com"
+            git config --local user.name ${{ github.actor }}
+            git add .
+            git commit -m "added terraform docs"
+            git push
+          else
+            echo "no changes"
+          fi
+
   terraform_lint:
 
     name: Run terraform-lint
@@ -63,7 +75,7 @@ jobs:
       contents: read
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         persist-credentials: false
@@ -87,7 +99,7 @@ jobs:
           go-version: '1.20.5'
       
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup terraform CLI
         uses: hashicorp/setup-terraform@v1
@@ -116,7 +128,7 @@ jobs:
           go-version: '1.20.5'
 
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup terraform CLI
         uses: hashicorp/setup-terraform@v1
@@ -129,3 +141,25 @@ jobs:
 
       - name: Run Unit Tests
         run: make acc-test
+  version_check:
+    name: Check version availability
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: false
+
+      - name: Check version availability
+        run: |
+          git fetch --tags
+          VERSION_TAG=$(cat .go-version)
+          if [ $(git tag -l "v$VERSION_TAG") ]; then
+              echo "Version tag v$VERSION_TAG already exists, please update .go-version with the version you intend to publish"
+              exit 1
+          else
+            echo "Version v$VERSION_TAG is available"
+          fi
