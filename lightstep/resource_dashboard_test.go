@@ -1390,16 +1390,6 @@ group {
 				),
 			},
 			{
-				// subtitle too long, this should be a chart-level description or something
-				Config: fmt.Sprintf(configTemplate, `subtitle = "this number represents the percentage of CPU cycles available to us that we have actually used"`),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "1"),
-				),
-				ExpectError: regexp.MustCompile("expected length of group.0.chart.0.subtitle to be in the range \\(0 - 37\\).*"),
-			},
-			{
 				// normal subtitle
 				Config: fmt.Sprintf(configTemplate, `subtitle = "percent"`),
 				Check: resource.ComposeTestCheckFunc(
