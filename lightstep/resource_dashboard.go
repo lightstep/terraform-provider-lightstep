@@ -75,6 +75,10 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Type:     schema.TypeFloat,
 						Optional: true,
 					},
+					"is_donut": {
+						Type:     schema.TypeBool,
+						Optional: true,
+					},
 				},
 			},
 			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
