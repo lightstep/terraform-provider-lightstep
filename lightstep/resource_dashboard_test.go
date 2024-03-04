@@ -990,6 +990,19 @@ func TestDisplayTypeOptions(t *testing.T) {
 				),
 			},
 			{
+				Config: makeDisplayTypeConfig("pie", strings.TrimSpace(`
+	display_type_options {
+			is_donut = true
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "pie"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.is_donut", "true"),
+				),
+			},
+			{
 				Config: makeDisplayTypeConfig("table", strings.TrimSpace(`
 	display_type_options {
 			sort_direction = "desc"

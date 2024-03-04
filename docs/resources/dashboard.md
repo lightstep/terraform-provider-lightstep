@@ -131,6 +131,7 @@ Optional:
 
 Optional:
 
+- `is_donut` (Boolean)
 - `sort_by` (String)
 - `sort_direction` (String)
 - `y_axis_log_base` (Number)
@@ -280,6 +281,7 @@ Optional:
 
 Optional:
 
+- `is_donut` (Boolean)
 - `sort_by` (String)
 - `sort_direction` (String)
 - `y_axis_log_base` (Number)
