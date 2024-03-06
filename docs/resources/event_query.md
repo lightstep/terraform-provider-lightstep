@@ -23,6 +23,11 @@ description: |-
 - `source` (String)
 - `type` (String)
 
+### Optional
+
+- `description` (String)
+- `tooltip_fields` (List of String)
+
 ### Read-Only
 
 - `id` (String) The ID of this resource.
