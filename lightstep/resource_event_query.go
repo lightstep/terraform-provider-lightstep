@@ -45,6 +45,17 @@ func resourceEventQuery() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"tooltip_fields": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 		},
 	}
 }
@@ -78,18 +89,37 @@ func resourceEventQueryRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err := d.Set("source", eq.Source); err != nil {
 		return diag.FromErr(fmt.Errorf("unable to set query string: %v", err))
 	}
+	if err := d.Set("description", eq.Description); err != nil {
+		return diag.FromErr(fmt.Errorf("unable to set description: %v", err))
+	}
+	if err := d.Set("tooltip_fields", eq.TooltipFields); err != nil {
+		return diag.FromErr(fmt.Errorf("unable to set tooltip fields: %v", err))
+	}
 
 	return diags
+}
+
+func resourceDataToStringSlice(resourceData *schema.ResourceData, fieldName string) []string {
+	resource := resourceData.Get(fieldName)
+
+	asInterfaceSlice := resource.([]interface{})
+	stringSlice := make([]string, len(asInterfaceSlice))
+	for i, element := range asInterfaceSlice {
+		stringSlice[i] = element.(string)
+	}
+	return stringSlice
 }
 
 func resourceEventQueryCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*client.Client)
 
 	attrs := client.EventQueryAttributes{
-		Type:        d.Get("type").(string),
-		Name:        d.Get("name").(string),
-		Source:      d.Get("source").(string),
-		QueryString: d.Get("query_string").(string),
+		Type:          d.Get("type").(string),
+		Name:          d.Get("name").(string),
+		Source:        d.Get("source").(string),
+		QueryString:   d.Get("query_string").(string),
+		Description:   d.Get("description").(string),
+		TooltipFields: resourceDataToStringSlice(d, "tooltip_fields"),
 	}
 	eq, err := c.CreateEventQuery(ctx, d.Get("project_name").(string), attrs)
 	if err != nil {
@@ -130,6 +160,12 @@ func resourceEventQueryImport(ctx context.Context, d *schema.ResourceData, m int
 	if err := d.Set("source", eq.Source); err != nil {
 		return nil, fmt.Errorf("unable to set query string: %v", err)
 	}
+	if err := d.Set("description", eq.Description); err != nil {
+		return nil, fmt.Errorf("unable to set description: %v", err)
+	}
+	if err := d.Set("tooltip_fields", eq.TooltipFields); err != nil {
+		return nil, fmt.Errorf("unable to set tooltip fields: %v", err)
+	}
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -137,10 +173,12 @@ func resourceEventQueryUpdate(ctx context.Context, d *schema.ResourceData, m int
 	c := m.(*client.Client)
 
 	attrs := client.EventQueryAttributes{
-		Type:        d.Get("type").(string),
-		Name:        d.Get("name").(string),
-		Source:      d.Get("source").(string),
-		QueryString: d.Get("query_string").(string),
+		Type:          d.Get("type").(string),
+		Name:          d.Get("name").(string),
+		Source:        d.Get("source").(string),
+		QueryString:   d.Get("query_string").(string),
+		Description:   d.Get("description").(string),
+		TooltipFields: resourceDataToStringSlice(d, "tooltip_fields"),
 	}
 	eq, err := c.UpdateEventQuery(ctx, d.Get("project_name").(string), d.Id(), attrs)
 	if err != nil {
