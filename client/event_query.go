@@ -8,11 +8,13 @@ import (
 )
 
 type EventQueryAttributes struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	QueryString string `json:"query_string"`
-	Source      string `json:"source"`
-	Type        string `json:"type"`
+	ID            string   `json:"id"`
+	Name          string   `json:"name"`
+	QueryString   string   `json:"query_string"`
+	Source        string   `json:"source"`
+	Type          string   `json:"type"`
+	Description   string   `json:"description"`
+	TooltipFields []string `json:"tooltip_fields"`
 }
 
 type WireEventQueryAttributes struct {

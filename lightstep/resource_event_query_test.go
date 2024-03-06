@@ -19,6 +19,8 @@ resource "lightstep_event_query" "terraform" {
   type = "test-type"
   source = "test-source"
   query_string = "logs"
+  description = "a test event query, for the terraform acceptance tests!"
+  tooltip_fields = ["foo", "bar"]
 }
 `
 
@@ -29,6 +31,7 @@ resource "lightstep_event_query" "terraform" {
   type = "test-type"
   source = "test-source"
   query_string = "logs | filter foo == bar"
+  description = "this is one heck of a query"
 }
 `
 	resource.Test(t, resource.TestCase{
@@ -44,6 +47,10 @@ resource "lightstep_event_query" "terraform" {
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "type", "test-type"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "source", "test-source"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "query_string", "logs"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "description", "a test event query, for the terraform acceptance tests!"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "tooltip_fields.#", "2"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "tooltip_fields.0", "foo"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "tooltip_fields.1", "bar"),
 				),
 			},
 			{
@@ -54,6 +61,8 @@ resource "lightstep_event_query" "terraform" {
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "type", "test-type"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "source", "test-source"),
 					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "query_string", "logs | filter foo == bar"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "description", "this is one heck of a query"),
+					resource.TestCheckResourceAttr("lightstep_event_query.terraform", "tooltip_fields.#", "0"),
 				),
 			},
 		},
