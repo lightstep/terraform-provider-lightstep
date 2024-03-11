@@ -207,6 +207,7 @@ Optional:
 
 Optional:
 
+- `display_type` (String)
 - `is_donut` (Boolean)
 - `sort_by` (String)
 - `sort_direction` (String)
@@ -274,6 +275,7 @@ Optional:
 
 Optional:
 
+- `display_type` (String)
 - `is_donut` (Boolean)
 - `sort_by` (String)
 - `sort_direction` (String)
