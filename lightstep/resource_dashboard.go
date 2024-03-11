@@ -42,6 +42,10 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 			Elem: &schema.Resource{
 				// This is the superset of all possible fields for all display types
 				Schema: map[string]*schema.Schema{
+					"display_type": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
 					"sort_by": {
 						Type:     schema.TypeString,
 						Optional: true,
