@@ -23,7 +23,7 @@ resource "lightstep_slack_destination" "slack" {
 
 ### Required
 
-- `channel` (String) One of: slack channel name (#channel), channel ID, handle name (@user).
+- `channel` (String) One of: channel ID (recommended), slack channel name (#channel), handle name (@user).
 - `project_name` (String) Lightstep project name
 
 ### Read-Only
