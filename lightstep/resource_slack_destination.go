@@ -30,7 +30,7 @@ func resourceSlackDestination() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "One of: slack channel name (#channel), channel ID, handle name (@user).",
+				Description: "One of: channel ID (recommended), slack channel name (#channel), handle name (@user).",
 			},
 		},
 	}
