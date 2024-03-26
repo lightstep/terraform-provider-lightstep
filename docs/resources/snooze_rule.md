@@ -83,8 +83,8 @@ resource "lightstep_snooze_rule" "snooze1" {
 ### Required
 
 - `project_name` (String) The name of the [project](https://docs.lightstep.com/docs/glossary#project) in which to create this alert.
-- `schedule` (Block Set, Min: 1) Defines when the silencing rule is effective (see [below for nested schema](#nestedblock--schedule))
-- `scope` (Block Set, Min: 1) Defines which alerts the rule applies to (see [below for nested schema](#nestedblock--scope))
+- `schedule` (Block Set, Min: 1, Max: 1) Defines when the silencing rule is effective (see [below for nested schema](#nestedblock--schedule))
+- `scope` (Block Set, Min: 1, Max: 1) Defines which alerts the rule applies to (see [below for nested schema](#nestedblock--scope))
 - `title` (String) The title of the snooze rule.
 
 ### Read-Only
@@ -96,8 +96,8 @@ resource "lightstep_snooze_rule" "snooze1" {
 
 Optional:
 
-- `one_time` (Block Set) Effective during the entire specified window (see [below for nested schema](#nestedblock--schedule--one_time))
-- `recurring` (Block Set) Effective beginning at the start date and follows the schedules defined. When schedules overlap, the rule is effective (see [below for nested schema](#nestedblock--schedule--recurring))
+- `one_time` (Block Set, Max: 1) Effective during the entire specified window (see [below for nested schema](#nestedblock--schedule--one_time))
+- `recurring` (Block Set, Max: 1) Effective beginning at the start date and follows the schedules defined. When schedules overlap, the rule is effective (see [below for nested schema](#nestedblock--schedule--recurring))
 
 <a id="nestedblock--schedule--one_time"></a>
 ### Nested Schema for `schedule.one_time`
@@ -117,7 +117,7 @@ Optional:
 
 Required:
 
-- `schedule` (Block Set, Min: 1) (see [below for nested schema](#nestedblock--schedule--recurring--schedule))
+- `schedule` (Block Set, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--schedule--recurring--schedule))
 - `start_date` (String) ISO 8601 date format. Example: 2021-01-01
 - `timezone` (String) IANA format timezone. Examples: 'UTC', 'US/Pacific', 'Europe/Paris'
 
@@ -130,7 +130,7 @@ Optional:
 
 Required:
 
-- `cadence` (Block Set, Min: 1) Defines which days should have an instance of this reoccurrence (see [below for nested schema](#nestedblock--schedule--recurring--schedule--cadence))
+- `cadence` (Block Set, Min: 1, Max: 1) Defines which days should have an instance of this reoccurrence (see [below for nested schema](#nestedblock--schedule--recurring--schedule--cadence))
 - `duration_millis` (Number) How long each occurrence lasts specified in milliseconds. Must be a multiple of 1 minute (no fractional minutes)
 - `start_time` (String) ISO 8601 time format defining when the silencing period begins on each relevant day defined by the cadence. Must NOT include UTC time offset (the time zone is specified in the 'recurring' block instead. Example '16:07:29'
 
@@ -154,7 +154,7 @@ Required:
 
 Required:
 
-- `basic` (Block Set, Min: 1) Defines which alerts the rule applies to (see [below for nested schema](#nestedblock--scope--basic))
+- `basic` (Block Set, Min: 1, Max: 1) Defines which alerts the rule applies to (see [below for nested schema](#nestedblock--scope--basic))
 
 <a id="nestedblock--scope--basic"></a>
 ### Nested Schema for `scope.basic`
@@ -169,7 +169,7 @@ Required:
 Optional:
 
 - `alert_ids` (Set of String)
-- `label_predicate` (Block Set) Optional configuration to receive alert notifications. (see [below for nested schema](#nestedblock--scope--basic--scope_filter--label_predicate))
+- `label_predicate` (Block Set, Max: 1) Optional configuration to receive alert notifications. (see [below for nested schema](#nestedblock--scope--basic--scope_filter--label_predicate))
 
 <a id="nestedblock--scope--basic--scope_filter--label_predicate"></a>
 ### Nested Schema for `scope.basic.scope_filter.label_predicate`
