@@ -44,6 +44,8 @@ func resourceSnoozeRule() *schema.Resource {
 			"scope": {
 				Type:        schema.TypeSet,
 				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
 				Description: "Defines which alerts the rule applies to",
 				Elem: &schema.Resource{
 					Schema: getScopeSchemaMap(),
@@ -53,6 +55,8 @@ func resourceSnoozeRule() *schema.Resource {
 				Type:        schema.TypeSet,
 				Required:    true,
 				Description: "Defines when the silencing rule is effective",
+				MinItems:    1,
+				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: getScheduleSchemaMap(),
 				},
@@ -67,6 +71,8 @@ func getScheduleSchemaMap() map[string]*schema.Schema {
 		"one_time": {
 			Type:        schema.TypeSet,
 			Optional:    true,
+			MinItems:    1,
+			MaxItems:    1,
 			Description: "Effective during the entire specified window",
 			Elem: &schema.Resource{
 				Schema: getOneTimeScheduleSchemaMap(),
@@ -75,6 +81,8 @@ func getScheduleSchemaMap() map[string]*schema.Schema {
 		"recurring": {
 			Type:        schema.TypeSet,
 			Optional:    true,
+			MinItems:    1,
+			MaxItems:    1,
 			Description: "Effective beginning at the start date and follows the schedules defined. When schedules overlap, the rule is effective",
 			Elem: &schema.Resource{
 				Schema: getRecurringScheduleSchemaMap(),
@@ -103,6 +111,8 @@ func getRecurringScheduleSchemaMap() map[string]*schema.Schema {
 		"schedule": {
 			Type:        schema.TypeSet,
 			Required:    true,
+			MinItems:    1,
+			MaxItems:    1,
 			Description: "",
 			Elem: &schema.Resource{
 				Schema: getReoccurrenceSchemaMap(),
@@ -131,6 +141,8 @@ func getReoccurrenceSchemaMap() map[string]*schema.Schema {
 		"cadence": {
 			Type:        schema.TypeSet,
 			Required:    true,
+			MinItems:    1,
+			MaxItems:    1,
 			Description: "Defines which days should have an instance of this reoccurrence",
 			Elem: &schema.Resource{
 				Schema: getCadenceSchemaMap(),
@@ -174,6 +186,8 @@ func getScopeSchemaMap() map[string]*schema.Schema {
 		"basic": {
 			Type:        schema.TypeSet,
 			Required:    true,
+			MinItems:    1,
+			MaxItems:    1,
 			Description: "Defines which alerts the rule applies to",
 			Elem: &schema.Resource{
 				Schema: getBasicTargetingSchemaMap(),
@@ -188,6 +202,7 @@ func getBasicTargetingSchemaMap() map[string]*schema.Schema {
 			Type:        schema.TypeSet,
 			Required:    true,
 			Description: "Defines which alerts the rule applies to",
+			MinItems:    1,
 			Elem: &schema.Resource{
 				Schema: getScopeFilterSchemaMap(),
 			},
@@ -208,6 +223,8 @@ func getScopeFilterSchemaMap() map[string]*schema.Schema {
 			Type:        schema.TypeSet,
 			Optional:    true,
 			Description: "Optional configuration to receive alert notifications.",
+			MinItems:    1,
+			MaxItems:    1,
 			Elem: &schema.Resource{
 				Schema: getPredicateSchemaMap(),
 			},
