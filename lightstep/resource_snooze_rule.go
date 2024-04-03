@@ -27,6 +27,7 @@ func resourceSnoozeRule() *schema.Resource {
 		ReadContext:   p.resourceSnoozeRuleRead,
 		UpdateContext: p.resourceSnoozeRuleUpdate,
 		DeleteContext: p.resourceSnoozeRuleDelete,
+		CustomizeDiff: p.resourceSnoozeRuleCustomizeDiff, // This is just used to do validation
 		Importer: &schema.ResourceImporter{
 			StateContext: p.resourceSnoozeRuleImport,
 		},
@@ -294,18 +295,22 @@ func (p *resourceSnoozeRuleImp) resourceSnoozeRuleUpdate(ctx context.Context, d 
 	return p.resourceSnoozeRuleRead(ctx, d, m)
 }
 
-func (p *resourceSnoozeRuleImp) resourceSnoozeRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
+func (p *resourceSnoozeRuleImp) resourceSnoozeRuleCustomizeDiff(ctx context.Context, d *schema.ResourceDiff, m interface{}) error {
 	c := m.(*client.Client)
-	if err := c.DeleteSnoozeRule(ctx, d.Get("project_name").(string), d.Id()); err != nil {
-		return diag.FromErr(fmt.Errorf("failed to delete snooze rule: %v", err))
+	ruleToValidate, err := getSnoozeRuleFromResource(d)
+	if err != nil {
+		return fmt.Errorf("failed to get snooze rule from resource : %v", err)
+	}
+	projectName := d.Get("project_name").(string)
+	isValid, validationError, err := c.ValidateSnoozeRule(ctx, projectName, ruleToValidate)
+	if err != nil {
+		return fmt.Errorf("failed validate rule : %v", err)
+	}
+	if !isValid {
+		return fmt.Errorf("snooze rule %s is invalid : %s", d.Id(), validationError)
 	}
 
-	// d.SetId("") is automatically called assuming delete returns no errors, but
-	// it is added here for explicitness.
-	d.SetId("")
-	return diags
+	return nil
 }
 
 func (p *resourceSnoozeRuleImp) resourceSnoozeRuleImport(ctx context.Context, d *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
@@ -329,6 +334,20 @@ func (p *resourceSnoozeRuleImp) resourceSnoozeRuleImport(ctx context.Context, d 
 	}
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func (p *resourceSnoozeRuleImp) resourceSnoozeRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*client.Client)
+	if err := c.DeleteSnoozeRule(ctx, d.Get("project_name").(string), d.Id()); err != nil {
+		return diag.FromErr(fmt.Errorf("failed to delete snooze rule: %v", err))
+	}
+
+	// d.SetId("") is automatically called assuming delete returns no errors, but
+	// it is added here for explicitness.
+	d.SetId("")
+	return diags
 }
 
 func setResourceDataFromSnoozeRule(project string, rule client.SnoozeRuleWithID, d *schema.ResourceData) error {
@@ -538,7 +557,11 @@ func labelToMap(label client.ResourceLabel) (map[string]any, error) {
 	return labelMap, nil
 }
 
-func getSnoozeRuleFromResource(d *schema.ResourceData) (client.SnoozeRule, error) {
+type ResourceGetter interface {
+	Get(string) interface{}
+}
+
+func getSnoozeRuleFromResource(d ResourceGetter) (client.SnoozeRule, error) {
 	var snoozeRule client.SnoozeRule
 	snoozeRule.Title = d.Get("title").(string)
 	if schedule, ok := getFirst(d.Get("schedule")); ok {

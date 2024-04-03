@@ -3,6 +3,7 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
@@ -243,4 +244,46 @@ func testAccCheckSnoozeRuleExists(resourceName string, rule *client.SnoozeRuleWi
 		*rule = *r
 		return nil
 	}
+}
+
+func TestValidateOnCreate(t *testing.T) {
+	ruleConfig := `
+resource "lightstep_snooze_rule" "snooze1" {
+  project_name = "` + testProject + `"
+  title = "Snooze Test"
+  
+  scope {
+    basic {
+      scope_filter {
+        label_predicate {
+	  	  operator = "eq"
+	  	  label {
+	  	    key = "a"
+	  	    value = "b"
+          }
+        }
+      }
+    }
+  }
+  
+  schedule {
+    one_time {
+      timezone = "Not A Timezone" ## this is invalid
+      start_date_time = "2021-03-20T00:00:00"
+      end_date_time = "2021-03-24T14:30:00"
+	}
+  }
+}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      ruleConfig,
+				ExpectError: regexp.MustCompile("snooze rule .* is invalid"),
+			},
+		},
+	})
 }

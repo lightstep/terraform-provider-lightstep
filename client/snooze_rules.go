@@ -78,6 +78,10 @@ func getSnoozeRuleURL(project string, id string) string {
 	return base
 }
 
+func getSnoozeRuleValidateURL(project string) string {
+	return fmt.Sprintf("projects/%v/snooze_rules_validate", project)
+}
+
 func (c *Client) CreateSnoozeRule(
 	ctx context.Context,
 	projectName string,
@@ -168,4 +172,35 @@ func (c *Client) DeleteSnoozeRule(ctx context.Context, projectName string, condi
 		}
 	}
 	return nil
+}
+
+func (c *Client) ValidateSnoozeRule(ctx context.Context, projectName string, snoozeRule SnoozeRule) (bool, string, error) {
+	var (
+		resp Envelope
+	)
+
+	bytes, err := json.Marshal(snoozeRule)
+	if err != nil {
+		return false, "", err
+	}
+
+	url := getSnoozeRuleValidateURL(projectName)
+
+	err = c.CallAPI(ctx, "POST", url, Envelope{Data: bytes}, &resp)
+	if err != nil {
+		return false, "", err
+	}
+
+	type ValidationResponse struct {
+		IsValid         bool   `json:"is_valid"`
+		ValidationError string `json:"validation_error"`
+	}
+	var validationResponse ValidationResponse
+
+	err = json.Unmarshal(resp.Data, &validationResponse)
+	if err != nil {
+		return false, "", err
+	}
+
+	return validationResponse.IsValid, validationResponse.ValidationError, nil
 }
