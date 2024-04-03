@@ -1062,6 +1062,23 @@ func TestDisplayTypeOptions(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_max", "100"),
 				),
 			},
+			{
+				Config: makeDisplayTypeConfig("dependency_map", strings.TrimSpace(`
+	display_type_options {
+		comparison_window_ms = 86400000
+	}
+	dependency_map_options {
+		map_type = "service"
+		scope    = "all"
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "dependency_map"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.comparison_window_ms", "86400000"),
+				),
+			},
 		},
 	})
 }
