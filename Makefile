@@ -1,6 +1,5 @@
 # Currently always builds for amd64
-#PLATFORM_ARCH=$(shell uname -m | tr '[:upper:]' '[:lower:]')
-PLATFORM_ARCH=amd64
+PLATFORM_ARCH=$(shell uname -m | tr '[:upper:]' '[:lower:]' | sed 's/x86_64/amd64/')
 PLATFORM_NAME=$(shell uname -s | tr '[:upper:]' '[:lower:]')
 VERSION_TAG=$(shell cat .go-version)
 
@@ -30,8 +29,9 @@ fmt:
 	go fmt
 
 .PHONY: docs
-docs:
-	tfplugindocs
+docs: build
+	$(MAKE) -C tfplugindocs_working generate-schema
+	tfplugindocs generate --providers-schema tfplugindocs_working/schema.json
 
 .PHONY: install-golangci-lint
 install-golangci-lint:
