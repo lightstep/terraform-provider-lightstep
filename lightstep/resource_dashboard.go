@@ -83,6 +83,10 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Type:     schema.TypeBool,
 						Optional: true,
 					},
+					"comparison_window_ms": {
+						Type:     schema.TypeInt,
+						Optional: true,
+					},
 				},
 			},
 			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
