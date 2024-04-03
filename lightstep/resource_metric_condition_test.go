@@ -111,13 +111,6 @@ resource "lightstep_metric_condition" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -182,13 +175,6 @@ resource "lightstep_metric_condition" "test" {
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [
-      {
-        key   = "project_name"
-        value = "catlab"
-      }
-    ]
   }
 }
 `
@@ -328,10 +314,6 @@ resource "lightstep_metric_condition" "test" {
 					resource.TestCheckResourceAttr(resourceName, "custom_data", ""),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.timeseries_operator_input_window_ms", "3600000"),
 					resource.TestCheckResourceAttr(resourceName, "metric_query.0.tql", ""),
-					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "alerting_rule.*", map[string]string{
-						"include_filters.0.key":   "project_name",
-						"include_filters.0.value": "catlab",
-					}),
 					resource.TestCheckResourceAttr(resourceName, "expression.0.is_no_data", "true"),
 				),
 			},
@@ -894,11 +876,6 @@ EOT
   alerting_rule {
     id          = lightstep_slack_destination.slack.id
     update_interval = "1h"
-
-    include_filters = [{
-      key   = "project_name"
-      value = "catlab"
-    }]
   }
 }
 `, uqlQuery)
