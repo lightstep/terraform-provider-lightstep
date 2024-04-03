@@ -207,6 +207,7 @@ Optional:
 
 Optional:
 
+- `comparison_window_ms` (Number)
 - `display_type` (String)
 - `is_donut` (Boolean)
 - `sort_by` (String)
@@ -275,6 +276,7 @@ Optional:
 
 Optional:
 
+- `comparison_window_ms` (Number)
 - `display_type` (String)
 - `is_donut` (Boolean)
 - `sort_by` (String)
