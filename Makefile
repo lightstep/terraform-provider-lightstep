@@ -1,5 +1,5 @@
 # Currently always builds for amd64
-PLATFORM_ARCH=$(shell uname -m | tr '[:upper:]' '[:lower:]')
+PLATFORM_ARCH=$(shell uname -m | tr '[:upper:]' '[:lower:]' | sed 's/x86_64/amd64/')
 PLATFORM_NAME=$(shell uname -s | tr '[:upper:]' '[:lower:]')
 VERSION_TAG=$(shell cat .go-version)
 
