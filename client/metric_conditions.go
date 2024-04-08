@@ -37,9 +37,8 @@ type CompositeSubAlert struct {
 }
 
 type AlertingRule struct {
-	MessageDestinationID string  `json:"message-destination-client-id"`
-	UpdateInterval       int     `json:"update-interval-ms"`
-	MatchOn              MatchOn `json:"match-on,omitempty"`
+	MessageDestinationID string `json:"message-destination-client-id"`
+	UpdateInterval       int    `json:"update-interval-ms"`
 }
 
 type Expression struct {
@@ -116,10 +115,6 @@ type LabelFilter struct {
 type GroupBy struct {
 	LabelKeys   []string `json:"label-keys"`
 	Aggregation string   `json:"aggregation-method"`
-}
-
-type MatchOn struct {
-	GroupBy []LabelFilter `json:"group-by"`
 }
 
 func getURL(project string, id string) string {

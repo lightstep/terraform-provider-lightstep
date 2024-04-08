@@ -151,14 +151,6 @@ Values should be expressed as a duration (example: "2d").`,
 			Required:    true,
 			Description: `The identifier of the destination to receive notifications for this alert.`,
 		},
-		"include_filters": {
-			Type:     schema.TypeList,
-			Optional: true,
-			Elem: &schema.Schema{
-				Type: schema.TypeMap,
-			},
-			Description: ``,
-		},
 	}
 }
 
@@ -735,19 +727,6 @@ func buildAlertingRules(alertingRulesIn *schema.Set) ([]client.AlertingRule, err
 			newRule.UpdateInterval = updateIntervalMilli
 		}
 
-		// N.B. the MatchOn feature in alertevaluator currently only supports include_filters (equality)
-		var includes []interface{}
-		filters := rule["include_filters"]
-		if filters != nil {
-			err := validateFilters(filters.([]interface{}), false)
-			if err != nil {
-				return nil, err
-			}
-			includes = filters.([]interface{})
-		}
-		newFilters := buildLabelFilters(includes, nil, nil)
-		newRule.MatchOn = client.MatchOn{GroupBy: newFilters}
-
 		newRules = append(newRules, newRule)
 	}
 	return newRules, nil
@@ -1321,17 +1300,9 @@ func setResourceDataFromUnifiedCondition(project string, c client.UnifiedConditi
 
 	var alertingRules []interface{}
 	for _, r := range c.Attributes.AlertingRules {
-		includeFilters, excludeFilters, allFilters := getIncludeExcludeFilters(r.MatchOn.GroupBy)
-		// pathological check: this should never happen, but we want to know if it does
-		// because that means we have a validation loophole somewhere else
-		if len(excludeFilters) > 0 || len(allFilters) > 0 {
-			return fmt.Errorf("the match-on filters include an unsupported operand (not 'eq')")
-		}
-
 		alertingRules = append(alertingRules, map[string]interface{}{
 			"id":              r.MessageDestinationID,
 			"update_interval": GetUpdateIntervalValue(r.UpdateInterval),
-			"include_filters": includeFilters,
 		})
 	}
 

@@ -1024,7 +1024,6 @@ func TestBuildAlertingRules(t *testing.T) {
 	renotifyMillis := 3600000
 
 	cases := []alertingRuleCase{
-		// without includes
 		{
 			rules: []interface{}{
 				map[string]interface{}{
@@ -1036,28 +1035,6 @@ func TestBuildAlertingRules(t *testing.T) {
 				{
 					MessageDestinationID: id,
 					UpdateInterval:       renotifyMillis,
-				},
-			},
-		},
-		// with includes
-		{
-			rules: []interface{}{
-				map[string]interface{}{
-					"id":              id,
-					"update_interval": renotify,
-					"include_filters": []interface{}{
-						map[string]interface{}{
-							"key":   k,
-							"value": v,
-						},
-					},
-				},
-			},
-			expected: []client.AlertingRule{
-				{
-					MessageDestinationID: id,
-					UpdateInterval:       renotifyMillis,
-					MatchOn:              client.MatchOn{GroupBy: []client.LabelFilter{includeFilter}},
 				},
 			},
 		},
@@ -1072,7 +1049,6 @@ func TestBuildAlertingRules(t *testing.T) {
 		)
 		result, err := buildAlertingRules(alertingRuleSet)
 		require.NoError(t, err)
-		require.Equal(t, c.expected, result)
 		require.Equal(t, c.expected, result)
 	}
 }
