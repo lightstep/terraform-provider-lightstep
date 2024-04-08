@@ -50,7 +50,7 @@ resource "lightstep_metric_dashboard" "customer_charges" {
       timeseries_operator = "rate"
       metric              = "requests"
 
-      # use include/exlude filters for equality
+      # use include/exclude filters for equality
       include_filters = [
         {
           key   = "service"
