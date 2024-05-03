@@ -150,19 +150,7 @@ func getQueriesFromUnifiedDashboardResourceData(
 			"query_string":           q.QueryString,
 			"dependency_map_options": getDependencyMapOptions(q.DependencyMapOptions),
 		}
-		if len(q.HiddenQueries) > 0 {
-			// Note due to Terraform's issues with TypeMap having TypeBool elements, we
-			// need to use boolean strings
-			hq := make(map[string]interface{}, len(q.HiddenQueries)+1)
-			for k, v := range q.HiddenQueries {
-				// Don't include the top-level query in the TF resource data
-				if k == q.Name {
-					continue
-				}
-				hq[k] = fmt.Sprintf("%t", v)
-			}
-			qs["hidden_queries"] = hq
-		}
+		setHiddenQueriesFromResourceData(qs, q)
 
 		queries = append(queries, qs)
 	}
