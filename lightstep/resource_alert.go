@@ -40,6 +40,7 @@ func getQueriesFromUnifiedConditionResourceData(
 			"query_name":   q.Name,
 			"query_string": q.QueryString,
 		}
+		setHiddenQueriesFromResourceData(qs, q)
 		queries = append(queries, qs)
 	}
 	return queries, nil

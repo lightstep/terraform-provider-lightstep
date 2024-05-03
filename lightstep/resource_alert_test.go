@@ -1265,3 +1265,50 @@ resource "lightstep_alert" "test" {
 		},
 	})
 }
+
+func TestSpuriousDiffAlert(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_alert" "test" {
+	name         = "hidden queries spurious diff"
+	project_name = "` + testProject + `"
+	
+	expression {
+		operand = "below"
+		thresholds {
+			critical = "1"
+		}
+	}
+	
+	query {
+		display = "line"
+		hidden = false
+		// fixme this winds up as an empty map in state
+		hidden_queries = {
+			a = false
+		}
+		query_name = "a"
+		query_string = "metric cpu.utilization | delta 5m | group_by[], sum"
+	}
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: conditionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+					resource.TestCheckResourceAttr(resourceName, "name", "hidden queries spurious diff"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.%", "1"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.a", "false"),
+				),
+			},
+		},
+	})
+}
