@@ -1266,7 +1266,7 @@ resource "lightstep_alert" "test" {
 	})
 }
 
-func TestSpuriousDiffAlert(t *testing.T) {
+func TestAlertWithHiddenQueries(t *testing.T) {
 	var condition client.UnifiedCondition
 
 	conditionConfig := `
