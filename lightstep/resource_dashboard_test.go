@@ -1079,6 +1079,20 @@ func TestDisplayTypeOptions(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.comparison_window_ms", "86400000"),
 				),
 			},
+			{
+				// 🐛 empty display_type options result in unresolvable diff
+				Config: makeDisplayTypeConfig("line", strings.TrimSpace(`
+	display_type_options {
+	}
+`)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test display_type_options"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "line"),
+				),
+				// fixme this should result in an empty plan
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
@@ -1463,6 +1477,47 @@ EOT
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard)),
 				ExpectError: regexp.MustCompile("expected length of .*\\.query_name to be in the range \\(1 - \\d+\\), got " + longName),
+			},
+		},
+	})
+}
+
+func TestAccDashboardHiddenQueriesUnresolvableDiff(t *testing.T) {
+	config := `
+resource "lightstep_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "🐛 dash"
+	chart {
+      rank = 0
+	  name = "Chart Number One"
+	  type = "timeseries"
+	  query {
+		hidden              = false
+		hidden_queries      = { a: "true" }
+		query_name          = "a"
+		display             = "line"
+		query_string        = "metric cpu.utilization | delta"
+	  }
+	}
+  }
+`
+
+	var dashboard client.UnifiedDashboard
+	resourceName := "lightstep_dashboard.test"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+				),
+				// 🐛 this plan should be empty, but we omit hidden_queries["a"] from state
+				// because it is the top level query name (also we overwrite the value using "hidden")
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
