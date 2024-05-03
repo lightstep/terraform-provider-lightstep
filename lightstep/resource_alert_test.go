@@ -1286,7 +1286,7 @@ resource "lightstep_alert" "test" {
 		hidden = false
 		// previously, this would result in a spurious diff
 		hidden_queries = {
-			a = false
+			b = true
 		}
 		query_name = "a"
 		query_string = "metric cpu.utilization | delta 5m | group_by[], sum"
@@ -1306,7 +1306,7 @@ resource "lightstep_alert" "test" {
 					testAccCheckLightstepAlertExists(resourceName, &condition),
 					resource.TestCheckResourceAttr(resourceName, "name", "hidden queries spurious diff"),
 					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.%", "1"),
-					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.a", "false"),
+					resource.TestCheckResourceAttr(resourceName, "query.0.hidden_queries.b", "true"),
 				),
 			},
 		},
