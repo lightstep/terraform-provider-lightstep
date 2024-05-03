@@ -1284,7 +1284,7 @@ resource "lightstep_alert" "test" {
 	query {
 		display = "line"
 		hidden = false
-		// fixme this winds up as an empty map in state
+		// previously, this would result in a spurious diff
 		hidden_queries = {
 			a = false
 		}
