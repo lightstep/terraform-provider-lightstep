@@ -55,6 +55,7 @@ func Provider() *schema.Provider {
 			},
 		},
 
+		// Deprecated; add new resources to lightstepProvider.Resources
 		ResourcesMap: map[string]*schema.Resource{
 			"lightstep_stream":                 resourceStream(),
 			"lightstep_stream_dashboard":       resourceStreamDashboard(),
