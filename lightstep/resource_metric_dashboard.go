@@ -3,6 +3,11 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	schema2 "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"net/http"
 	"strings"
 
@@ -19,6 +24,76 @@ const (
 	MetricChartSchema ChartSchemaType = iota
 	UnifiedChartSchema
 )
+
+type UnifiedDashboardResource struct {
+	typeName string
+}
+
+func (r *UnifiedDashboardResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = r.typeName
+}
+
+func (r *UnifiedDashboardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema.Attributes = map[string]schema2.Attribute{
+		"project_name": schema2.StringAttribute{
+			Required: true,
+		},
+		"dashboard_name": schema2.StringAttribute{
+			Required: true,
+		},
+		"dashboard_description": schema2.StringAttribute{
+			Optional: true,
+		},
+		"type": schema2.StringAttribute{
+			Computed: true,
+		},
+		"chart": schema2.SetNestedAttribute{
+			Optional: true,
+			NestedObject: schema2.NestedAttributeObject{
+				Attributes: getChartSchema(chartSchemaType),
+			},
+		},
+		"group": schema2.SetAttribute{
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: getGroupSchema(chartSchemaType),
+			},
+		},
+		"label": schema2.SetAttribute{
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Description: "Labels can be key/value pairs or standalone values.",
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"key": {
+						Type:     schema.TypeString,
+						Optional: true,
+					},
+					"value": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
+				},
+			},
+		},
+		"template_variable": schema2.SetAttribute{
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: getTemplateVariableSchema(),
+			},
+			Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
+		},
+		"event_query_ids": schema2.SetAttribute{
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Elem:        &schema.Schema{Type: schema.TypeString},
+			Description: "IDs of the event queries to display on this dashboard",
+		},
+	}
+}
+
+// todo req.ProviderTypeName +
 
 // resourceUnifiedDashboard creates a resource for either:
 //
@@ -38,69 +113,7 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 		Importer: &schema.ResourceImporter{
 			StateContext: p.resourceUnifiedDashboardImport,
 		},
-		Schema: map[string]*schema.Schema{
-			"project_name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"dashboard_name": {
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"dashboard_description": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-			"type": {
-				Type:     schema.TypeString,
-				Computed: true,
-			},
-			"chart": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: getChartSchema(chartSchemaType),
-				},
-			},
-			"group": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: getGroupSchema(chartSchemaType),
-				},
-			},
-			"label": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Description: "Labels can be key/value pairs or standalone values.",
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"key": {
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"value": {
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
-			},
-			"template_variable": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: getTemplateVariableSchema(),
-				},
-				Description: "Variable to be used in dashboard queries for dynamically filtering telemetry data",
-			},
-			"event_query_ids": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Description: "IDs of the event queries to display on this dashboard",
-			},
-		},
+		Schema: map[string]*schema.Schema{},
 	}
 }
 
@@ -223,25 +236,28 @@ func getPositionSchema() map[string]*schema.Schema {
 	}
 }
 
-func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
-	var querySchema map[string]*schema.Schema
+func getChartSchema(chartSchemaType ChartSchemaType) map[string]schema2.Attribute {
+	var querySchema map[string]schema2.Attribute
 	if chartSchemaType == UnifiedChartSchema {
 		querySchema = getUnifiedQuerySchemaMap()
-		querySchema["dependency_map_options"] = &schema.Schema{
-			Type:     schema.TypeList,
+		querySchema["dependency_map_options"] = schema2.ListNestedAttribute{
 			Optional: true,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"scope": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"all", "upstream", "downstream", "immediate"}, false),
+			Validators: []validator.List{
+				listvalidator.SizeAtMost(1),
+			},
+			NestedObject: schema2.NestedAttributeObject{
+				Attributes: map[string]schema2.Attribute{
+					"scope": schema2.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("all", "upstream", "downstream", "immediate"),
+						},
 					},
-					"map_type": {
-						Type:         schema.TypeString,
-						Optional:     true,
-						ValidateFunc: validation.StringInSlice([]string{"service", "operation"}, false),
+					"map_type": schema2.StringAttribute{
+						Optional: true,
+						Validators: []validator.String{
+							stringvalidator.OneOf("service", "operation"),
+						},
 					},
 				},
 			},

@@ -1,118 +1,152 @@
 package lightstep
 
 import (
+	"context"
 	"fmt"
-
+	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	schema2 "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/lightstep/terraform-provider-lightstep/client"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
-	sma := map[string]*schema.Schema{
-		"hidden": {
-			Type:     schema.TypeBool,
+func getUnifiedQuerySchemaMap() map[string]schema2.Attribute {
+	sma := map[string]schema2.Attribute{
+		"hidden": schema2.BoolAttribute{
 			Required: true,
 		},
-		"display": {
-			Type:     schema.TypeString,
+		"display": schema2.StringAttribute{
 			Optional: true,
-			ValidateFunc: validation.StringInSlice([]string{
-				"line",
-				"area",
-				"bar",
-				"big_number",
-				"heatmap",
-				"dependency_map",
-				"big_number_v2",
-				"scatter_plot",
-				"ordered_list",
-				"pie",
-				"table",
-				"traces_list",
-			}, false),
+			Validators: []validator.String{
+				stringvalidator.OneOf(
+					"line",
+					"area",
+					"bar",
+					"big_number",
+					"heatmap",
+					"dependency_map",
+					"big_number_v2",
+					"scatter_plot",
+					"ordered_list",
+					"pie",
+					"table",
+					"traces_list",
+				),
+			},
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
 		// Using a TypeSet of size 1 as a way to allow nested properties
-		"display_type_options": {
-			Type:     schema.TypeSet,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				// This is the superset of all possible fields for all display types
-				Schema: map[string]*schema.Schema{
-					"display_type": {
-						Type:     schema.TypeString,
+		"display_type_options": schema2.SetNestedAttribute{
+			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
+			Optional:    true,
+			Validators: []validator.Set{
+				setvalidator.SizeAtMost(1),
+			},
+			NestedObject: schema2.NestedAttributeObject{
+				Attributes: map[string]schema2.Attribute{
+					"display_type": schema2.StringAttribute{
 						Optional: true,
 					},
-					"sort_by": {
-						Type:     schema.TypeString,
+					"sort_by": schema2.StringAttribute{
 						Optional: true,
 					},
-					"sort_direction": {
-						Type:     schema.TypeString,
+					"sort_direction": schema2.StringAttribute{
 						Optional: true,
 					},
-					"y_axis_scale": {
-						Type:     schema.TypeString,
+					"y_axis_scale": schema2.StringAttribute{
 						Optional: true,
-						ValidateFunc: validation.StringInSlice([]string{
-							"linear",
-							"log",
-							"symlog",
-						}, false),
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								"linear",
+								"log",
+								"symlog",
+							),
+						},
 					},
-					"y_axis_log_base": {
-						Type:     schema.TypeInt,
+					"y_axis_log_base": schema2.Int64Attribute{
 						Optional: true,
-						ValidateFunc: validation.IntInSlice([]int{
-							2,
-							10,
-						}),
+						Validators: []validator.Int64{
+							int64validator.OneOf(2, 10),
+						},
 					},
-					"y_axis_min": {
-						Type:     schema.TypeFloat,
+					"y_axis_min": schema2.Float64Attribute{
 						Optional: true,
 					},
-					"y_axis_max": {
-						Type:     schema.TypeFloat,
+					"y_axis_max": schema2.Float64Attribute{
 						Optional: true,
 					},
-					"is_donut": {
-						Type:     schema.TypeBool,
+					"is_donut": schema2.BoolAttribute{
 						Optional: true,
 					},
-					"comparison_window_ms": {
-						Type:     schema.TypeInt,
+					"comparison_window_ms": schema2.Int64Attribute{
 						Optional: true,
 					},
 				},
 			},
-			Description: "Applicable options vary depending on the display type. Please see the Lightstep documentation for a full description.",
 		},
-		"query_name": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringLenBetween(1, 128),
+		"query_name": schema2.StringAttribute{
+			Required: true,
+			Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 128),
+			},
 		},
-		"query_string": {
-			Type:     schema.TypeString,
+		"query_string": schema2.StringAttribute{
 			Required: true,
 		},
-		"hidden_queries": {
-			Type: schema.TypeMap,
-			Elem: &schema.Schema{
-				Type: schema.TypeString,
-			},
-			Optional: true,
+		"hidden_queries": schema2.MapAttribute{
+			ElementType: types.StringType,
+			Optional:    true,
 			Description: "An optional map of sub-query names in the query_string to a boolean string to hide/show that query. " +
 				"If specified, the map must have an entry for all named sub-queries in the query_string. A value " +
 				"of \"true\" indicates the query should be hidden. " +
 				"Example: `hidden_queries = {  \"a\" = \"true\",  \"b\" = \"false\" }`.",
+			Validators: []validator.Map{
+				newHiddenQueriesValidator(),
+			},
 		},
 	}
 	return sma
+}
+
+var _ validator.Map = hiddenQueriesValidator{}
+
+// hiddenQueriesValidator validates that the top-level query's name is not specified in hidden_queries
+type hiddenQueriesValidator struct{}
+
+// Description describes the validation in plain text formatting.
+func (v hiddenQueriesValidator) Description(_ context.Context) string {
+	return "hidden_queries must not contain top-level query name"
+}
+
+// MarkdownDescription describes the validation in Markdown formatting.
+func (v hiddenQueriesValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+// Validate performs the validation.
+func (v hiddenQueriesValidator) ValidateMap(ctx context.Context, req validator.MapRequest, resp *validator.MapResponse) {
+	var topLevelQueryName string
+	d := req.Config.GetAttribute(ctx, req.Path.ParentPath().AtName("query_name"), &topLevelQueryName)
+	if d.HasError() {
+		resp.Diagnostics.Append(d...)
+		return
+	}
+	for queryName := range req.ConfigValue.Elements() {
+		if queryName == topLevelQueryName {
+			resp.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				req.Path,
+				v.Description(ctx),
+				fmt.Sprintf("%v", req.ConfigValue.Elements()),
+			))
+		}
+	}
+}
+
+func newHiddenQueriesValidator() validator.Map {
+	return hiddenQueriesValidator{}
 }
 
 func getQueriesFromUnifiedDashboardResourceData(

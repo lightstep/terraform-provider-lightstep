@@ -3,6 +3,10 @@ package lightstep
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	schema2 "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"net/http"
 	"strconv"
 	"strings"
@@ -211,38 +215,42 @@ func getSpansQuerySchema() *schema.Schema {
 	return &sma
 }
 
-func getMetricQuerySchemaMap() map[string]*schema.Schema {
-	sma := map[string]*schema.Schema{
-		"metric": {
-			Type:     schema.TypeString,
+func getMetricQuerySchemaMap() map[string]schema2.Attribute {
+	sma := map[string]schema2.Attribute{
+		"metric": schema2.StringAttribute{
 			Optional: true, // optional for composite formula
 			Computed: true,
 		},
-		"hidden": {
-			Type:     schema.TypeBool,
+		"hidden": schema2.BoolAttribute{
 			Required: true,
 		},
-		"display": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			ValidateFunc: validation.StringInSlice([]string{"line", "area", "bar", "big_number", "heatmap", "dependency_map", "big_number_v2", "scatter_plot"}, false),
+		"display": schema2.StringAttribute{
+			Optional: true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("line", "area", "bar", "big_number", "heatmap", "dependency_map", "big_number_v2", "scatter_plot"),
+			},
 		},
-		"query_name": {
-			Type:         schema.TypeString,
-			Required:     true,
-			ValidateFunc: validation.StringLenBetween(1, 128),
+		"query_name": schema2.StringAttribute{
+			Required: true,
+			Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 128),
+			},
 		},
-		"timeseries_operator": {
-			Type:         schema.TypeString,
-			Optional:     true,
-			Computed:     true,
-			ValidateFunc: validation.StringInSlice([]string{"rate", "delta", "last", "min", "max", "avg"}, false),
+		"timeseries_operator": schema2.StringAttribute{
+			Optional: true,
+			Computed: true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("rate", "delta", "last", "min", "max", "avg"),
+			},
 		},
-		"timeseries_operator_input_window_ms": {
-			Type:         schema.TypeInt,
-			Description:  "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).",
-			Optional:     true,
-			ValidateFunc: validation.All(validation.IntDivisibleBy(1_000), validation.IntAtLeast(30_000)),
+		"timeseries_operator_input_window_ms": schema2.Int64Attribute{
+			Description: "Unit specified in milliseconds, but must be at least 30,000 and a round number of seconds (i.e. evenly divisible by 1,000).",
+			Optional:    true,
+			Validators: []validator.Int64{
+				int64validator.AtLeast(30_000),
+			},
+			// todo
+			// validation.IntDivisibleBy(1_000)
 		},
 		"final_window_operation": getFinalWindowOperationSchema(),
 		"filters": {

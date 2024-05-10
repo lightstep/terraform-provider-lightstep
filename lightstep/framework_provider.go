@@ -136,7 +136,14 @@ func (p *lightstepProvider) Configure(ctx context.Context, req provider.Configur
 }
 
 func (p *lightstepProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		func() resource.Resource {
+			return &resourceUnifiedDashboard{}
+		},
+		func() resource.Resource {
+			return &resourceUnifiedDashboard{}
+		},
+	}
 }
 
 func (p *lightstepProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
