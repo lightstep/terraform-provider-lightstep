@@ -838,7 +838,9 @@ func buildQueries(queriesIn []interface{}) ([]client.MetricQueryWithAttributes, 
 				}
 				// Ensure the outer query is always included for the API call.
 				// Don't make the user do this explicitly.
-				hq[newQuery.Name] = newQuery.Hidden
+				if _, ok = hq[newQuery.Name]; !ok {
+					hq[newQuery.Name] = newQuery.Hidden
+				}
 				newQuery.HiddenQueries = hq
 			}
 

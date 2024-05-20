@@ -1482,7 +1482,7 @@ EOT
 	})
 }
 
-func TestAccDashboardHiddenQueriesUnresolvableDiff(t *testing.T) {
+func TestAccDashboardHiddenQueriesWithOuterQueryHidden(t *testing.T) {
 	config := `
 resource "lightstep_dashboard" "test" {
 	project_name          = "` + testProject + `"
@@ -1514,10 +1514,11 @@ resource "lightstep_dashboard" "test" {
 				Config: config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden", "false"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.query.0.hidden_queries.a", "true"),
 				),
-				// 🐛 this plan should be empty, but we omit hidden_queries["a"] from state
-				// because it is the top level query name (also we overwrite the value using "hidden")
-				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
