@@ -35,10 +35,6 @@ func setHiddenQueriesFromResourceData(qs map[string]interface{}, query client.Me
 	}
 	hq := make(map[string]interface{}, len(query.HiddenQueries))
 	for k, v := range query.HiddenQueries {
-		// Don't include the top-level query in the TF resource data
-		if k == query.Name {
-			continue
-		}
 		hq[k] = fmt.Sprintf("%t", v)
 	}
 	qs["hidden_queries"] = hq
