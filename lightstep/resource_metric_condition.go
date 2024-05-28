@@ -1105,8 +1105,13 @@ func buildCompositeAlert(d *schema.ResourceData) (*client.CompositeAlert, error)
 		if !ok {
 			return nil, fmt.Errorf("could not parse alert")
 		}
-
-		subAlertExpression, err := buildSubAlertExpression(subAlertIn["expression"].([]interface{})[0].(map[string]interface{}))
+		subAlertExpressionsUntyped := subAlertIn["expression"].([]interface{})
+		if len(subAlertExpressionsUntyped) == 0 {
+			// if a subalert is being dropped and recreated, we will get a zero-value
+			// subalert in the list. ignore it.
+			continue
+		}
+		subAlertExpression, err := buildSubAlertExpression(subAlertExpressionsUntyped[0].(map[string]interface{}))
 		if err != nil {
 			return nil, err
 		}
