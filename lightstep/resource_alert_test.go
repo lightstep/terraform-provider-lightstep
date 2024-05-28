@@ -1312,3 +1312,78 @@ resource "lightstep_alert" "test" {
 		},
 	})
 }
+
+func TestCompositeCrash(t *testing.T) {
+	var condition client.UnifiedCondition
+
+	conditionConfig := `
+resource "lightstep_alert" "test" {
+  name         = "test"
+  project_name = "` + testProject + `"
+
+  composite_alert {
+
+    alert {
+      name  = "A"
+      title = "cpu"
+
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "metric a | delta 30s | group_by[], sum"
+        display      = "line"
+        hidden_queries = { "a" = "%s" }
+      }
+
+      expression {
+        operand = "above"
+
+        thresholds {
+          critical = 20
+        }
+      }
+    }
+	alert {
+      name  = "B"
+      title = "b"
+
+      query {
+        hidden       = false
+        query_name   = "a"
+        query_string = "metric b | delta 30s | group_by[], sum"
+        display      = "line" 
+      }
+
+      expression {
+        operand = "above"
+
+        thresholds {
+          critical = 20
+        }
+      }
+    }
+  }
+}
+`
+
+	resourceName := "lightstep_alert.test"
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccMetricConditionDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(conditionConfig, "false"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+				),
+			},
+			{
+				Config: fmt.Sprintf(conditionConfig, "true"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckLightstepAlertExists(resourceName, &condition),
+				),
+			},
+		},
+	})
+}
