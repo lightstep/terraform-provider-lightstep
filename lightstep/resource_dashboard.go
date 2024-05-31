@@ -31,6 +31,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"pie",
 				"table",
 				"traces_list",
+				"trichart",
 			}, false),
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
