@@ -933,6 +933,53 @@ chart {
 `, displayType, displayTypeOptions)
 }
 
+func makeTrichartDisplay() string {
+	return fmt.Sprintf(`
+resource "lightstep_dashboard" "test_display_type_options" {
+project_name   = "` + testProject + `"
+dashboard_name = "test trichart"
+
+group {
+rank            = 0
+title           = ""
+visibility_type = "implicit"
+
+chart {
+	name   = "Chart #123"
+	type   = "timeseries"
+	rank   = 0
+	x_pos  = 4
+	y_pos  = 0
+	width  = 4
+	height = 4
+
+	query {
+	  query_name   = "error_ratio"
+	  display      = "trichart"
+	  display_type_options = { display_type = trichart }
+	  hidden       = false
+	  query_string = "with\n errors = spans count\n | delta\n | filter service == "web" && error == true\n | group_by [], sum;\n total = spans count\n | delta\n | filter service == "web"\n | group_by [], sum;\n join errors / total, errors=0, total=0"
+	}
+	query {
+	  query_name   = "latency"
+	  display      = "trichart"
+	  display_type_options = { display_type = trichart }
+	  hidden       = false
+	  query_string = "spans latency | delta | filter service == "web" | group_by [], sum | point percentile(value, 99.0)"
+	}
+	query {
+	  query_name   = "rate"
+	  display      = "trichart"
+	  display_type_options = { display_type = trichart }
+	  hidden       = false
+	  query_string = "spans count | rate | filter service == "web" | group_by [], sum"
+	}
+  }
+}
+}
+`)
+}
+
 func TestDisplayTypeOptionsError(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 
@@ -1060,6 +1107,15 @@ func TestDisplayTypeOptions(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "table"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_min", "0"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.y_axis_max", "100"),
+				),
+			},
+			{
+				Config: makeTrichartDisplay(),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "dashboard_name", "test trichart"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "trichart"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.display_type", "trichart"),
 				),
 			},
 			{
