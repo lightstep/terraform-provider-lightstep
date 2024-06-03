@@ -52,9 +52,6 @@ endif
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_BASE_URL="https://api.lightstep.com" \
-	TF_ACC_TERRAFORM_PATH=$(which terraform) \
-	TF_ACC_PROVIDER_NAMESPACE=hashicorp \
-	TF_ACC_PROVIDER_HOST=registry.opentofu.org \
 	go test -v ./lightstep
 
 .PHONY: test-local
@@ -66,9 +63,6 @@ test-local:
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_RATE_LIMIT=100 \
 	LIGHTSTEP_API_BASE_URL="https://api.lightstep.com" \
-	TF_ACC_TERRAFORM_PATH=$(which terraform) \
-	TF_ACC_PROVIDER_NAMESPACE=hashicorp \
-	TF_ACC_PROVIDER_HOST=registry.opentofu.org \
 	go test -v ./lightstep -test.run TestAccSAMLGroupMappings
 
 .PHONY: test-staging
@@ -79,9 +73,6 @@ test-staging:
 	LIGHTSTEP_ORG="terraform-provider" \
 	LIGHTSTEP_PROJECT="terraform-provider-test" \
 	LIGHTSTEP_API_BASE_URL="https://api-staging.lightstep.com" \
-	TF_ACC_TERRAFORM_PATH=$(which terraform) \
-	TF_ACC_PROVIDER_NAMESPACE=hashicorp \
-	TF_ACC_PROVIDER_HOST=registry.opentofu.org \
 	go test -v ./lightstep
 
 .PHONY: ensure-clean-repo
