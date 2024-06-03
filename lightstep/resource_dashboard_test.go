@@ -958,7 +958,7 @@ chart {
 	  display      = "trichart"
 	  display_type_options = { display_type = trichart }
 	  hidden       = false
-	  query_string = "with\n errors = spans count\n | delta\n | filter service == "web" && error == true\n | group_by [], sum;\n total = spans count\n | delta\n | filter service == "web"\n | group_by [], sum;\n join errors / total, errors=0, total=0"
+	  query_string = "with\n errors = spans count\n | delta\n | filter service == \"web\" && error == true\n | group_by [], sum;\n total = spans count\n | delta\n | filter service == \"web\"\n | group_by [], sum;\n join errors / total, errors=0, total=0"
 	}
 	query {
 	  query_name   = "latency"
