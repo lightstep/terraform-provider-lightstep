@@ -965,14 +965,14 @@ chart {
 	  display      = "trichart"
 	  display_type_options = { display_type = trichart }
 	  hidden       = false
-	  query_string = "spans latency | delta | filter service == "web" | group_by [], sum | point percentile(value, 99.0)"
+	  query_string = "spans latency | delta | filter service == \"web\" | group_by [], sum | point percentile(value, 99.0)"
 	}
 	query {
 	  query_name   = "rate"
 	  display      = "trichart"
 	  display_type_options = { display_type = trichart }
 	  hidden       = false
-	  query_string = "spans count | rate | filter service == "web" | group_by [], sum"
+	  query_string = "spans count | rate | filter service == \"web\" | group_by [], sum"
 	}
   }
 }
