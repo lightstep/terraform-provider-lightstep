@@ -956,21 +956,27 @@ chart {
 	query {
 	  query_name   = "error_ratio"
 	  display      = "trichart"
-	  display_type_options = { display_type = trichart }
+	  display_type_options { 
+		display_type = "trichart"
+	  }
 	  hidden       = false
 	  query_string = "with\n errors = spans count\n | delta\n | filter service == \"web\" && error == true\n | group_by [], sum;\n total = spans count\n | delta\n | filter service == \"web\"\n | group_by [], sum;\n join errors / total, errors=0, total=0"
 	}
 	query {
 	  query_name   = "latency"
 	  display      = "trichart"
-	  display_type_options = { display_type = trichart }
+	  display_type_options { 
+		display_type = "trichart"
+	  }
 	  hidden       = false
 	  query_string = "spans latency | delta | filter service == \"web\" | group_by [], sum | point percentile(value, 99.0)"
 	}
 	query {
 	  query_name   = "rate"
 	  display      = "trichart"
-	  display_type_options = { display_type = trichart }
+	  display_type_options { 
+		display_type = "trichart"
+	  }
 	  hidden       = false
 	  query_string = "spans count | rate | filter service == \"web\" | group_by [], sum"
 	}
