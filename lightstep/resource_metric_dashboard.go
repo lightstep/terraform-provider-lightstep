@@ -294,6 +294,13 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(0, 256),
 			},
+			"threshold": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getThresholdSchema(),
+				},
+			},
 		},
 	)
 }
