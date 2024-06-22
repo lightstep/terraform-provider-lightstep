@@ -517,8 +517,8 @@ resource "lightstep_metric_dashboard" "test" {
 				Config: dashboardConfig,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMetricDashboardExists(resourceName, &dashboard),
-
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.name", "cpu"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.#", "2"),
 
 					// First threshold in chart
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.color", "#AA3018"),
@@ -527,10 +527,10 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.value", "99"),
 
 					// Second threshold in chart
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.color", "#6699CC"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.operator", "GT"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.value", "199"),
-					resource.TestCheckNoResourceAttr(resourceName, "group.0.chart.0.threshold.0.label"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.color", "#6699CC"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.operator", "GT"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.value", "199"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.label", ""),
 				),
 			},
 		},
