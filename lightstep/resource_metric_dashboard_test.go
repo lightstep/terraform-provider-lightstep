@@ -505,6 +505,45 @@ resource "lightstep_metric_dashboard" "test" {
 	}
 }
 `
+	updatedDashboardConfig := `
+resource "lightstep_metric_dashboard" "test" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Acceptance Test Dashboard (TestAccDashboardChartThresholds)"
+	dashboard_description = "Dashboard to test thresholds in charts"
+
+	group {
+		rank = 0
+		visibility_type = "implicit"
+
+		chart {
+			name = "cpu"
+			rank = 1
+			type = "timeseries"
+
+			query {
+				display             = "line"
+				hidden              = false
+				query_name          = "a"		
+				tql					= "metric cpu.utilization | latest | group_by [], sum"
+			}
+
+			threshold {
+				color		= "#AA3018"
+				label		= "critical"
+				operator	= "GT"
+				value 		= 99
+			}
+
+			threshold {
+				color		= "#6699CC"
+				label		= "extra critical"
+				operator	= "GT"
+				value 		= 199
+			}
+		}
+	}
+}
+`
 	resourceName := "lightstep_metric_dashboard.test"
 
 	resource.Test(t, resource.TestCase{
@@ -531,6 +570,27 @@ resource "lightstep_metric_dashboard" "test" {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.operator", "GT"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.value", "199"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.label", ""),
+				),
+			},
+			{
+				// Updated config will contain the a label for the second threshold
+				Config: updatedDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.name", "cpu"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.#", "2"),
+
+					// First threshold in chart
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.color", "#AA3018"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.label", "critical"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.operator", "GT"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.0.value", "99"),
+
+					// Second threshold in chart
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.color", "#6699CC"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.operator", "GT"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.value", "199"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.threshold.1.label", "extra critical"),
 				),
 			},
 		},
