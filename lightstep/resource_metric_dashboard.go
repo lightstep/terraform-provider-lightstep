@@ -611,30 +611,6 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	return newCharts, nil
 }
 
-var colors = map[string]bool{
-	"#AA3018": true,
-	"#B67D0C": true,
-	"#3C864F": true,
-	"#1B7BBB": true,
-	"#DC7847": true,
-	"#78469B": true,
-	"#37A2AE": true,
-	"#B03B7F": true,
-	"#1F40C1": true,
-	"#8B7255": true,
-	"#826CEF": true,
-	"#D56DD5": true,
-	"#6699CC": true,
-}
-
-var operators = map[string]bool{
-	"E":  true,
-	"GE": true,
-	"GT": true,
-	"LE": true,
-	"LT": true,
-}
-
 func buildChartThresholds(thresholdsIn []interface{}) ([]client.Threshold, error) {
 	var thresholds []client.Threshold
 	if len(thresholdsIn) < 1 {
@@ -648,17 +624,9 @@ func buildChartThresholds(thresholdsIn []interface{}) ([]client.Threshold, error
 			return []client.Threshold{}, fmt.Errorf("missing required attribute 'color' for threshold")
 		}
 
-		if !colors[color] {
-			return []client.Threshold{}, fmt.Errorf("invalid value for attribute 'color' for threshold")
-		}
-
 		operator, ok := threshold["operator"].(string)
 		if !ok {
 			return []client.Threshold{}, fmt.Errorf("missing required attribute 'operator' for threshold")
-		}
-
-		if !operators[operator] {
-			return []client.Threshold{}, fmt.Errorf("invalid value for attribute 'operator' for threshold")
 		}
 
 		label, ok := threshold["label"].(string)
