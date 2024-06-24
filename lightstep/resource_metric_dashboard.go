@@ -629,11 +629,7 @@ func buildChartThresholds(thresholdsIn []interface{}) ([]client.Threshold, error
 			return []client.Threshold{}, fmt.Errorf("missing required attribute 'operator' for threshold")
 		}
 
-		label, ok := threshold["label"].(string)
-
-		if !ok {
-			return []client.Threshold{}, fmt.Errorf("missing required attribute 'label' for threshold")
-		}
+		label := threshold["label"].(string)
 
 		value, ok := threshold["value"].(float64)
 
@@ -643,7 +639,7 @@ func buildChartThresholds(thresholdsIn []interface{}) ([]client.Threshold, error
 
 		thresholds = append(thresholds, client.Threshold{
 			Color:    color,
-			Label:    &label,
+			Label:    label,
 			Operator: operator,
 			Value:    value,
 		})

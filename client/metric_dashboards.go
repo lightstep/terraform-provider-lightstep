@@ -73,8 +73,8 @@ type Threshold struct {
 	Operator string  `json:"operator"`
 	Value    float64 `json:"value"`
 	// An alpha hex color
-	Color string  `json:"color"`
-	Label *string `json:"label"`
+	Color string `json:"color"`
+	Label string `json:"label"`
 }
 
 type YAxis struct {
