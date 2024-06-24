@@ -14,21 +14,6 @@ func getThresholdSchema() map[string]*schema.Schema {
 		"color": {
 			Type:     schema.TypeString,
 			Required: true,
-			ValidateFunc: validation.StringInSlice([]string{
-				"#AA3018",
-				"#B67D0C",
-				"#3C864F",
-				"#1B7BBB",
-				"#DC7847",
-				"#78469B",
-				"#37A2AE",
-				"#B03B7F",
-				"#1F40C1",
-				"#8B7255",
-				"#826CEF",
-				"#D56DD5",
-				"#6699CC",
-			}, false),
 		},
 		"label": {
 			Type:     schema.TypeString,
