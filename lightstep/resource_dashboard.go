@@ -9,6 +9,34 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+func getThresholdSchema() map[string]*schema.Schema {
+	return map[string]*schema.Schema{
+		"color": {
+			Type:     schema.TypeString,
+			Required: true,
+		},
+		"label": {
+			Type:     schema.TypeString,
+			Optional: true,
+		},
+		"operator": {
+			Type:     schema.TypeString,
+			Required: true,
+			ValidateFunc: validation.StringInSlice([]string{
+				"E",
+				"GE",
+				"GT",
+				"LE",
+				"LT",
+			}, false),
+		},
+		"value": {
+			Type:     schema.TypeFloat,
+			Required: true,
+		},
+	}
+}
+
 func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 	sma := map[string]*schema.Schema{
 		"hidden": {

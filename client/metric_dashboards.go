@@ -51,6 +51,7 @@ type UnifiedChart struct {
 	YAxis         *YAxis                      `json:"y-axis"`
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
 	Text          string                      `json:"text"`
+	Thresholds    []Threshold                 `json:"thresholds"`
 	Subtitle      *string                     `json:"subtitle,omitempty"`
 }
 
@@ -65,6 +66,15 @@ type Panel struct {
 	Type     string          `json:"type"`
 	Position UnifiedPosition `json:"position"`
 	Body     map[string]any  `json:"body"`
+}
+
+type Threshold struct {
+	// enum: E,GE,GT,LE,LT
+	Operator string  `json:"operator"`
+	Value    float64 `json:"value"`
+	// An alpha hex color
+	Color string `json:"color"`
+	Label string `json:"label"`
 }
 
 type YAxis struct {
