@@ -66,6 +66,7 @@ func Provider() *schema.Provider {
 			"lightstep_pagerduty_destination":  resourcePagerdutyDestination(),
 			"lightstep_slack_destination":      resourceSlackDestination(),
 			"lightstep_servicenow_destination": resourceServiceNowDestination(),
+			"lightstep_opsgenie_destination":   resourceOpsgenieDestination(),
 			"lightstep_alerting_rule":          resourceAlertingRule(),
 			"lightstep_dashboard":              resourceUnifiedDashboard(UnifiedChartSchema),
 			"lightstep_alert":                  resourceUnifiedCondition(UnifiedConditionSchema),

@@ -39,6 +39,13 @@ type ServiceNowAttributes struct {
 	Auth            Auth   `json:"auth"`
 }
 
+type OpsgenieAttributes struct {
+	Name            string `json:"name"`
+	DestinationType string `json:"destination_type"`
+	URL             string `json:"url"`
+	Auth            Auth   `json:"auth"`
+}
+
 type Auth struct {
 	Username string `json:"username"`
 	// Password is only set for requests. Will be empty for API responses
