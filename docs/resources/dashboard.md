@@ -92,6 +92,7 @@ Optional:
 - `description` (String)
 - `height` (Number)
 - `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
+- `threshold` (Block List) (see [below for nested schema](#nestedblock--chart--threshold))
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
@@ -141,6 +142,20 @@ Optional:
 - `y_axis_min` (Number)
 - `y_axis_scale` (String)
 
+
+
+<a id="nestedblock--chart--threshold"></a>
+### Nested Schema for `chart.threshold`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
+- `value` (Number)
+
+Optional:
+
+- `label` (String)
 
 
 <a id="nestedblock--chart--y_axis"></a>
@@ -244,6 +259,7 @@ Optional:
 - `description` (String)
 - `height` (Number)
 - `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
+- `threshold` (Block List) (see [below for nested schema](#nestedblock--group--chart--threshold))
 - `width` (Number)
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
@@ -293,6 +309,20 @@ Optional:
 - `y_axis_min` (Number)
 - `y_axis_scale` (String)
 
+
+
+<a id="nestedblock--group--chart--threshold"></a>
+### Nested Schema for `group.chart.threshold`
+
+Required:
+
+- `color` (String)
+- `operator` (String)
+- `value` (Number)
+
+Optional:
+
+- `label` (String)
 
 
 <a id="nestedblock--group--chart--y_axis"></a>
