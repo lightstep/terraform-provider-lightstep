@@ -14,8 +14,9 @@ type Stream struct {
 }
 
 type StreamAttributes struct {
-	Name  string `json:"name"`
-	Query string `json:"query"`
+	Name     string `json:"name"`
+	Query    string `json:"query,omitempty"`
+	UQLQuery string `json:"uql_query,omitempty"`
 
 	// "custom_data" on set, but "custom-data" on get
 	CustomData map[string]map[string]string `json:"custom_data,omitempty"`
@@ -27,7 +28,7 @@ type StreamAttributes struct {
 func CustomDataConvert(customData []interface{}) map[string]map[string]string {
 
 	// This is what Lightstep expects
-	//"custom_data": {
+	// "custom_data": {
 	//	"object1": {
 	//		"url": "http://",
 	//		"key": "value"
@@ -35,7 +36,7 @@ func CustomDataConvert(customData []interface{}) map[string]map[string]string {
 	//	"object2": {
 	//		"key": "value"
 	//	}
-	//},
+	// },
 	lsCustomData := make(map[string]map[string]string)
 
 	// This is what we have (terraform doesn't support a map of maps natively.
@@ -70,6 +71,7 @@ func (c *Client) CreateStream(
 	projectName string,
 	name string,
 	query string,
+	uqlQuery string,
 	customData []interface{},
 ) (Stream, error) {
 
@@ -80,12 +82,17 @@ func (c *Client) CreateStream(
 
 	lsCustomData := CustomDataConvert(customData)
 
+	if query != "" && uqlQuery != "" {
+		return s, fmt.Errorf("only one of [query, uql_query] should be set")
+	}
+
 	bytes, err := json.Marshal(
 		Stream{
 			Type: "stream",
 			Attributes: StreamAttributes{
 				Name:       name,
 				Query:      query,
+				UQLQuery:   uqlQuery,
 				CustomData: lsCustomData,
 			},
 		})
@@ -138,9 +145,11 @@ func (c *Client) GetStream(ctx context.Context, projectName string, StreamID str
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("getting: projects/%v/streams/%v\n", projectName, StreamID)
 
 	err = json.Unmarshal(resp.Data, &s)
 	if err != nil {
+		fmt.Printf("resp: %#v\n\n", string(resp.Data))
 		return s, err
 	}
 	return s, err
