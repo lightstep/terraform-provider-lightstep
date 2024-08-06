@@ -311,6 +311,13 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(0, 256),
 			},
+			"threshold": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: getThresholdSchema(),
+				},
+			},
 			"workflow_link": {
 				Description: "Links to other resources",
 				Type:        schema.TypeList,
@@ -614,6 +621,11 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 			return nil, err
 		}
 		c.MetricQueries = queries
+		thresholds, err := buildChartThresholds(chart["threshold"].([]interface{}))
+		if err != nil {
+			return nil, err
+		}
+		c.Thresholds = thresholds
 
 		yaxis, err := buildYAxis(chart["y_axis"].([]interface{}))
 		if err != nil {
@@ -645,6 +657,42 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
+}
+
+func buildChartThresholds(thresholdsIn []interface{}) ([]client.Threshold, error) {
+	var thresholds []client.Threshold
+	if len(thresholdsIn) < 1 {
+		return thresholds, nil
+	}
+	for _, t := range thresholdsIn {
+		threshold := t.(map[string]interface{})
+		color, ok := threshold["color"].(string)
+
+		if !ok {
+			return []client.Threshold{}, fmt.Errorf("missing required attribute 'color' for threshold")
+		}
+
+		operator, ok := threshold["operator"].(string)
+		if !ok {
+			return []client.Threshold{}, fmt.Errorf("missing required attribute 'operator' for threshold")
+		}
+
+		label := threshold["label"].(string)
+
+		value, ok := threshold["value"].(float64)
+
+		if !ok {
+			return []client.Threshold{}, fmt.Errorf("missing required attribute 'value' for threshold")
+		}
+
+		thresholds = append(thresholds, client.Threshold{
+			Color:    color,
+			Label:    label,
+			Operator: operator,
+			Value:    value,
+		})
+	}
+	return thresholds, nil
 }
 
 func buildYAxis(yAxisIn []interface{}) (*client.YAxis, error) {
@@ -828,7 +876,7 @@ func assembleDashboardPanels(
 // into the resource interface
 func setPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
-	panel client.UnifiedChart, // Panel from the API
+	panel client.UnifiedChart,       // Panel from the API
 ) {
 	resource["name"] = panel.Title
 	resource["description"] = panel.Description
@@ -904,6 +952,8 @@ func assembleCharts(
 			resource["query"] = queries
 		}
 
+		resource["threshold"] = getThresholdsFromResourceData(c.Thresholds)
+
 		resourceWorkflowLinks := make([]map[string]string, 0, len(c.WorkflowLinks))
 		for _, workflowLink := range c.WorkflowLinks {
 			resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
@@ -913,10 +963,23 @@ func assembleCharts(
 			})
 		}
 		resource["workflow_links"] = resourceWorkflowLinks
-
+		
 		chartResources = append(chartResources, resource)
 	}
 	return chartResources, nil
+}
+
+func getThresholdsFromResourceData(thresholdsIn []client.Threshold) []interface{} {
+	var thresholds []interface{}
+	for _, t := range thresholdsIn {
+		thresholds = append(thresholds, map[string]interface{}{
+			"color":    t.Color,
+			"label":    t.Label,
+			"operator": t.Operator,
+			"value":    t.Value,
+		})
+	}
+	return thresholds
 }
 
 // isLegacyImplicitGroup defines the logic for determining if the charts in this dashboard need to be unwrapped to
