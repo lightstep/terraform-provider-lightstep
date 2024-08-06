@@ -22,6 +22,7 @@ type UnifiedDashboardAttributes struct {
 	Labels            []Label            `json:"labels"`
 	TemplateVariables []TemplateVariable `json:"template_variables"`
 	EventQueryIDs     []string           `json:"event_query_ids"`
+	WorkflowLinks     []WorkflowLink     `json:"workflow_links"`
 }
 
 type UnifiedGroup struct {
@@ -52,6 +53,7 @@ type UnifiedChart struct {
 	MetricQueries []MetricQueryWithAttributes `json:"metric-queries"`
 	Text          string                      `json:"text"`
 	Subtitle      *string                     `json:"subtitle,omitempty"`
+	WorkflowLinks []WorkflowLink              `json:"workflow_links"`
 }
 
 type Label struct {
@@ -81,6 +83,12 @@ type TemplateVariable struct {
 	Name                   string   `json:"name"`
 	DefaultValues          []string `json:"default_values"`
 	SuggestionAttributeKey string   `json:"suggestion_attribute_key"`
+}
+
+type WorkflowLink struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }
 
 func getUnifiedDashboardURL(project, id string) string {
@@ -114,6 +122,7 @@ func (c *Client) CreateUnifiedDashboard(
 			Labels:            dashboard.Attributes.Labels,
 			TemplateVariables: dashboard.Attributes.TemplateVariables,
 			EventQueryIDs:     dashboard.Attributes.EventQueryIDs,
+			WorkflowLinks:     dashboard.Attributes.WorkflowLinks,
 		},
 	})
 

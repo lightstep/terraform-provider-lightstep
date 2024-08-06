@@ -100,6 +100,23 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "IDs of the event queries to display on this dashboard",
 			},
+			"workflow_link": {
+				Description: "Links to other resources",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -293,6 +310,23 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 				Description:  "Subtitle to show beneath big number, unused in other chart types",
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(0, 256),
+			},
+			"workflow_link": {
+				Description: "Links to other resources",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
 			},
 		},
 	)
@@ -594,6 +628,20 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 			c.Subtitle = &subtitleStr
 		}
 
+		if workflowLinks, hasWorkflowLinks := chart["workflow_links"]; hasWorkflowLinks {
+			if workflowLinkList, ok := workflowLinks.([]map[string]any); ok {
+				typedWorkflowLinks := make([]client.WorkflowLink, 0, len(workflowLinkList))
+				for _, workflowLink := range workflowLinkList {
+					typedWorkflowLinks = append(typedWorkflowLinks, client.WorkflowLink{
+						URL:  workflowLink["url"].(string),
+						Name: workflowLink["name"].(string),
+					})
+				}
+				c.WorkflowLinks = typedWorkflowLinks
+			}
+
+		}
+
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
@@ -722,6 +770,17 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	if err := d.Set("event_query_ids", dash.Attributes.EventQueryIDs); err != nil {
 		return fmt.Errorf("unable to set event_query_ids resource field: %v", err)
 	}
+	resourceWorkflowLinks := make([]map[string]string, 0, len(dash.Attributes.WorkflowLinks))
+	for _, workflowLink := range dash.Attributes.WorkflowLinks {
+		resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
+			"id":   workflowLink.ID,
+			"name": workflowLink.Name,
+			"url":  workflowLink.URL,
+		})
+	}
+	if err := d.Set("workflow_links", resourceWorkflowLinks); err != nil {
+		return fmt.Errorf("unable to set workflow_links resource field: %v", err)
+	}
 
 	return nil
 }
@@ -844,6 +903,16 @@ func assembleCharts(
 			}
 			resource["query"] = queries
 		}
+
+		resourceWorkflowLinks := make([]map[string]string, 0, len(c.WorkflowLinks))
+		for _, workflowLink := range c.WorkflowLinks {
+			resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
+				"id":   workflowLink.ID,
+				"name": workflowLink.Name,
+				"url":  workflowLink.URL,
+			})
+		}
+		resource["workflow_links"] = resourceWorkflowLinks
 
 		chartResources = append(chartResources, resource)
 	}
