@@ -505,6 +505,9 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	eventQueriesSet := d.Get("event_query_ids").(*schema.Set)
 	eventQueries := buildStringSlice(eventQueriesSet.List())
 
+	workflowLinksList := d.Get("workflow_link").([]any)
+	workflowLinks := buildWorkflowLinks(workflowLinksList)
+
 	attributes := &client.UnifiedDashboardAttributes{
 		Name:              d.Get("dashboard_name").(string),
 		Description:       d.Get("dashboard_description").(string),
@@ -512,6 +515,7 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		Labels:            labels,
 		TemplateVariables: templateVariables,
 		EventQueryIDs:     eventQueries,
+		WorkflowLinks:     workflowLinks,
 	}
 
 	return attributes, hasLegacyChartsIn, nil
@@ -607,13 +611,17 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	}
 
 	for _, chart := range charts {
+		workflowLinksList := chart["workflow_link"].([]any)
+		workflowLinks := buildWorkflowLinks(workflowLinksList)
+
 		c := client.UnifiedChart{
-			Title:       chart["name"].(string),
-			Description: chart["description"].(string),
-			Rank:        chart["rank"].(int),
-			Position:    buildPosition(chart),
-			ID:          chart["id"].(string),
-			ChartType:   chart["type"].(string),
+			Title:         chart["name"].(string),
+			Description:   chart["description"].(string),
+			Rank:          chart["rank"].(int),
+			Position:      buildPosition(chart),
+			ID:            chart["id"].(string),
+			ChartType:     chart["type"].(string),
+			WorkflowLinks: workflowLinks,
 		}
 
 		queries, err := buildQueries(chart["query"].([]interface{}))
@@ -736,6 +744,21 @@ func buildTemplateVariables(templateVariablesIn []interface{}) []client.Template
 	return newTemplateVariables
 }
 
+func buildWorkflowLinks(workflowLinksIn []interface{}) []client.WorkflowLink {
+	var newWorkflowLinks []client.WorkflowLink
+	for _, wfLink := range workflowLinksIn {
+		wfMap := wfLink.(map[string]interface{})
+		name := wfMap["name"].(string)
+		url := wfMap["url"].(string)
+
+		newWorkflowLinks = append(newWorkflowLinks, client.WorkflowLink{
+			Name: name,
+			URL:  url,
+		})
+	}
+	return newWorkflowLinks
+}
+
 func buildStringSlice(valuesIn []interface{}) []string {
 	vals := make([]string, 0, len(valuesIn))
 	for _, v := range valuesIn {
@@ -821,7 +844,6 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	resourceWorkflowLinks := make([]map[string]string, 0, len(dash.Attributes.WorkflowLinks))
 	for _, workflowLink := range dash.Attributes.WorkflowLinks {
 		resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
-			"id":   workflowLink.ID,
 			"name": workflowLink.Name,
 			"url":  workflowLink.URL,
 		})
@@ -957,7 +979,6 @@ func assembleCharts(
 		resourceWorkflowLinks := make([]map[string]string, 0, len(c.WorkflowLinks))
 		for _, workflowLink := range c.WorkflowLinks {
 			resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
-				"id":   workflowLink.ID,
 				"name": workflowLink.Name,
 				"url":  workflowLink.URL,
 			})
