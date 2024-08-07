@@ -640,7 +640,7 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 			c.Subtitle = &subtitleStr
 		}
 
-		if workflowLinks, hasWorkflowLinks := chart["workflow_links"]; hasWorkflowLinks {
+		if workflowLinks, hasWorkflowLinks := chart["workflow_link"]; hasWorkflowLinks {
 			if workflowLinkList, ok := workflowLinks.([]map[string]any); ok {
 				typedWorkflowLinks := make([]client.WorkflowLink, 0, len(workflowLinkList))
 				for _, workflowLink := range workflowLinkList {
@@ -826,8 +826,8 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 			"url":  workflowLink.URL,
 		})
 	}
-	if err := d.Set("workflow_links", resourceWorkflowLinks); err != nil {
-		return fmt.Errorf("unable to set workflow_links resource field: %v", err)
+	if err := d.Set("workflow_link", resourceWorkflowLinks); err != nil {
+		return fmt.Errorf("unable to set workflow_link resource field: %v", err)
 	}
 
 	return nil
@@ -876,7 +876,7 @@ func assembleDashboardPanels(
 // into the resource interface
 func setPanelResourceData(
 	resource map[string]interface{}, // Terraform resource
-	panel client.UnifiedChart,       // Panel from the API
+	panel client.UnifiedChart, // Panel from the API
 ) {
 	resource["name"] = panel.Title
 	resource["description"] = panel.Description
@@ -962,8 +962,8 @@ func assembleCharts(
 				"url":  workflowLink.URL,
 			})
 		}
-		resource["workflow_links"] = resourceWorkflowLinks
-		
+		resource["workflow_link"] = resourceWorkflowLinks
+
 		chartResources = append(chartResources, resource)
 	}
 	return chartResources, nil

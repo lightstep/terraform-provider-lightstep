@@ -866,3 +866,110 @@ func Test_extractLabels(t *testing.T) {
 		})
 	}
 }
+
+func TestAccDashboardWorkflowLinks(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	dashboardConfig := `
+resource "lightstep_dashboard" "test_workflow_links" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Test workflow links dashboard"
+	workflow_link {
+		name = "test dashboard link"
+		url  = "https://test.com"
+	}
+
+	chart {
+		name = "test chart"
+		rank = 0
+		type = "timeseries"
+	
+		query {
+			query_name   = "a"
+			display      = "line"
+			hidden       = false
+			query_string = "metric cpu.utilization | delta"
+		}
+
+		workflow_link {
+			name = "test chart link"
+			url  = "https://testchart.com"
+		}
+		workflow_link {
+			name = "another test chart link"
+			url  = "https://anothertestchart.com"
+		}
+	}
+}
+`
+	updatedDashboardConfig := `
+resource "lightstep_dashboard" "test_workflow_links" {
+	project_name          = "` + testProject + `"
+	dashboard_name        = "Test workflow links dashboard"
+	event_query_ids 	  = []
+	workflow_link {
+		name = "test dashboard link"
+		url  = "https://test.com"
+	}
+	workflow_link {
+		name = "another test dashboard link"
+		url  = "https://anothertest.com"
+	}
+
+	chart {
+		name = "test chart"
+		rank = 0
+		type = "timeseries"
+	
+		query {
+			query_name   = "a"
+			display      = "line"
+			hidden       = false
+			query_string = "metric cpu.utilization | delta"
+		}
+
+		workflow_link {
+			name = "another test chart link"
+			url  = "https://anothertestchart.com"
+		}
+	}
+}
+`
+	resourceName := "lightstep_dashboard.test_workflow_links"
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: dashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.name", "test dashboard link"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.url", "https://test.com"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.0.name", "test chart link"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.0.url", "https://testchart.com"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.1.name", "another test chart link"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.1.url", "https://anothertestchart.com"),
+				),
+			},
+			{
+				Config: updatedDashboardConfig,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.name", "test link"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.url", "https://test.com"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.name", "another test dashboard link"),
+					resource.TestCheckResourceAttr(resourceName, "workflow_link.0.url", "https://anothertest.com"),
+					resource.TestCheckResourceAttr(resourceName, "chart.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.0.name", "another test chart link"),
+					resource.TestCheckResourceAttr(resourceName, "chart.0.workflow_link.1.url", "https://anothertestchart.com"),
+				),
+			},
+		},
+	})
+}
