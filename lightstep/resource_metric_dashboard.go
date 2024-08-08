@@ -100,6 +100,23 @@ func resourceUnifiedDashboard(chartSchemaType ChartSchemaType) *schema.Resource 
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Description: "IDs of the event queries to display on this dashboard",
 			},
+			"workflow_link": {
+				Description: "Links to other resources",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -301,6 +318,23 @@ func getChartSchema(chartSchemaType ChartSchemaType) map[string]*schema.Schema {
 					Schema: getThresholdSchema(),
 				},
 			},
+			"workflow_link": {
+				Description: "Links to other resources",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"url": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
 		},
 	)
 }
@@ -471,6 +505,9 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 	eventQueriesSet := d.Get("event_query_ids").(*schema.Set)
 	eventQueries := buildStringSlice(eventQueriesSet.List())
 
+	workflowLinksList := d.Get("workflow_link").([]any)
+	workflowLinks := buildWorkflowLinks(workflowLinksList)
+
 	attributes := &client.UnifiedDashboardAttributes{
 		Name:              d.Get("dashboard_name").(string),
 		Description:       d.Get("dashboard_description").(string),
@@ -478,6 +515,7 @@ func getUnifiedDashboardAttributesFromResource(d *schema.ResourceData) (*client.
 		Labels:            labels,
 		TemplateVariables: templateVariables,
 		EventQueryIDs:     eventQueries,
+		WorkflowLinks:     workflowLinks,
 	}
 
 	return attributes, hasLegacyChartsIn, nil
@@ -573,13 +611,17 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 	}
 
 	for _, chart := range charts {
+		workflowLinksList := chart["workflow_link"].([]any)
+		workflowLinks := buildWorkflowLinks(workflowLinksList)
+
 		c := client.UnifiedChart{
-			Title:       chart["name"].(string),
-			Description: chart["description"].(string),
-			Rank:        chart["rank"].(int),
-			Position:    buildPosition(chart),
-			ID:          chart["id"].(string),
-			ChartType:   chart["type"].(string),
+			Title:         chart["name"].(string),
+			Description:   chart["description"].(string),
+			Rank:          chart["rank"].(int),
+			Position:      buildPosition(chart),
+			ID:            chart["id"].(string),
+			ChartType:     chart["type"].(string),
+			WorkflowLinks: workflowLinks,
 		}
 
 		queries, err := buildQueries(chart["query"].([]interface{}))
@@ -688,6 +730,21 @@ func buildTemplateVariables(templateVariablesIn []interface{}) []client.Template
 	return newTemplateVariables
 }
 
+func buildWorkflowLinks(workflowLinksIn []interface{}) []client.WorkflowLink {
+	var newWorkflowLinks []client.WorkflowLink
+	for _, wfLink := range workflowLinksIn {
+		wfMap := wfLink.(map[string]interface{})
+		name := wfMap["name"].(string)
+		url := wfMap["url"].(string)
+
+		newWorkflowLinks = append(newWorkflowLinks, client.WorkflowLink{
+			Name: name,
+			URL:  url,
+		})
+	}
+	return newWorkflowLinks
+}
+
 func buildStringSlice(valuesIn []interface{}) []string {
 	vals := make([]string, 0, len(valuesIn))
 	for _, v := range valuesIn {
@@ -769,6 +826,16 @@ func (p *resourceUnifiedDashboardImp) setResourceDataFromUnifiedDashboard(projec
 	}
 	if err := d.Set("event_query_ids", dash.Attributes.EventQueryIDs); err != nil {
 		return fmt.Errorf("unable to set event_query_ids resource field: %v", err)
+	}
+	resourceWorkflowLinks := make([]map[string]string, 0, len(dash.Attributes.WorkflowLinks))
+	for _, workflowLink := range dash.Attributes.WorkflowLinks {
+		resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
+			"name": workflowLink.Name,
+			"url":  workflowLink.URL,
+		})
+	}
+	if err := d.Set("workflow_link", resourceWorkflowLinks); err != nil {
+		return fmt.Errorf("unable to set workflow_link resource field: %v", err)
 	}
 
 	return nil
@@ -894,6 +961,15 @@ func assembleCharts(
 		}
 
 		resource["threshold"] = getThresholdsFromResourceData(c.Thresholds)
+
+		resourceWorkflowLinks := make([]map[string]string, 0, len(c.WorkflowLinks))
+		for _, workflowLink := range c.WorkflowLinks {
+			resourceWorkflowLinks = append(resourceWorkflowLinks, map[string]string{
+				"name": workflowLink.Name,
+				"url":  workflowLink.URL,
+			})
+		}
+		resource["workflow_link"] = resourceWorkflowLinks
 
 		chartResources = append(chartResources, resource)
 	}

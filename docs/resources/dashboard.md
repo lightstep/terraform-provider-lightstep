@@ -71,6 +71,7 @@ resource "lightstep_dashboard" "customer_charges" {
 - `group` (Block Set) (see [below for nested schema](#nestedblock--group))
 - `label` (Block Set) Labels can be key/value pairs or standalone values. (see [below for nested schema](#nestedblock--label))
 - `template_variable` (Block Set) Variable to be used in dashboard queries for dynamically filtering telemetry data (see [below for nested schema](#nestedblock--template_variable))
+- `workflow_link` (Block List) Links to other resources (see [below for nested schema](#nestedblock--workflow_link))
 
 ### Read-Only
 
@@ -94,6 +95,7 @@ Optional:
 - `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
 - `threshold` (Block List) (see [below for nested schema](#nestedblock--chart--threshold))
 - `width` (Number)
+- `workflow_link` (Block List) Links to other resources (see [below for nested schema](#nestedblock--chart--workflow_link))
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--chart--y_axis))
 - `y_pos` (Number)
@@ -156,6 +158,15 @@ Required:
 Optional:
 
 - `label` (String)
+
+
+<a id="nestedblock--chart--workflow_link"></a>
+### Nested Schema for `chart.workflow_link`
+
+Required:
+
+- `name` (String)
+- `url` (String)
 
 
 <a id="nestedblock--chart--y_axis"></a>
@@ -261,6 +272,7 @@ Optional:
 - `subtitle` (String) Subtitle to show beneath big number, unused in other chart types
 - `threshold` (Block List) (see [below for nested schema](#nestedblock--group--chart--threshold))
 - `width` (Number)
+- `workflow_link` (Block List) Links to other resources (see [below for nested schema](#nestedblock--group--chart--workflow_link))
 - `x_pos` (Number)
 - `y_axis` (Block List, Max: 1, Deprecated) (see [below for nested schema](#nestedblock--group--chart--y_axis))
 - `y_pos` (Number)
@@ -323,6 +335,15 @@ Required:
 Optional:
 
 - `label` (String)
+
+
+<a id="nestedblock--group--chart--workflow_link"></a>
+### Nested Schema for `group.chart.workflow_link`
+
+Required:
+
+- `name` (String)
+- `url` (String)
 
 
 <a id="nestedblock--group--chart--y_axis"></a>
@@ -405,3 +426,12 @@ Required:
 - `default_values` (List of String) One or more values to set the template variable to by default (if none are provided, defaults to all possible values)
 - `name` (String) Unique (per dashboard) name for template variable, beginning with a letter or underscore and only containing letters, numbers, and underscores
 - `suggestion_attribute_key` (String) Attribute key used as source for suggested template variable values appearing in Lightstep UI
+
+
+<a id="nestedblock--workflow_link"></a>
+### Nested Schema for `workflow_link`
+
+Required:
+
+- `name` (String)
+- `url` (String)
