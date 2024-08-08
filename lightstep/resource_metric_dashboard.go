@@ -648,20 +648,6 @@ func buildCharts(chartsIn []interface{}) ([]client.UnifiedChart, error) {
 			c.Subtitle = &subtitleStr
 		}
 
-		if workflowLinks, hasWorkflowLinks := chart["workflow_link"]; hasWorkflowLinks {
-			if workflowLinkList, ok := workflowLinks.([]map[string]any); ok {
-				typedWorkflowLinks := make([]client.WorkflowLink, 0, len(workflowLinkList))
-				for _, workflowLink := range workflowLinkList {
-					typedWorkflowLinks = append(typedWorkflowLinks, client.WorkflowLink{
-						URL:  workflowLink["url"].(string),
-						Name: workflowLink["name"].(string),
-					})
-				}
-				c.WorkflowLinks = typedWorkflowLinks
-			}
-
-		}
-
 		newCharts = append(newCharts, c)
 	}
 	return newCharts, nil
