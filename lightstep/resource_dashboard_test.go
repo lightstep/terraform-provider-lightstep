@@ -1498,6 +1498,66 @@ group {
 	})
 }
 
+func TestGauge(t *testing.T) {
+	var dashboard client.UnifiedDashboard
+
+	resourceName := "lightstep_dashboard.test_gauge"
+
+	configTemplate := `
+resource "lightstep_dashboard" "test_gauge" {
+project_name   = "` + testProject + `"
+dashboard_name = "test gauges"
+
+group {
+	rank            = 0
+	title           = ""
+	visibility_type = "implicit"
+	
+	chart {
+		name   = "overall cpu utilization"
+		type   = "timeseries"
+		rank   = 0
+		x_pos  = 4
+		y_pos  = 0
+		width  = 4
+		height = 4
+	
+		query {
+		  query_name   = "a"
+		  display      = "gauge"
+		  hidden       = false
+		  query_string = "metric cpu.utilization | delta | group_by[], sum"
+		  display_type_options { 
+			min = 0
+			max = 100
+		  }
+		}
+	  }
+	}
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testGetMetricDashboardDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: configTemplate,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckMetricDashboardExists(resourceName, &dashboard),
+					resource.TestCheckResourceAttr(resourceName, "group.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "gauge"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.min", "0"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.max", "100"),
+				),
+			},
+		},
+	})
+}
+
 func TestValidationErrors(t *testing.T) {
 	var dashboard client.UnifiedDashboard
 

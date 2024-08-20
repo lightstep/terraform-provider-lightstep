@@ -60,6 +60,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"table",
 				"traces_list",
 				"trichart",
+				"gauge",
 			}, false),
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
@@ -113,6 +114,14 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Optional: true,
 					},
 					"comparison_window_ms": {
+						Type:     schema.TypeInt,
+						Optional: true,
+					},
+					"min": {
+						Type:     schema.TypeInt,
+						Optional: true,
+					},
+					"max": {
 						Type:     schema.TypeInt,
 						Optional: true,
 					},
