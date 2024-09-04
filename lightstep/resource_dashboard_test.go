@@ -1529,7 +1529,7 @@ group {
 		  query_string = "metric cpu.utilization | delta | group_by[], sum"
 		  display_type_options { 
 			min = 0
-			max = 100
+			max = ""
 		  }
 		}
 	  }
@@ -1551,7 +1551,7 @@ group {
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display", "gauge"),
 					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.min", "0"),
-					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.max", "100"),
+					resource.TestCheckResourceAttr(resourceName, "group.0.chart.0.query.0.display_type_options.0.max", ""),
 				),
 			},
 		},

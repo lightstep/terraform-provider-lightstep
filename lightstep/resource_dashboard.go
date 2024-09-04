@@ -2,6 +2,7 @@ package lightstep
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/lightstep/terraform-provider-lightstep/client"
 
@@ -118,12 +119,14 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 						Optional: true,
 					},
 					"min": {
-						Type:     schema.TypeInt,
-						Optional: true,
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringMatch(regexp.MustCompile(`^(\d|\.)*$`), ""),
 					},
 					"max": {
-						Type:     schema.TypeInt,
-						Optional: true,
+						Type:         schema.TypeString,
+						Optional:     true,
+						ValidateFunc: validation.StringMatch(regexp.MustCompile(`^(\d|\.)*$`), ""),
 					},
 				},
 			},
