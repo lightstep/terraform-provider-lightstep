@@ -62,6 +62,7 @@ func getUnifiedQuerySchemaMap() map[string]*schema.Schema {
 				"traces_list",
 				"trichart",
 				"gauge",
+				"logs_list",
 			}, false),
 		},
 		// See https://github.com/hashicorp/terraform-plugin-sdk/issues/155
